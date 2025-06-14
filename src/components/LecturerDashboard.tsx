@@ -14,17 +14,23 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const LecturerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const { user, createdUnits } = useAuth();
+  const { user, createdUnits, createdContent } = useAuth();
 
   // Get units assigned to current lecturer
   const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
   const totalStudents = assignedUnits.reduce((total, unit) => total + unit.enrolled, 0);
 
+  // Get content created by current lecturer
+  const lecturerContent = createdContent.filter(content => content.lecturerId === user?.id);
+  const assignments = lecturerContent.filter(content => content.type === 'assignment');
+  const notes = lecturerContent.filter(content => content.type === 'notes');
+  const exams = lecturerContent.filter(content => content.type === 'exam' || content.type === 'cat');
+
   const stats = {
     totalCourses: assignedUnits.length,
     totalStudents: totalStudents,
-    pendingAssignments: 12,
-    upcomingExams: 2
+    pendingAssignments: assignments.length,
+    upcomingExams: exams.length
   };
 
   return (

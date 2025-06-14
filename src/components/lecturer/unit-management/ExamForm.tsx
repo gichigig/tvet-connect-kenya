@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, AlertTriangle } from "lucide-react";
+import { FileText, Clock, AlertTriangle, Plus, Trash2 } from "lucide-react";
+
+interface Question {
+  id: string;
+  question: string;
+  marks: number;
+}
 
 interface ExamFormProps {
   onAddExam: (exam: any) => void;
@@ -19,8 +25,38 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
   const [duration, setDuration] = useState(120); // minutes
   const [venue, setVenue] = useState("");
   const [totalMarks, setTotalMarks] = useState(100);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState("");
+  const [currentMarks, setCurrentMarks] = useState(10);
+
+  const addQuestion = () => {
+    if (!currentQuestion.trim()) return;
+    
+    const newQuestion: Question = {
+      id: Date.now().toString(),
+      question: currentQuestion,
+      marks: currentMarks
+    };
+    
+    setQuestions([...questions, newQuestion]);
+    setCurrentQuestion("");
+    setCurrentMarks(10);
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
+  };
+
+  const calculateTotalMarks = () => {
+    return questions.reduce((total, q) => total + q.marks, 0);
+  };
 
   const handleSubmit = () => {
+    if (questions.length === 0) {
+      alert("Please add at least one question");
+      return;
+    }
+
     const exam = {
       type: "exam",
       title,
@@ -28,10 +64,13 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
       scheduledDate,
       duration,
       venue,
-      totalMarks,
+      totalMarks: calculateTotalMarks(),
+      questions,
       isLive: true,
       requiresHODApproval: true,
       status: "pending_approval",
+      isVisible: true,
+      isAccessible: false,
       createdAt: new Date().toISOString()
     };
     
@@ -44,6 +83,7 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
     setDuration(120);
     setVenue("");
     setTotalMarks(100);
+    setQuestions([]);
   };
 
   return (
@@ -71,12 +111,11 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
             />
           </div>
           <div>
-            <Label>Total Marks</Label>
+            <Label>Venue</Label>
             <Input
-              type="number"
-              value={totalMarks}
-              onChange={(e) => setTotalMarks(Number(e.target.value))}
-              min="1"
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              placeholder="Exam hall or room number"
             />
           </div>
         </div>
@@ -93,22 +132,13 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
             />
           </div>
           <div>
-            <Label>Venue</Label>
+            <Label>Scheduled Date & Time</Label>
             <Input
-              value={venue}
-              onChange={(e) => setVenue(e.target.value)}
-              placeholder="Exam hall or room number"
+              type="datetime-local"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
             />
           </div>
-        </div>
-
-        <div>
-          <Label>Scheduled Date & Time</Label>
-          <Input
-            type="datetime-local"
-            value={scheduledDate}
-            onChange={(e) => setScheduledDate(e.target.value)}
-          />
         </div>
 
         <div>
@@ -121,17 +151,79 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
           />
         </div>
 
+        {/* Questions Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-lg">Exam Questions</Label>
+            <Badge variant="outline">
+              Total Marks: {calculateTotalMarks()}
+            </Badge>
+          </div>
+          
+          {/* Add Question Form */}
+          <div className="border rounded-lg p-4 space-y-3">
+            <div>
+              <Label>Question</Label>
+              <Textarea
+                value={currentQuestion}
+                onChange={(e) => setCurrentQuestion(e.target.value)}
+                placeholder="Enter exam question"
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <div>
+                <Label>Marks</Label>
+                <Input
+                  type="number"
+                  value={currentMarks}
+                  onChange={(e) => setCurrentMarks(Number(e.target.value))}
+                  min="1"
+                  max="100"
+                  className="w-20"
+                />
+              </div>
+              <Button onClick={addQuestion} size="sm">
+                <Plus className="w-4 h-4 mr-1" />
+                Add Question
+              </Button>
+            </div>
+          </div>
+
+          {/* Questions List */}
+          {questions.length > 0 && (
+            <div className="space-y-2">
+              <Label>Added Questions:</Label>
+              {questions.map((question, index) => (
+                <div key={question.id} className="border rounded p-3 flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-medium">Question {index + 1}: ({question.marks} marks)</div>
+                    <div className="text-sm text-gray-600 mt-1">{question.question}</div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => removeQuestion(question.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-start space-x-2">
             <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
             <div className="text-sm text-yellow-800">
               <p className="font-medium">HOD Approval Required</p>
-              <p>This exam will be submitted for HOD approval before it becomes active. You will be notified once approved.</p>
+              <p>This exam will be submitted for HOD approval before it becomes active. Students will see it but cannot access it until the scheduled date and time.</p>
             </div>
           </div>
         </div>
 
-        <Button onClick={handleSubmit} className="w-full">
+        <Button onClick={handleSubmit} className="w-full" disabled={questions.length === 0}>
           Submit for HOD Approval
         </Button>
       </CardContent>

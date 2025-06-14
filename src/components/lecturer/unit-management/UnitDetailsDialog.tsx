@@ -8,6 +8,7 @@ import { ExamForm } from "./ExamForm";
 import { NotesForm } from "./NotesForm";
 import { OnlineClassForm } from "./OnlineClassForm";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UnitDetailsDialogProps {
   isOpen: boolean;
@@ -39,47 +40,103 @@ export const UnitDetailsDialog = ({
   onAddItem
 }: UnitDetailsDialogProps) => {
   const { toast } = useToast();
+  const { user, addCreatedContent } = useAuth();
 
   if (!unit) return null;
 
   const handleAddAssignment = (assignment: any) => {
+    const contentItem = {
+      id: Date.now().toString(),
+      ...assignment,
+      lecturerId: user?.id,
+      unitId: unit.id,
+      unitName: unit.name,
+      unitCode: unit.code
+    };
+    
+    addCreatedContent(contentItem);
+    
     toast({
       title: "Assignment Created",
       description: `${assignment.title} has been created successfully.`,
     });
-    console.log("Assignment created:", assignment);
+    console.log("Assignment created:", contentItem);
   };
 
   const handleAddCAT = (cat: any) => {
+    const contentItem = {
+      id: Date.now().toString(),
+      ...cat,
+      lecturerId: user?.id,
+      unitId: unit.id,
+      unitName: unit.name,
+      unitCode: unit.code
+    };
+    
+    addCreatedContent(contentItem);
+    
     toast({
       title: "CAT Scheduled",
       description: `${cat.title} has been scheduled successfully.`,
     });
-    console.log("CAT scheduled:", cat);
+    console.log("CAT scheduled:", contentItem);
   };
 
   const handleAddExam = (exam: any) => {
+    const contentItem = {
+      id: Date.now().toString(),
+      ...exam,
+      lecturerId: user?.id,
+      unitId: unit.id,
+      unitName: unit.name,
+      unitCode: unit.code
+    };
+    
+    addCreatedContent(contentItem);
+    
     toast({
       title: "Exam Submitted for Approval",
       description: `${exam.title} has been submitted to HOD for approval.`,
     });
-    console.log("Exam submitted:", exam);
+    console.log("Exam submitted:", contentItem);
   };
 
   const handleAddNotes = (notes: any) => {
+    const contentItem = {
+      id: Date.now().toString(),
+      ...notes,
+      lecturerId: user?.id,
+      unitId: unit.id,
+      unitName: unit.name,
+      unitCode: unit.code
+    };
+    
+    addCreatedContent(contentItem);
+    
     toast({
       title: "Notes Uploaded",
       description: `${notes.title} has been uploaded successfully.`,
     });
-    console.log("Notes uploaded:", notes);
+    console.log("Notes uploaded:", contentItem);
   };
 
   const handleAddOnlineClass = (onlineClass: any) => {
+    const contentItem = {
+      id: Date.now().toString(),
+      ...onlineClass,
+      lecturerId: user?.id,
+      unitId: unit.id,
+      unitName: unit.name,
+      unitCode: unit.code
+    };
+    
+    addCreatedContent(contentItem);
+    
     toast({
       title: "Online Class Scheduled",
       description: `${onlineClass.title} has been scheduled successfully.`,
     });
-    console.log("Online class scheduled:", onlineClass);
+    console.log("Online class scheduled:", contentItem);
   };
 
   return (
