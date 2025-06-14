@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu } from "lucide-react";
+import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle } from "lucide-react";
 import { UnitRegistration } from "@/components/student/UnitRegistration";
 import { OnlineClasses } from "@/components/student/OnlineClasses";
 import { NotesAccess } from "@/components/student/NotesAccess";
 import { ExamsQuizzes } from "@/components/student/ExamsQuizzes";
 import { MyUnits } from "@/components/student/MyUnits";
+import { DiscussionGroups } from "@/components/student/DiscussionGroups";
 import {
   Sheet,
   SheetContent,
@@ -38,6 +39,7 @@ export const StudentDashboard = () => {
     { id: "classes", label: "Online Classes", icon: Video },
     { id: "notes", label: "Notes & Materials", icon: FileText },
     { id: "exams", label: "Exams & Quizzes", icon: PenTool },
+    { id: "discussions", label: "Discussion Groups", icon: MessageCircle },
   ];
 
   return (
@@ -140,7 +142,7 @@ export const StudentDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-5">
+        <TabsList className="hidden md:grid w-full grid-cols-6">
           {menuItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
               <item.icon className="w-4 h-4" />
@@ -167,6 +169,10 @@ export const StudentDashboard = () => {
 
         <TabsContent value="exams" className="space-y-4">
           <ExamsQuizzes />
+        </TabsContent>
+
+        <TabsContent value="discussions" className="space-y-4">
+          <DiscussionGroups />
         </TabsContent>
       </Tabs>
     </div>
