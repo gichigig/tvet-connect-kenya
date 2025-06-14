@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -81,6 +80,13 @@ export interface CreatedContent {
   submissionInstructions?: string;
   submissionType?: 'file' | 'multiple_choice';
   requiresHODApproval?: boolean;
+  // Assignment specific properties
+  assignmentType?: string;
+  dueDate?: string;
+  questionFileName?: string;
+  acceptedFormats?: string[];
+  // Notes specific properties
+  fileName?: string;
 }
 
 export interface AuthContextType {
