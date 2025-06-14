@@ -158,7 +158,20 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      await signup(formData);
+      // Convert empty strings to undefined for optional fields
+      const signupData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        department: formData.department || undefined,
+        course: formData.course || undefined,
+        level: formData.level || undefined,
+        intake: formData.intake || undefined,
+      };
+
+      await signup(signupData);
       
       toast({
         title: "Application Submitted",
