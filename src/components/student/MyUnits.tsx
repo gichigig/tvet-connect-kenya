@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Video, FileText, PenTool, Calendar, Users, GraduationCap, Download, Upload, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Unit {
   id: string;
@@ -38,9 +39,25 @@ interface CourseMaterial {
 
 export const MyUnits = () => {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const { user, pendingUnitRegistrations } = useAuth();
   
-  // For now, no units until student registers and gets approved
-  const registeredUnits: Unit[] = [];
+  // Get approved units for the current user
+  const approvedRegistrations = pendingUnitRegistrations.filter(
+    reg => reg.studentId === user?.id && reg.status === 'approved'
+  );
+
+  // Convert approved registrations to Unit format
+  const registeredUnits: Unit[] = approvedRegistrations.map(reg => ({
+    id: reg.id,
+    code: reg.unitCode,
+    name: reg.unitName,
+    lecturer: "TBD", // This would come from unit details in a real system
+    credits: 3, // Default value, would come from unit details
+    progress: 0, // Start at 0% for newly approved units
+    nextClass: "Check schedule", // Placeholder
+    status: 'active' as const,
+    semester: `Semester ${reg.semester}`
+  }));
 
   // Mock course work data for when units are available
   const mockAssignments: Assignment[] = [

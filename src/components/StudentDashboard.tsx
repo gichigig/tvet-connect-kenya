@@ -22,13 +22,21 @@ import {
 } from "@/components/ui/sheet";
 
 export const StudentDashboard = () => {
-  const { user } = useAuth();
+  const { user, pendingUnitRegistrations } = useAuth();
   const [activeTab, setActiveTab] = useState("units");
 
-  // Updated stats to reflect empty state for new students
+  // Get stats for current user
+  const userPendingRegistrations = pendingUnitRegistrations.filter(
+    reg => reg.studentId === user?.id && reg.status === 'pending'
+  );
+  
+  const enrolledUnits = pendingUnitRegistrations.filter(
+    reg => reg.studentId === user?.id && reg.status === 'approved'
+  );
+
   const stats = {
-    enrolledUnits: 0, // No units until registered and approved
-    pendingRegistrations: 0, // Will be updated based on actual registrations
+    enrolledUnits: enrolledUnits.length,
+    pendingRegistrations: userPendingRegistrations.length,
     upcomingExams: 0, // No exams until units are enrolled
     completedAssignments: 0 // No assignments until units are enrolled
   };
