@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -20,6 +19,7 @@ import {
   getPendingUsers 
 } from './auth/authUtils';
 import { sendResultsNotification as sendNotifications } from './auth/notificationUtils';
+import { Unit } from '@/types/unitManagement';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
   const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
+  const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
@@ -143,6 +144,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sendNotifications(resultIds, sendToGuardians, examResults, users);
   };
 
+  const addCreatedUnit = (unit: Unit) => {
+    setCreatedUnits(prev => [...prev, unit]);
+  };
+
+  const updateCreatedUnit = (unitId: string, updates: Partial<Unit>) => {
+    setCreatedUnits(prev => prev.map(unit => 
+      unit.id === unitId ? { ...unit, ...updates } : unit
+    ));
+  };
+
+  const deleteCreatedUnit = (unitId: string) => {
+    setCreatedUnits(prev => prev.filter(unit => unit.id !== unitId));
+  };
+
+  const getAvailableUnits = (course?: string, year?: number) => {
+    if (!course || !year) return [];
+    return createdUnits.filter(unit => 
+      unit.course === course && unit.year === year && unit.status === 'active'
+    );
+  };
+
   const value = {
     user,
     login,
@@ -165,7 +187,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getPendingUnitRegistrations,
     examResults,
     addExamResult,
-    sendResultsNotification
+    sendResultsNotification,
+    createdUnits,
+    addCreatedUnit,
+    updateCreatedUnit,
+    deleteCreatedUnit,
+    getAvailableUnits
   };
 
   return (

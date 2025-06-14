@@ -1,3 +1,25 @@
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'student' | 'lecturer' | 'registrar' | 'hod';
+  approved: boolean;
+  blocked?: boolean;
+  department?: string;
+  course?: string;
+  year?: number;
+  semester?: number;
+  admissionNumber?: string;
+  guardians?: Guardian[];
+}
+
+export interface Guardian {
+  name: string;
+  email: string;
+  phone: string;
+  relationship: string;
+}
 
 export interface PendingUnitRegistration {
   id: string;
@@ -9,35 +31,8 @@ export interface PendingUnitRegistration {
   course: string;
   year: number;
   semester: number;
-  submittedDate: string;
   status: 'pending' | 'approved' | 'rejected';
-}
-
-export interface Guardian {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  relationship: string;
-}
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: string;
-  approved: boolean;
-  blocked?: boolean;
-  course?: string;
-  level?: string;
-  year?: number;
-  semester?: number;
-  admissionNumber?: string;
-  department?: string;
-  intake?: string;
-  guardians?: Guardian[];
+  submittedDate: string;
 }
 
 export interface ExamResult {
@@ -46,21 +41,20 @@ export interface ExamResult {
   studentName: string;
   unitCode: string;
   unitName: string;
-  examType: 'cat' | 'exam';
+  examType: string;
   score: number;
-  maxScore: number;
   grade: string;
-  status: 'pass' | 'fail';
-  examDate: string;
   semester: number;
   year: number;
+  examDate: string;
+  lecturerName: string;
 }
 
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role?: string) => Promise<void>;
   signup: (userData: any) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   users: User[];
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -79,4 +73,9 @@ export interface AuthContextType {
   examResults: ExamResult[];
   addExamResult: (result: Omit<ExamResult, 'id'>) => void;
   sendResultsNotification: (resultIds: string[], sendToGuardians: boolean) => Promise<void>;
+  createdUnits: import('@/types/unitManagement').Unit[];
+  addCreatedUnit: (unit: import('@/types/unitManagement').Unit) => void;
+  updateCreatedUnit: (unitId: string, updates: Partial<import('@/types/unitManagement').Unit>) => void;
+  deleteCreatedUnit: (unitId: string) => void;
+  getAvailableUnits: (course?: string, year?: number) => import('@/types/unitManagement').Unit[];
 }

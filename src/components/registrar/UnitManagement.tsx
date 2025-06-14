@@ -16,14 +16,11 @@ import { Unit, CreateUnitData } from "@/types/unitManagement";
 
 export const UnitManagement = () => {
   const { toast } = useToast();
-  const { getAllUsers } = useAuth();
+  const { getAllUsers, createdUnits, addCreatedUnit, updateCreatedUnit, deleteCreatedUnit } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
-  // Mock units data - in real app this would come from context/database
-  const [units, setUnits] = useState<Unit[]>([]);
   
   // Get lecturers for assignment
   const allUsers = getAllUsers();
@@ -79,7 +76,7 @@ export const UnitManagement = () => {
       status: 'active'
     };
 
-    setUnits(prev => [...prev, unit]);
+    addCreatedUnit(unit);
     setNewUnit({
       code: '',
       name: '',
@@ -107,16 +104,11 @@ export const UnitManagement = () => {
     const lecturer = lecturers.find(l => l.id === lecturerId);
     if (!lecturer) return;
 
-    setUnits(prev => prev.map(unit => 
-      unit.id === unitId 
-        ? { 
-            ...unit, 
-            lecturerId: lecturer.id,
-            lecturerName: `${lecturer.firstName} ${lecturer.lastName}`,
-            lecturerEmail: lecturer.email
-          }
-        : unit
-    ));
+    updateCreatedUnit(unitId, {
+      lecturerId: lecturer.id,
+      lecturerName: `${lecturer.firstName} ${lecturer.lastName}`,
+      lecturerEmail: lecturer.email
+    });
 
     toast({
       title: "Lecturer Assigned",
@@ -125,14 +117,14 @@ export const UnitManagement = () => {
   };
 
   const handleDeleteUnit = (unitId: string) => {
-    setUnits(prev => prev.filter(unit => unit.id !== unitId));
+    deleteCreatedUnit(unitId);
     toast({
       title: "Unit Deleted",
       description: "Unit has been removed successfully.",
     });
   };
 
-  const filteredUnits = units.filter(unit =>
+  const filteredUnits = createdUnits.filter(unit =>
     unit.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     unit.course.toLowerCase().includes(searchTerm.toLowerCase())
@@ -305,7 +297,7 @@ export const UnitManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Units</p>
-                <p className="text-2xl font-bold text-blue-600">{units.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{createdUnits.length}</p>
               </div>
               <BookOpen className="w-8 h-8 text-blue-600" />
             </div>
@@ -318,7 +310,7 @@ export const UnitManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Assigned Units</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {units.filter(u => u.lecturerId).length}
+                  {createdUnits.filter(u => u.lecturerId).length}
                 </p>
               </div>
               <User className="w-8 h-8 text-green-600" />
@@ -332,7 +324,7 @@ export const UnitManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Unassigned Units</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {units.filter(u => !u.lecturerId).length}
+                  {createdUnits.filter(u => !u.lecturerId).length}
                 </p>
               </div>
               <BookOpen className="w-8 h-8 text-orange-600" />
@@ -435,7 +427,7 @@ export const UnitManagement = () => {
 
           {filteredUnits.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              {units.length === 0 ? "No units created yet" : "No units found matching your search"}
+              {createdUnits.length === 0 ? "No units created yet" : "No units found matching your search"}
             </div>
           )}
         </CardContent>

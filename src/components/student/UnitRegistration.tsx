@@ -15,7 +15,7 @@ export const UnitRegistration = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const { toast } = useToast();
-  const { user, addPendingUnitRegistration, pendingUnitRegistrations } = useAuth();
+  const { user, addPendingUnitRegistration, pendingUnitRegistrations, getAvailableUnits } = useAuth();
 
   // Filter pending registrations for current user
   const userPendingRegistrations: PendingRegistration[] = pendingUnitRegistrations
@@ -28,13 +28,9 @@ export const UnitRegistration = () => {
       submittedDate: reg.submittedDate
     }));
 
-  // Mock units data - this should come from the registrar's created units
-  // In a real app, this would be fetched from the context or API
+  // Get available units from the context based on selected course and year
   const availableUnits = selectedCourse && selectedYear 
-    ? [
-        // For now, showing empty array since registrar needs to create units first
-        // This will be populated when registrar creates units for specific courses/years
-      ]
+    ? getAvailableUnits(selectedCourse, parseInt(selectedYear))
     : [];
 
   const filteredUnits = availableUnits.filter(unit =>
@@ -45,6 +41,20 @@ export const UnitRegistration = () => {
   const handleRegister = (unitId: string) => {
     const unit = availableUnits.find(u => u.id === unitId);
     if (unit && user) {
+      // Check if already registered or pending
+      const existingRegistration = pendingUnitRegistrations.find(
+        reg => reg.studentId === user.id && reg.unitCode === unit.code
+      );
+      
+      if (existingRegistration) {
+        toast({
+          title: "Already Registered",
+          description: `You already have a ${existingRegistration.status} registration for ${unit.code}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Add to global context
       addPendingUnitRegistration({
         studentId: user.id,
@@ -54,7 +64,7 @@ export const UnitRegistration = () => {
         unitName: unit.name,
         course: user.course || selectedCourse,
         year: parseInt(selectedYear),
-        semester: parseInt(unit.semester)
+        semester: unit.semester
       });
       
       toast({
