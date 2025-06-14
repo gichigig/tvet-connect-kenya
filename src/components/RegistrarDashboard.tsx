@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, GraduationCap, FileText, Clock, BookOpen } from "lucide-react";
+import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users } from "lucide-react";
 import { StudentApproval } from "@/components/registrar/StudentApproval";
 import { UnitAllocation } from "@/components/registrar/UnitAllocation";
 import { ExamManager } from "@/components/registrar/ExamManager";
 import { RetakeManager } from "@/components/registrar/RetakeManager";
+import { ApprovedStudents } from "@/components/registrar/ApprovedStudents";
 
 export const RegistrarDashboard = () => {
   const { user, getPendingUsers, getAllUsers } = useAuth();
@@ -95,10 +96,14 @@ export const RegistrarDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Approved Students
           </TabsTrigger>
           <TabsTrigger value="units" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -116,6 +121,10 @@ export const RegistrarDashboard = () => {
 
         <TabsContent value="students" className="space-y-4">
           <StudentApproval />
+        </TabsContent>
+
+        <TabsContent value="approved" className="space-y-4">
+          <ApprovedStudents />
         </TabsContent>
 
         <TabsContent value="units" className="space-y-4">
