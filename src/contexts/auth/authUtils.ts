@@ -1,8 +1,7 @@
-
 import { User } from './types';
 
 export const createNewUser = (userData: any): User => {
-  const { email, password, firstName, lastName, role, course, level, year, semester, admissionNumber } = userData;
+  const { email, password, firstName, lastName, role, course, level, year, semester, admissionNumber, intake, phone } = userData;
   
   return {
     id: Date.now().toString(),
@@ -13,6 +12,8 @@ export const createNewUser = (userData: any): User => {
     approved: role === 'admin',
     course,
     level,
+    intake,
+    phone,
     year,
     semester,
     admissionNumber

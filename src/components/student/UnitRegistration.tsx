@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PendingRegistrations } from "./registration/PendingRegistrations";
 import { CourseYearSelector } from "./registration/CourseYearSelector";
 import { UnitCard } from "./registration/UnitCard";
-import { PendingRegistration } from "./registration/types";
+import { PendingRegistration, AvailableUnit } from "./registration/types";
 
 export const UnitRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,9 +28,19 @@ export const UnitRegistration = () => {
     }));
 
   // Get available units from the context based on selected course and year
-  const availableUnits = selectedCourse && selectedYear 
+  const rawUnits = selectedCourse && selectedYear 
     ? getAvailableUnits(selectedCourse, parseInt(selectedYear))
     : [];
+
+  // Convert units to AvailableUnit type with lecturer property
+  const availableUnits: AvailableUnit[] = rawUnits.map(unit => ({
+    ...unit,
+    lecturer: unit.lecturerName ? {
+      id: unit.lecturerId || '',
+      name: unit.lecturerName,
+      email: unit.lecturerEmail || ''
+    } : undefined
+  }));
 
   const filteredUnits = availableUnits.filter(unit =>
     unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

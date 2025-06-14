@@ -10,6 +10,9 @@ export interface User {
   course?: string;
   year?: number;
   semester?: number;
+  level?: string;
+  intake?: string;
+  phone?: string;
   admissionNumber?: string;
   guardians?: Guardian[];
 }
@@ -43,11 +46,13 @@ export interface ExamResult {
   unitName: string;
   examType: string;
   score: number;
+  maxScore: number;
   grade: string;
   semester: number;
   year: number;
   examDate: string;
   lecturerName: string;
+  status: 'pass' | 'fail';
 }
 
 export interface AuthContextType {
