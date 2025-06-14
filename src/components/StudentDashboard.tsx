@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,12 @@ export const StudentDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("units");
 
-  // Mock data for dashboard stats
+  // Updated stats to reflect empty state for new students
   const stats = {
-    enrolledUnits: 6,
-    pendingRegistrations: 2,
-    upcomingExams: 3,
-    completedAssignments: 12
+    enrolledUnits: 0, // No units until registered and approved
+    pendingRegistrations: 0, // Will be updated based on actual registrations
+    upcomingExams: 0, // No exams until units are enrolled
+    completedAssignments: 0 // No assignments until units are enrolled
   };
 
   const menuItems = [

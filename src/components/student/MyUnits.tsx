@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Video, FileText, PenTool, Calendar, Users } from "lucide-react";
+import { BookOpen, Video, FileText, PenTool, Calendar, Users, GraduationCap } from "lucide-react";
 
 interface Unit {
   id: string;
@@ -18,55 +18,11 @@ interface Unit {
   semester: string;
 }
 
-const mockUnits: Unit[] = [
-  {
-    id: "1",
-    code: "SE101",
-    name: "Introduction to Software Engineering",
-    lecturer: "Dr. John Kamau",
-    credits: 3,
-    progress: 75,
-    nextClass: "Tomorrow 2:00 PM",
-    status: 'active',
-    semester: "Semester 1"
-  },
-  {
-    id: "2",
-    code: "DB201",
-    name: "Database Management Systems",
-    lecturer: "Prof. Mary Wanjiku",
-    credits: 4,
-    progress: 60,
-    nextClass: "Friday 10:00 AM",
-    status: 'active',
-    semester: "Semester 1"
-  },
-  {
-    id: "3",
-    code: "WEB301",
-    name: "Web Development",
-    lecturer: "Mr. Peter Mwangi",
-    credits: 3,
-    progress: 85,
-    nextClass: "Monday 3:00 PM",
-    status: 'active',
-    semester: "Semester 1"
-  },
-  {
-    id: "4",
-    code: "PROG101",
-    name: "Programming Fundamentals",
-    lecturer: "Ms. Grace Njeri",
-    credits: 4,
-    progress: 100,
-    nextClass: "Completed",
-    status: 'completed',
-    semester: "Semester 1"
-  }
-];
-
 export const MyUnits = () => {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  
+  // For now, no units until student registers and gets approved
+  const registeredUnits: Unit[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -165,6 +121,31 @@ export const MyUnits = () => {
     );
   }
 
+  // Empty state when no units are registered
+  if (registeredUnits.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">My Units</h2>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <GraduationCap className="w-12 h-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Units Registered</h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            You haven't registered for any units yet. Visit the Unit Registration tab to browse and register for available units.
+          </p>
+          <div className="text-sm text-gray-500">
+            <p>Once you register for units and they are approved by the registrar,</p>
+            <p>they will appear here in your dashboard.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -172,7 +153,7 @@ export const MyUnits = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockUnits.map((unit) => (
+        {registeredUnits.map((unit) => (
           <Card 
             key={unit.id} 
             className="cursor-pointer hover:shadow-lg transition-shadow duration-300"
