@@ -4,19 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Upload, FileText, Clock, GraduationCap } from "lucide-react";
+import { BookOpen, Users, Upload, FileText, Clock, GraduationCap, Settings } from "lucide-react";
 import { AssignmentManager } from "@/components/lecturer/AssignmentManager";
 import { NotesManager } from "@/components/lecturer/NotesManager";
 import { AttendanceManager } from "@/components/lecturer/AttendanceManager";
 import { ExamManager } from "@/components/lecturer/ExamManager";
 import { QuizAttendance } from "@/components/lecturer/QuizAttendance";
+import { UnitManagement } from "@/components/lecturer/UnitManagement";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const LecturerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const { user, createdUnits } = useAuth();
+
+  // Get units assigned to current lecturer
+  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+  const totalStudents = assignedUnits.reduce((total, unit) => total + unit.enrolled, 0);
 
   const stats = {
-    totalCourses: 3,
-    totalStudents: 89,
+    totalCourses: assignedUnits.length,
+    totalStudents: totalStudents,
     pendingAssignments: 12,
     upcomingExams: 2
   };
@@ -35,12 +42,12 @@ export const LecturerDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+            <CardTitle className="text-sm font-medium">Assigned Units</CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCourses}</div>
-            <p className="text-xs text-muted-foreground">Active courses</p>
+            <p className="text-xs text-muted-foreground">Active units</p>
           </CardContent>
         </Card>
         
@@ -80,8 +87,9 @@ export const LecturerDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="units">My Units</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
@@ -118,7 +126,11 @@ export const LecturerDashboard = () => {
                 <CardDescription>Common tasks</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full" onClick={() => setActiveTab('assignments')}>
+                <Button className="w-full" onClick={() => setActiveTab('units')}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Units
+                </Button>
+                <Button className="w-full" variant="outline" onClick={() => setActiveTab('assignments')}>
                   <Upload className="w-4 h-4 mr-2" />
                   Create Assignment
                 </Button>
@@ -133,6 +145,10 @@ export const LecturerDashboard = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="units">
+          <UnitManagement />
         </TabsContent>
 
         <TabsContent value="assignments">

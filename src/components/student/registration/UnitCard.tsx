@@ -1,9 +1,9 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Clock, User, MessageCircle, Users } from "lucide-react";
-import { AvailableUnit, PendingRegistration } from './types';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageCircle, Users, ExternalLink } from "lucide-react";
+import { AvailableUnit, PendingRegistration } from "./types";
 
 interface UnitCardProps {
   unit: AvailableUnit;
@@ -13,89 +13,113 @@ interface UnitCardProps {
   onJoinDiscussion: (unitCode: string) => void;
 }
 
-export const UnitCard = ({ 
-  unit, 
-  pendingRegistrations, 
-  onRegister, 
-  onJoinWhatsApp, 
-  onJoinDiscussion 
+export const UnitCard = ({
+  unit,
+  pendingRegistrations,
+  onRegister,
+  onJoinWhatsApp,
+  onJoinDiscussion
 }: UnitCardProps) => {
-  const isAlreadyRegistered = pendingRegistrations.some(p => p.unitCode === unit.code);
-
+  const isRegistered = pendingRegistrations.some(reg => reg.unitCode === unit.code);
+  const registration = pendingRegistrations.find(reg => reg.unitCode === unit.code);
+  
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">{unit.code}</CardTitle>
-            <CardDescription>{unit.name}</CardDescription>
+            <CardDescription className="text-sm font-medium text-gray-900 mt-1">
+              {unit.name}
+            </CardDescription>
           </div>
-          <Badge variant="outline">{unit.credits} Credits</Badge>
+          <Badge variant={unit.enrolled >= unit.capacity ? "destructive" : "default"}>
+            {unit.enrolled}/{unit.capacity}
+          </Badge>
         </div>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600">{unit.description}</p>
-        
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            <span>{unit.lecturer}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>{unit.schedule}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
-            <span>{unit.semester}, Year {unit.year}</span>
-          </div>
+        <div className="text-sm text-gray-600">
+          <p><strong>Credits:</strong> {unit.credits}</p>
+          <p><strong>Department:</strong> {unit.department}</p>
+          {unit.lecturer && (
+            <p><strong>Lecturer:</strong> {unit.lecturer.name}</p>
+          )}
+          {unit.schedule && (
+            <p><strong>Schedule:</strong> {unit.schedule}</p>
+          )}
         </div>
-
+        
+        {unit.description && (
+          <p className="text-sm text-gray-600">{unit.description}</p>
+        )}
+        
         {unit.prerequisites.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold mb-2">Prerequisites:</h4>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-sm font-medium">Prerequisites:</p>
+            <div className="flex flex-wrap gap-1 mt-1">
               {unit.prerequisites.map((prereq) => (
-                <Badge key={prereq} variant="secondary" className="text-xs">
+                <Badge key={prereq} variant="outline" className="text-xs">
                   {prereq}
                 </Badge>
               ))}
             </div>
           </div>
         )}
-
-        <div className="flex gap-2">
-          {unit.whatsappLink && (
+        
+        <div className="flex flex-col space-y-2">
+          {!isRegistered ? (
             <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => onJoinWhatsApp(unit.whatsappLink!)}
-              className="flex items-center gap-2"
+              onClick={() => onRegister(unit.id)}
+              disabled={unit.enrolled >= unit.capacity}
+              className="w-full"
             >
-              <MessageCircle className="w-4 h-4" />
-              WhatsApp
+              {unit.enrolled >= unit.capacity ? "Unit Full" : "Register"}
             </Button>
-          )}
-          {unit.hasDiscussionGroup && (
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => onJoinDiscussion(unit.code)}
-              className="flex items-center gap-2"
-            >
-              <Users className="w-4 h-4" />
-              Discussion
-            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Badge 
+                variant={
+                  registration?.status === 'approved' ? 'default' : 
+                  registration?.status === 'rejected' ? 'destructive' : 
+                  'secondary'
+                }
+                className="w-full justify-center py-2"
+              >
+                Registration {registration?.status}
+              </Badge>
+              
+              {registration?.status === 'approved' && (
+                <div className="flex space-x-2">
+                  {unit.whatsappLink && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onJoinWhatsApp(unit.whatsappLink!)}
+                      className="flex-1"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      WhatsApp
+                    </Button>
+                  )}
+                  
+                  {unit.hasDiscussionGroup && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onJoinDiscussion(unit.code)}
+                      className="flex-1"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-1" />
+                      Discussion
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
-
-        <Button 
-          onClick={() => onRegister(unit.id)}
-          className="w-full"
-          disabled={isAlreadyRegistered}
-        >
-          {isAlreadyRegistered ? 'Already Registered' : 'Register for Unit'}
-        </Button>
       </CardContent>
     </Card>
   );
