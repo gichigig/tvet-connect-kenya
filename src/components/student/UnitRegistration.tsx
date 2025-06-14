@@ -10,7 +10,7 @@ import { UnitCard } from "./registration/UnitCard";
 import { courseUnits } from "./registration/courseUnitsData";
 import { PendingRegistration } from "./registration/types";
 
-const pendingRegistrations: PendingRegistration[] = [
+const initialPendingRegistrations: PendingRegistration[] = [
   {
     id: "1",
     unitCode: "PROG101",
@@ -24,6 +24,7 @@ export const UnitRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
+  const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>(initialPendingRegistrations);
   const { toast } = useToast();
 
   const availableUnits = selectedCourse && selectedYear 
@@ -38,9 +39,19 @@ export const UnitRegistration = () => {
   const handleRegister = (unitId: string) => {
     const unit = availableUnits.find(u => u.id === unitId);
     if (unit) {
+      const newRegistration: PendingRegistration = {
+        id: Date.now().toString(),
+        unitCode: unit.code,
+        unitName: unit.name,
+        status: 'pending',
+        submittedDate: new Date().toISOString().split('T')[0]
+      };
+      
+      setPendingRegistrations(prev => [...prev, newRegistration]);
+      
       toast({
-        title: "Registration Submitted",
-        description: `Your registration for ${unit.code} - ${unit.name} has been submitted for approval.`,
+        title: "Registration Pending for Approval", 
+        description: `Your registration for ${unit.code} - ${unit.name} is now pending for approval by the registrar.`,
       });
     }
   };
