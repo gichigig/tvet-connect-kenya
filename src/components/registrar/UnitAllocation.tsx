@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, BookOpen, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, Plus, BookOpen, Users, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,7 +26,7 @@ interface Unit {
 
 export const UnitAllocation = () => {
   const { toast } = useToast();
-  const { getAllUsers } = useAuth();
+  const { getAllUsers, getPendingUnitRegistrations } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -34,9 +35,15 @@ export const UnitAllocation = () => {
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
+  const [selectedStudentForUnits, setSelectedStudentForUnits] = useState<any>(null);
+  const [showUnitsDialog, setShowUnitsDialog] = useState(false);
 
   // Get approved students from context
   const approvedStudents = getAllUsers().filter(u => u.role === 'student' && u.approved);
+  
+  // Get approved unit registrations
+  const approvedUnitRegistrations = getPendingUnitRegistrations ? 
+    getPendingUnitRegistrations().filter(reg => reg.status === 'approved') : [];
 
   // Get unique values for filters
   const departments = [...new Set(approvedStudents.map(s => s.department).filter(Boolean))];
@@ -114,6 +121,15 @@ export const UnitAllocation = () => {
     } else {
       setSelectedStudents(prev => prev.filter(id => id !== studentId));
     }
+  };
+
+  const handleStudentClick = (student: any) => {
+    setSelectedStudentForUnits(student);
+    setShowUnitsDialog(true);
+  };
+
+  const getStudentRegisteredUnits = (studentId: string) => {
+    return approvedUnitRegistrations.filter(reg => reg.studentId === studentId);
   };
 
   // Filter students based on search and filters
@@ -222,7 +238,7 @@ export const UnitAllocation = () => {
           </CardTitle>
           <CardDescription>
             {viewMode === "students" 
-              ? "Choose students to allocate units to"
+              ? "Choose students to allocate units to. Click on a student to view their registered units."
               : "Choose units to allocate to students"
             }
           </CardDescription>
@@ -318,19 +334,30 @@ export const UnitAllocation = () => {
                                     <CardContent>
                                       <div className="space-y-2">
                                         {students.map((student: any) => (
-                                          <div key={student.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                                          <div key={student.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
                                             <Checkbox
                                               checked={selectedStudents.includes(student.id)}
                                               onCheckedChange={(checked) => 
                                                 handleStudentSelection(student.id, checked as boolean)
                                               }
                                             />
-                                            <div className="flex-1">
+                                            <div 
+                                              className="flex-1 cursor-pointer"
+                                              onClick={() => handleStudentClick(student)}
+                                            >
                                               <div className="font-medium text-sm">{student.firstName} {student.lastName}</div>
                                               <div className="text-xs text-gray-500">
                                                 {student.admissionNumber} • {student.email}
                                               </div>
                                             </div>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => handleStudentClick(student)}
+                                              className="ml-2"
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </Button>
                                           </div>
                                         ))}
                                       </div>
@@ -401,6 +428,62 @@ export const UnitAllocation = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Units Dialog */}
+      <Dialog open={showUnitsDialog} onOpenChange={setShowUnitsDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedStudentForUnits && `${selectedStudentForUnits.firstName} ${selectedStudentForUnits.lastName}'s Registered Units`}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedStudentForUnits && `${selectedStudentForUnits.admissionNumber} • ${selectedStudentForUnits.email}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {selectedStudentForUnits && (
+              <div className="space-y-4">
+                {getStudentRegisteredUnits(selectedStudentForUnits.id).length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Unit Code</TableHead>
+                        <TableHead>Unit Name</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Year</TableHead>
+                        <TableHead>Semester</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {getStudentRegisteredUnits(selectedStudentForUnits.id).map((registration) => (
+                        <TableRow key={registration.id}>
+                          <TableCell className="font-medium">{registration.unitCode}</TableCell>
+                          <TableCell>{registration.unitName}</TableCell>
+                          <TableCell>{registration.course}</TableCell>
+                          <TableCell>{registration.year}</TableCell>
+                          <TableCell>{registration.semester}</TableCell>
+                          <TableCell>
+                            <Badge variant="default">
+                              {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p>No units registered yet</p>
+                    <p className="text-sm">This student hasn't registered for any units.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
