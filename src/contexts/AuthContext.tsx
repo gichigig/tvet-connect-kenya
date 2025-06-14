@@ -7,7 +7,10 @@ import {
   AuthContextType,
   CreatedContent,
   SupplyRequest,
-  StudentFee
+  StudentFee,
+  FeeStructure,
+  PaymentRecord,
+  ClearanceForm
 } from './auth/types';
 import { 
   mockUsers, 
@@ -37,6 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [createdContent, setCreatedContent] = useState<CreatedContent[]>([]);
   const [supplyRequests, setSupplyRequests] = useState<SupplyRequest[]>([]);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+  const [clearanceForms, setClearanceForms] = useState<ClearanceForm[]>([]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
@@ -216,19 +222,148 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...fee,
       id: Date.now().toString(),
       createdDate: new Date().toISOString().split('T')[0],
-      status: 'pending'
+      status: 'pending',
+      invoiceNumber: `INV-${Date.now()}`
     };
     setStudentFees(prev => [...prev, newFee]);
   };
 
-  const updateFeeStatus = (feeId: string, status: StudentFee['status'], paidDate?: string) => {
+  const updateFeeStatus = (feeId: string, status: StudentFee['status'], paidDate?: string, paidAmount?: number, paymentMethod?: string, receiptNumber?: string) => {
     setStudentFees(prev =>
       prev.map(fee =>
         fee.id === feeId 
-          ? { ...fee, status, paidDate }
+          ? { 
+              ...fee, 
+              status, 
+              paidDate,
+              paidAmount,
+              paymentMethod: paymentMethod as any,
+              receiptNumber
+            }
           : fee
       )
     );
+
+    // Update student financial status
+    const fee = studentFees.find(f => f.id === feeId);
+    if (fee && status === 'paid') {
+      const studentTotalOwed = studentFees
+        .filter(f => f.studentId === fee.studentId && f.status !== 'paid')
+        .reduce((sum, f) => sum + f.amount, 0);
+      
+      updateStudentFinancialStatus(
+        fee.studentId, 
+        studentTotalOwed > 0 ? 'partial' : 'cleared',
+        studentTotalOwed
+      );
+    }
+  };
+
+  const addFeeStructure = (structure: Omit<FeeStructure, 'id' | 'createdDate'>) => {
+    const newStructure: FeeStructure = {
+      ...structure,
+      id: Date.now().toString(),
+      createdDate: new Date().toISOString().split('T')[0]
+    };
+    setFeeStructures(prev => [...prev, newStructure]);
+  };
+
+  const updateFeeStructure = (structureId: string, updates: Partial<FeeStructure>) => {
+    setFeeStructures(prev => prev.map(structure => 
+      structure.id === structureId ? { ...structure, ...updates } : structure
+    ));
+  };
+
+  const addPaymentRecord = (payment: Omit<PaymentRecord, 'id'>) => {
+    const newPayment: PaymentRecord = {
+      ...payment,
+      id: Date.now().toString()
+    };
+    setPaymentRecords(prev => [...prev, newPayment]);
+  };
+
+  const addClearanceForm = (clearance: Omit<ClearanceForm, 'id'>) => {
+    const newClearance: ClearanceForm = {
+      ...clearance,
+      id: Date.now().toString()
+    };
+    setClearanceForms(prev => [...prev, newClearance]);
+  };
+
+  const updateClearanceStatus = (clearanceId: string, status: ClearanceForm['status'], clearedBy?: string, remarks?: string) => {
+    setClearanceForms(prev =>
+      prev.map(clearance =>
+        clearance.id === clearanceId 
+          ? { 
+              ...clearance, 
+              status, 
+              clearedBy,
+              clearanceDate: status === 'cleared' ? new Date().toISOString().split('T')[0] : undefined,
+              remarks 
+            }
+          : clearance
+      )
+    );
+  };
+
+  const generateInvoice = (studentId: string, academicYear: string, semester: number) => {
+    const student = users.find(u => u.id === studentId);
+    if (!student) return;
+
+    const feeStructure = feeStructures.find(
+      fs => fs.course === student.course && 
+            fs.year === student.year && 
+            fs.semester === semester &&
+            fs.academicYear === academicYear &&
+            fs.isActive
+    );
+
+    if (feeStructure) {
+      // Create tuition fee
+      addStudentFee({
+        studentId,
+        studentName: `${student.firstName} ${student.lastName}`,
+        feeType: 'tuition',
+        amount: feeStructure.tuitionFee,
+        description: 'Tuition Fee',
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+        academicYear,
+        semester,
+        isRecurring: true
+      });
+
+      // Create other fees
+      const otherFees = [
+        { type: 'exam' as const, amount: feeStructure.examFee, description: 'Examination Fee' },
+        { type: 'library' as const, amount: feeStructure.libraryFee, description: 'Library Fee' },
+        { type: 'lab' as const, amount: feeStructure.labFee, description: 'Laboratory Fee' },
+        { type: 'activity' as const, amount: feeStructure.activityFee, description: 'Activity Fee' },
+        { type: 'medical' as const, amount: feeStructure.medicalFee, description: 'Medical Fee' }
+      ];
+
+      otherFees.forEach(fee => {
+        if (fee.amount > 0) {
+          addStudentFee({
+            studentId,
+            studentName: `${student.firstName} ${student.lastName}`,
+            feeType: fee.type,
+            amount: fee.amount,
+            description: fee.description,
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            academicYear,
+            semester
+          });
+        }
+      });
+    }
+  };
+
+  const updateStudentFinancialStatus = (studentId: string, status: User['financialStatus'], totalOwed?: number) => {
+    setUsers(prev => prev.map(user => 
+      user.id === studentId 
+        ? { ...user, financialStatus: status, totalFeesOwed: totalOwed }
+        : user
+    ));
   };
 
   const value = {
@@ -268,7 +403,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateSupplyRequestStatus,
     studentFees,
     addStudentFee,
-    updateFeeStatus
+    updateFeeStatus,
+    feeStructures,
+    addFeeStructure,
+    updateFeeStructure,
+    paymentRecords,
+    addPaymentRecord,
+    clearanceForms,
+    addClearanceForm,
+    updateClearanceStatus,
+    generateInvoice,
+    updateStudentFinancialStatus
   };
 
   return (

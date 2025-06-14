@@ -16,6 +16,8 @@ export interface User {
   phone?: string;
   admissionNumber?: string;
   guardians?: Guardian[];
+  financialStatus?: 'cleared' | 'defaulter' | 'partial';
+  totalFeesOwed?: number;
 }
 
 export interface Guardian {
@@ -81,12 +83,10 @@ export interface CreatedContent {
   submissionInstructions?: string;
   submissionType?: 'file' | 'multiple_choice';
   requiresHODApproval?: boolean;
-  // Assignment specific properties
   assignmentType?: string;
   dueDate?: string;
   questionFileName?: string;
   acceptedFormats?: string[];
-  // Notes specific properties
   fileName?: string;
   topic?: string;
 }
@@ -120,17 +120,71 @@ export interface StudentFee {
   id: string;
   studentId: string;
   studentName: string;
-  feeType: 'supplementary_exam' | 'special_exam' | 'unit_retake';
+  feeType: 'tuition' | 'supplementary_exam' | 'special_exam' | 'unit_retake' | 'library' | 'lab' | 'caution' | 'exam' | 'activity' | 'medical' | 'graduation';
   amount: number;
   unitCode?: string;
   unitName?: string;
   description: string;
   dueDate: string;
-  status: 'pending' | 'paid' | 'overdue';
+  status: 'pending' | 'paid' | 'overdue' | 'partial';
   createdDate: string;
   paidDate?: string;
+  paidAmount?: number;
   academicYear: string;
   semester: number;
+  invoiceNumber?: string;
+  receiptNumber?: string;
+  paymentMethod?: 'cash' | 'bank_transfer' | 'mobile_money' | 'cheque';
+  isRecurring?: boolean;
+}
+
+export interface FeeStructure {
+  id: string;
+  course: string;
+  year: number;
+  semester: number;
+  academicYear: string;
+  tuitionFee: number;
+  examFee: number;
+  libraryFee: number;
+  labFee: number;
+  cautionMoney: number;
+  activityFee: number;
+  medicalFee: number;
+  totalFee: number;
+  isActive: boolean;
+  createdBy: string;
+  createdDate: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  feeId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: 'cash' | 'bank_transfer' | 'mobile_money' | 'cheque';
+  referenceNumber: string;
+  receiptNumber: string;
+  processedBy: string;
+  notes?: string;
+}
+
+export interface ClearanceForm {
+  id: string;
+  studentId: string;
+  studentName: string;
+  academicYear: string;
+  semester: number;
+  requestDate: string;
+  status: 'pending' | 'cleared' | 'blocked';
+  totalFeesOwed: number;
+  totalFeesPaid: number;
+  outstandingBalance: number;
+  clearedBy?: string;
+  clearanceDate?: string;
+  remarks?: string;
 }
 
 export interface AuthContextType {
@@ -170,5 +224,15 @@ export interface AuthContextType {
   updateSupplyRequestStatus: (requestId: string, status: SupplyRequest['status'], verificationNotes?: string) => void;
   studentFees: StudentFee[];
   addStudentFee: (fee: Omit<StudentFee, 'id' | 'createdDate' | 'status'>) => void;
-  updateFeeStatus: (feeId: string, status: StudentFee['status'], paidDate?: string) => void;
+  updateFeeStatus: (feeId: string, status: StudentFee['status'], paidDate?: string, paidAmount?: number, paymentMethod?: string, receiptNumber?: string) => void;
+  feeStructures: FeeStructure[];
+  addFeeStructure: (structure: Omit<FeeStructure, 'id' | 'createdDate'>) => void;
+  updateFeeStructure: (structureId: string, updates: Partial<FeeStructure>) => void;
+  paymentRecords: PaymentRecord[];
+  addPaymentRecord: (payment: Omit<PaymentRecord, 'id'>) => void;
+  clearanceForms: ClearanceForm[];
+  addClearanceForm: (clearance: Omit<ClearanceForm, 'id'>) => void;
+  updateClearanceStatus: (clearanceId: string, status: ClearanceForm['status'], clearedBy?: string, remarks?: string) => void;
+  generateInvoice: (studentId: string, academicYear: string, semester: number) => void;
+  updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void;
 }

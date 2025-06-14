@@ -3,25 +3,34 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt } from "lucide-react";
+import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, FileText, UserCheck } from "lucide-react";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
+import { FeeStructureManagement } from "@/components/finance/FeeStructureManagement";
+import { InvoiceManagement } from "@/components/finance/InvoiceManagement";
+import { ClearanceManagement } from "@/components/finance/ClearanceManagement";
 
 export const FinanceDashboard = () => {
-  const { user, supplyRequests, studentFees } = useAuth();
-  const [activeTab, setActiveTab] = useState("supplies");
+  const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
 
   const pendingSupplies = supplyRequests.filter(r => r.status === 'pending');
   const pendingFees = studentFees.filter(f => f.status === 'pending');
   const overdueFees = studentFees.filter(f => f.status === 'overdue');
-  const totalRevenue = studentFees.filter(f => f.status === 'paid').reduce((sum, fee) => sum + fee.amount, 0);
+  const totalRevenue = studentFees.filter(f => f.status === 'paid').reduce((sum, fee) => sum + (fee.paidAmount || fee.amount), 0);
+  
+  const students = getAllUsers().filter(u => u.role === 'student' && u.approved);
+  const defaulters = students.filter(s => s.financialStatus === 'defaulter');
+  const pendingClearances = clearanceForms.filter(c => c.status === 'pending');
 
   const stats = {
     pendingSupplies: pendingSupplies.length,
     pendingFees: pendingFees.length,
     overdueFees: overdueFees.length,
-    totalRevenue
+    totalRevenue,
+    defaulters: defaulters.length,
+    pendingClearances: pendingClearances.length
   };
 
   return (
@@ -29,26 +38,26 @@ export const FinanceDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Finance Dashboard</h1>
-          <p className="text-gray-600">Supply verification and student fee management</p>
+          <p className="text-gray-600">Comprehensive financial management system</p>
         </div>
         <DollarSign className="w-8 h-8 text-green-600" />
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Supplies</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingSupplies}</div>
+            <div className="text-2xl font-bold text-green-600">KSh {stats.totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Awaiting verification
+              Collected this term
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Fees</CardTitle>
@@ -74,16 +83,42 @@ export const FinanceDashboard = () => {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Defaulters</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.defaulters}</div>
+            <p className="text-xs text-muted-foreground">
+              Students blocked
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Clearances</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingClearances}</div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting approval
+            </p>
+          </CardContent>
+        </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Supplies</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">KSh {stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingSupplies}</div>
             <p className="text-xs text-muted-foreground">
-              Collected this term
+              Awaiting verification
             </p>
           </CardContent>
         </Card>
@@ -91,31 +126,55 @@ export const FinanceDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="supplies" className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4" />
-            Supply Verification
-          </TabsTrigger>
-          <TabsTrigger value="fee-management" className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            Fee Management
-          </TabsTrigger>
-          <TabsTrigger value="student-fees" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />
             Student Fees
           </TabsTrigger>
+          <TabsTrigger value="structures" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Fee Structures
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Invoices
+          </TabsTrigger>
+          <TabsTrigger value="clearances" className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4" />
+            Clearances
+          </TabsTrigger>
+          <TabsTrigger value="fee-management" className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Add Fees
+          </TabsTrigger>
+          <TabsTrigger value="supplies" className="flex items-center gap-2">
+            <FileCheck className="w-4 h-4" />
+            Supplies
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="supplies" className="space-y-4">
-          <SupplyVerification />
+        <TabsContent value="overview" className="space-y-4">
+          <StudentFeesOverview />
+        </TabsContent>
+
+        <TabsContent value="structures" className="space-y-4">
+          <FeeStructureManagement />
+        </TabsContent>
+
+        <TabsContent value="invoices" className="space-y-4">
+          <InvoiceManagement />
+        </TabsContent>
+
+        <TabsContent value="clearances" className="space-y-4">
+          <ClearanceManagement />
         </TabsContent>
 
         <TabsContent value="fee-management" className="space-y-4">
           <FeeManagement />
         </TabsContent>
 
-        <TabsContent value="student-fees" className="space-y-4">
-          <StudentFeesOverview />
+        <TabsContent value="supplies" className="space-y-4">
+          <SupplyVerification />
         </TabsContent>
       </Tabs>
     </div>
