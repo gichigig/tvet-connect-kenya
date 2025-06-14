@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -29,6 +30,7 @@ export interface PendingUnitRegistration {
   studentId: string;
   studentName: string;
   studentEmail: string;
+  unitId: string;
   unitCode: string;
   unitName: string;
   course: string;
@@ -53,6 +55,32 @@ export interface ExamResult {
   examDate: string;
   lecturerName: string;
   status: 'pass' | 'fail';
+}
+
+export interface CreatedContent {
+  id: string;
+  type: 'assignment' | 'notes' | 'exam' | 'cat' | 'online_class';
+  title: string;
+  description?: string;
+  lecturerId: string;
+  unitId: string;
+  unitName: string;
+  unitCode: string;
+  isVisible: boolean;
+  isAccessible?: boolean;
+  createdAt: string;
+  scheduledDate?: string;
+  duration?: number;
+  venue?: string;
+  status?: string;
+  questions?: any[];
+  totalMarks?: number;
+  link?: string;
+  fileUrl?: string;
+  allowedFormats?: string[];
+  submissionInstructions?: string;
+  submissionType?: 'file' | 'multiple_choice';
+  requiresHODApproval?: boolean;
 }
 
 export interface AuthContextType {
@@ -83,4 +111,8 @@ export interface AuthContextType {
   updateCreatedUnit: (unitId: string, updates: Partial<import('@/types/unitManagement').Unit>) => void;
   deleteCreatedUnit: (unitId: string) => void;
   getAvailableUnits: (course?: string, year?: number) => import('@/types/unitManagement').Unit[];
+  createdContent: CreatedContent[];
+  addCreatedContent: (content: CreatedContent) => void;
+  updateCreatedContent: (contentId: string, updates: Partial<CreatedContent>) => void;
+  deleteCreatedContent: (contentId: string) => void;
 }

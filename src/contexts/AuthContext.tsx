@@ -1,10 +1,12 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   PendingUnitRegistration, 
   ExamResult, 
-  AuthContextType 
+  AuthContextType,
+  CreatedContent
 } from './auth/types';
 import { 
   mockUsers, 
@@ -31,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
   const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
   const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
+  const [createdContent, setCreatedContent] = useState<CreatedContent[]>([]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
@@ -165,6 +168,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  const addCreatedContent = (content: CreatedContent) => {
+    setCreatedContent(prev => [...prev, content]);
+  };
+
+  const updateCreatedContent = (contentId: string, updates: Partial<CreatedContent>) => {
+    setCreatedContent(prev => prev.map(content => 
+      content.id === contentId ? { ...content, ...updates } : content
+    ));
+  };
+
+  const deleteCreatedContent = (contentId: string) => {
+    setCreatedContent(prev => prev.filter(content => content.id !== contentId));
+  };
+
   const value = {
     user,
     login,
@@ -192,7 +209,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addCreatedUnit,
     updateCreatedUnit,
     deleteCreatedUnit,
-    getAvailableUnits
+    getAvailableUnits,
+    createdContent,
+    addCreatedContent,
+    updateCreatedContent,
+    deleteCreatedContent
   };
 
   return (
