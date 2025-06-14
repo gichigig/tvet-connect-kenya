@@ -1,9 +1,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Unit } from "@/types/unitManagement";
 
 interface UnitCardProps {
-  unit: any;
+  unit: Unit;
   onClick: (unitId: string) => void;
 }
 

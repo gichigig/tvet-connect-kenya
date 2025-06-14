@@ -38,7 +38,9 @@ export const LecturerDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Lecturer Dashboard</h1>
-          <p className="text-gray-600">Manage your courses, assignments, and student activities</p>
+          <p className="text-gray-600">
+            Welcome {user?.firstName} {user?.lastName} - Manage your courses, assignments, and student activities
+          </p>
         </div>
         <GraduationCap className="w-8 h-8 text-blue-600" />
       </div>
@@ -48,12 +50,12 @@ export const LecturerDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="units">My Units</TabsTrigger>
-          <TabsTrigger value="assignments">Assignments</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="units">My Units ({assignedUnits.length})</TabsTrigger>
+          <TabsTrigger value="assignments">Assignments ({assignments.length})</TabsTrigger>
+          <TabsTrigger value="notes">Notes ({notes.length})</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="quiz-attendance">Quiz Attendance</TabsTrigger>
-          <TabsTrigger value="exams">Exams & CATs</TabsTrigger>
+          <TabsTrigger value="exams">Exams & CATs ({exams.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

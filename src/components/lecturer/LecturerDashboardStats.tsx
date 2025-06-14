@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, Upload, Clock } from "lucide-react";
+import { BookOpen, Users, FileText, Calendar } from "lucide-react";
 
 interface LecturerDashboardStatsProps {
   stats: {
@@ -38,23 +38,23 @@ export const LecturerDashboardStats = ({ stats }: LecturerDashboardStatsProps) =
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Submissions</CardTitle>
-          <Upload className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Assignments Created</CardTitle>
+          <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.pendingAssignments}</div>
-          <p className="text-xs text-muted-foreground">To be graded</p>
+          <p className="text-xs text-muted-foreground">Total assignments</p>
         </CardContent>
       </Card>
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Upcoming Exams</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Exams & CATs</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.upcomingExams}</div>
-          <p className="text-xs text-muted-foreground">This month</p>
+          <p className="text-xs text-muted-foreground">Created exams</p>
         </CardContent>
       </Card>
     </div>
