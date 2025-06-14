@@ -35,7 +35,7 @@ export const useAuth = () => {
 
 // Admin credentials
 const ADMIN_EMAIL = 'billyblund17@gmail.com';
-const ADMIN_PASSWORD = 'billybill';
+const ADMIN_PASSWORD = 'admin123';
 
 // Mock users database
 const mockUsers: User[] = [
