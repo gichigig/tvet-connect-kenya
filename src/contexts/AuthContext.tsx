@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -9,12 +10,16 @@ interface User {
   approved: boolean;
   blocked?: boolean;
   department?: string;
+  admissionNumber?: string;
+  course?: string;
+  level?: 'diploma' | 'certificate';
+  intake?: 'january' | 'may' | 'september';
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string }) => Promise<boolean>;
+  signup: (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string; course?: string; level?: 'diploma' | 'certificate'; intake?: 'january' | 'may' | 'september' }) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -24,6 +29,7 @@ interface AuthContextType {
   unblockUser: (userId: string) => void;
   getAllUsers: () => User[];
   getPendingUsers: () => User[];
+  approveStudent: (userId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,6 +58,17 @@ const mockUsers: User[] = [
     blocked: false
   }
 ];
+
+// Function to generate admission number
+const generateAdmissionNumber = (course: string, level: 'diploma' | 'certificate', intake: 'january' | 'may' | 'september'): string => {
+  const levelCode = level === 'diploma' ? 'D' : 'C';
+  const courseInitials = course.split(' ').map(word => word.charAt(0)).join('').toUpperCase();
+  const intakeCode = intake === 'january' ? '01' : intake === 'may' ? '02' : '03';
+  const studentNumber = Math.floor(Math.random() * 9000) + 1000; // Random 4-digit number
+  const year = new Date().getFullYear();
+  
+  return `${levelCode}${courseInitials}-${intakeCode}-${studentNumber}/${year}`;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -135,7 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
-  const signup = async (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string }): Promise<boolean> => {
+  const signup = async (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string; course?: string; level?: 'diploma' | 'certificate'; intake?: 'january' | 'may' | 'september' }): Promise<boolean> => {
     // Check if user already exists
     const existingUser = users.find(u => u.email === userData.email);
     if (existingUser) {
@@ -148,20 +165,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       firstName: userData.firstName,
       lastName: userData.lastName,
       role: userData.role as User['role'],
-      approved: userData.role === 'student', // Students are auto-approved
+      approved: false, // All users including students now need approval
       blocked: false,
-      department: userData.department
+      department: userData.department,
+      course: userData.course,
+      level: userData.level,
+      intake: userData.intake
     };
     
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
     localStorage.setItem('users', JSON.stringify(updatedUsers));
-    
-    // If it's a student, log them in immediately
-    if (userData.role === 'student') {
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
-    }
     
     return true;
   };
@@ -177,6 +191,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
     setUsers(updatedUsers);
     localStorage.setItem('users', JSON.stringify(updatedUsers));
+  };
+
+  const approveStudent = (userId: string) => {
+    const userToApprove = users.find(u => u.id === userId);
+    if (userToApprove && userToApprove.role === 'student') {
+      const admissionNumber = generateAdmissionNumber(
+        userToApprove.course || 'General Studies',
+        userToApprove.level || 'diploma',
+        userToApprove.intake || 'january'
+      );
+      
+      const updatedUsers = users.map(u => 
+        u.id === userId ? { ...u, approved: true, admissionNumber } : u
+      );
+      setUsers(updatedUsers);
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } else {
+      // For non-students, use regular approval
+      approveUser(userId);
+    }
   };
 
   const rejectUser = (userId: string) => {
@@ -225,7 +259,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     blockUser,
     unblockUser,
     getAllUsers,
-    getPendingUsers
+    getPendingUsers,
+    approveStudent
   };
 
   return (

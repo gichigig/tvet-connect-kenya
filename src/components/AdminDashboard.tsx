@@ -168,7 +168,8 @@ export const AdminDashboard = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Department</TableHead>
+                <TableHead>Department/Course</TableHead>
+                <TableHead>Admission No.</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -185,7 +186,17 @@ export const AdminDashboard = () => {
                       {user.role.toUpperCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.department || 'N/A'}</TableCell>
+                  <TableCell>
+                    {user.role === 'student' 
+                      ? (user.course || 'N/A')
+                      : (user.department || 'N/A')
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {user.role === 'student' && user.admissionNumber ? (
+                      <Badge variant="outline">{user.admissionNumber}</Badge>
+                    ) : 'N/A'}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Badge variant={user.approved ? 'default' : 'secondary'}>

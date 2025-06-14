@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,23 @@ const KENYA_DEPARTMENTS = [
   "Records Management"
 ];
 
+const COURSES = [
+  "Software Engineering",
+  "Computer Science",
+  "Information Technology",
+  "Mechanical Engineering",
+  "Electrical Engineering",
+  "Civil Engineering",
+  "Business Administration",
+  "Accounting",
+  "Marketing",
+  "Human Resource Management",
+  "Hospitality Management",
+  "Tourism Management",
+  "Agriculture",
+  "Automotive Engineering"
+];
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -54,6 +72,9 @@ const Signup = () => {
     confirmPassword: "",
     role: "",
     department: "",
+    course: "",
+    level: "" as 'diploma' | 'certificate' | '',
+    intake: "" as 'january' | 'may' | 'september' | '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -83,6 +104,27 @@ const Signup = () => {
     });
   };
 
+  const handleCourseChange = (value: string) => {
+    setFormData({
+      ...formData,
+      course: value,
+    });
+  };
+
+  const handleLevelChange = (value: 'diploma' | 'certificate') => {
+    setFormData({
+      ...formData,
+      level: value,
+    });
+  };
+
+  const handleIntakeChange = (value: 'january' | 'may' | 'september') => {
+    setFormData({
+      ...formData,
+      intake: value,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -104,24 +146,25 @@ const Signup = () => {
       return;
     }
 
+    if (formData.role === 'student' && (!formData.course || !formData.level || !formData.intake)) {
+      toast({
+        title: "Student Information Required",
+        description: "Please fill in course, level, and intake information.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await signup(formData);
       
-      if (formData.role === 'student') {
-        toast({
-          title: "Account Created",
-          description: "Welcome to TVET Kenya! Your account has been created successfully.",
-        });
-        navigate("/");
-      } else {
-        toast({
-          title: "Application Submitted",
-          description: "Your application has been submitted and is pending admin approval. You will be notified once approved.",
-        });
-        navigate("/login");
-      }
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been submitted and is pending approval. You will be notified once approved.",
+      });
+      navigate("/login");
     } catch (error) {
       toast({
         title: "Signup Failed",
@@ -134,6 +177,7 @@ const Signup = () => {
   };
 
   const requiresDepartment = ['lecturer', 'hod'].includes(formData.role);
+  const isStudent = formData.role === 'student';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -202,6 +246,54 @@ const Signup = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {isStudent && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="course">Course</Label>
+                  <Select onValueChange={handleCourseChange} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your course" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {COURSES.map((course) => (
+                        <SelectItem key={course} value={course}>
+                          {course}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="level">Level</Label>
+                  <Select onValueChange={handleLevelChange} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diploma">Diploma</SelectItem>
+                      <SelectItem value="certificate">Certificate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="intake">Intake</Label>
+                  <Select onValueChange={handleIntakeChange} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select intake" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="january">January</SelectItem>
+                      <SelectItem value="may">May</SelectItem>
+                      <SelectItem value="september">September</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            
             {requiresDepartment && (
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
@@ -219,6 +311,7 @@ const Signup = () => {
                 </Select>
               </div>
             )}
+            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -274,13 +367,12 @@ const Signup = () => {
               </div>
             </div>
             
-            {formData.role && formData.role !== 'student' && (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Staff accounts require admin approval. You will be notified once your application is reviewed.
-                </p>
-              </div>
-            )}
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> All accounts require approval. You will be notified once your application is reviewed.
+                {isStudent && " Students will receive an admission number upon approval."}
+              </p>
+            </div>
             
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating Account..." : "Create Account"}

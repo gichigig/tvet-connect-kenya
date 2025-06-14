@@ -12,13 +12,18 @@ import { ExamManager } from "@/components/registrar/ExamManager";
 import { RetakeManager } from "@/components/registrar/RetakeManager";
 
 export const RegistrarDashboard = () => {
-  const { user } = useAuth();
+  const { user, getPendingUsers, getAllUsers } = useAuth();
   const [activeTab, setActiveTab] = useState("students");
+
+  const pendingUsers = getPendingUsers();
+  const allUsers = getAllUsers();
+  const pendingStudents = pendingUsers.filter(u => u.role === 'student');
+  const totalStudents = allUsers.filter(u => u.role === 'student' && u.approved);
 
   // Mock data for dashboard stats
   const stats = {
-    pendingStudents: 15,
-    totalStudents: 1250,
+    pendingStudents: pendingStudents.length,
+    totalStudents: totalStudents.length,
     pendingExams: 8,
     retakeRequests: 12
   };
