@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -48,8 +47,13 @@ export const StudentDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
           <p className="text-gray-600">
-            Welcome back, {user?.firstName}! {user?.admissionNumber && `Admission No: ${user.admissionNumber}`}
+            Welcome back, {user?.firstName}!
           </p>
+          {user?.admissionNumber && (
+            <p className="text-sm text-blue-600 font-medium mt-1">
+              Admission Number: {user.admissionNumber}
+            </p>
+          )}
         </div>
         
         {/* Mobile Menu */}
