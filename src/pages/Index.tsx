@@ -4,13 +4,16 @@ import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseDetail } from "@/components/CourseDetail";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { AdminDashboard } from "@/components/AdminDashboard";
 import { coursesData, getUserProgress, Course, Lesson } from "@/data/coursesData";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson";
+type ViewState = "catalog" | "course" | "lesson" | "admin";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<ViewState>("catalog");
+  const { isAdmin } = useAuth();
+  const [currentView, setCurrentView] = useState<ViewState>(isAdmin ? "admin" : "catalog");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,6 +106,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {currentView === "admin" && isAdmin && (
+        <>
+          <Header onSearch={setSearchQuery} />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <AdminDashboard />
+          </main>
+        </>
+      )}
+      
       {currentView === "catalog" && (
         <>
           <Header onSearch={setSearchQuery} />

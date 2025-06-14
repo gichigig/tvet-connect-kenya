@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { BookOpen, User, Search, LogOut } from "lucide-react";
+import { BookOpen, User, Search, LogOut, Shield, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
@@ -10,7 +10,16 @@ interface HeaderProps {
 }
 
 export const Header = ({ onSearch }: HeaderProps) => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
+  const location = useLocation();
+
+  const handleNavigation = (path: string) => {
+    if (path === '/admin') {
+      window.location.reload();
+    } else if (path === '/courses') {
+      window.location.reload();
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -34,22 +43,49 @@ export const Header = ({ onSearch }: HeaderProps) => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              My Courses
-            </Button>
             {isAuthenticated && user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    {user.firstName} {user.lastName}
-                  </span>
+              <>
+                {isAdmin && (
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleNavigation('/admin')}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin Panel
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleNavigation('/courses')}
+                    >
+                      <GraduationCap className="w-4 h-4 mr-2" />
+                      Courses
+                    </Button>
+                  </div>
+                )}
+                {!isAdmin && (
+                  <Button variant="ghost" size="sm">
+                    My Courses
+                  </Button>
+                )}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {user.firstName} {user.lastName}
+                    </span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      {user.role.toUpperCase()}
+                    </span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={logout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
+              </>
             ) : (
               <>
                 <Link to="/login">

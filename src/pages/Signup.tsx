@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +17,8 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "",
+    department: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -30,6 +34,13 @@ const Signup = () => {
     });
   };
 
+  const handleRoleChange = (value: string) => {
+    setFormData({
+      ...formData,
+      role: value,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -42,25 +53,45 @@ const Signup = () => {
       return;
     }
 
+    if (!formData.role) {
+      toast({
+        title: "Role Required",
+        description: "Please select your role.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await signup(formData);
-      toast({
-        title: "Account Created",
-        description: "Welcome to TVET Kenya! Your account has been created successfully.",
-      });
-      navigate("/");
+      
+      if (formData.role === 'student') {
+        toast({
+          title: "Account Created",
+          description: "Welcome to TVET Kenya! Your account has been created successfully.",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Application Submitted",
+          description: "Your application has been submitted and is pending admin approval. You will be notified once approved.",
+        });
+        navigate("/login");
+      }
     } catch (error) {
       toast({
         title: "Signup Failed",
-        description: "Failed to create account. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create account. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const requiresDepartment = ['lecturer', 'hod'].includes(formData.role);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -115,6 +146,35 @@ const Signup = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select onValueChange={handleRoleChange} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="lecturer">Lecturer</SelectItem>
+                  <SelectItem value="hod">Head of Department (HOD)</SelectItem>
+                  <SelectItem value="registrar">Registrar</SelectItem>
+                  <SelectItem value="finance">Finance Department</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {requiresDepartment && (
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  name="department"
+                  type="text"
+                  placeholder="e.g., Mechanical Engineering"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            )}
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
@@ -168,6 +228,15 @@ const Signup = () => {
                 </Button>
               </div>
             </div>
+            
+            {formData.role && formData.role !== 'student' && (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> Staff accounts require admin approval. You will be notified once your application is reviewed.
+                </p>
+              </div>
+            )}
+            
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>

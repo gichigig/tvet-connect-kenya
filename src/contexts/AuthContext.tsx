@@ -6,14 +6,22 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  role: 'student' | 'lecturer' | 'hod' | 'registrar' | 'finance' | 'admin';
+  approved: boolean;
+  department?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (userData: { firstName: string; lastName: string; email: string; password: string }) => Promise<boolean>;
+  signup: (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string }) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  approveUser: (userId: string) => void;
+  rejectUser: (userId: string) => void;
+  getAllUsers: () => User[];
+  getPendingUsers: () => User[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,8 +34,21 @@ export const useAuth = () => {
   return context;
 };
 
+// Mock users database
+const mockUsers: User[] = [
+  {
+    id: 'admin-1',
+    email: 'admin@tvetkenya.ac.ke',
+    firstName: 'Admin',
+    lastName: 'User',
+    role: 'admin',
+    approved: true
+  }
+];
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>(mockUsers);
 
   useEffect(() => {
     // Check if user is logged in from localStorage
@@ -35,33 +56,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    
+    // Load users from localStorage
+    const savedUsers = localStorage.getItem('users');
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers));
+    }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate login - in real app, this would call an API
-    const userData = {
-      id: '1',
-      email,
-      firstName: 'John',
-      lastName: 'Doe'
-    };
+    // Find user in our mock database
+    const foundUser = users.find(u => u.email === email);
     
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    if (!foundUser) {
+      throw new Error('User not found');
+    }
+    
+    if (!foundUser.approved && foundUser.role !== 'admin') {
+      throw new Error('Account pending approval');
+    }
+    
+    setUser(foundUser);
+    localStorage.setItem('user', JSON.stringify(foundUser));
     return true;
   };
 
-  const signup = async (userData: { firstName: string; lastName: string; email: string; password: string }): Promise<boolean> => {
-    // Simulate signup - in real app, this would call an API
-    const newUser = {
+  const signup = async (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string }): Promise<boolean> => {
+    // Check if user already exists
+    const existingUser = users.find(u => u.email === userData.email);
+    if (existingUser) {
+      throw new Error('User already exists');
+    }
+    
+    const newUser: User = {
       id: Date.now().toString(),
       email: userData.email,
       firstName: userData.firstName,
-      lastName: userData.lastName
+      lastName: userData.lastName,
+      role: userData.role as User['role'],
+      approved: userData.role === 'student', // Students are auto-approved
+      department: userData.department
     };
     
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    
+    // If it's a student, log them in immediately
+    if (userData.role === 'student') {
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+    }
+    
     return true;
   };
 
@@ -70,12 +116,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('user');
   };
 
+  const approveUser = (userId: string) => {
+    const updatedUsers = users.map(u => 
+      u.id === userId ? { ...u, approved: true } : u
+    );
+    setUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  };
+
+  const rejectUser = (userId: string) => {
+    const updatedUsers = users.filter(u => u.id !== userId);
+    setUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  };
+
+  const getAllUsers = () => users;
+  
+  const getPendingUsers = () => users.filter(u => !u.approved && u.role !== 'admin');
+
   const value = {
     user,
     login,
     signup,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isAdmin: user?.role === 'admin',
+    approveUser,
+    rejectUser,
+    getAllUsers,
+    getPendingUsers
   };
 
   return (
