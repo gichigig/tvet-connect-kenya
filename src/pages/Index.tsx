@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseDetail } from "@/components/CourseDetail";
@@ -13,12 +13,19 @@ type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom";
 
 const Index = () => {
   const { isAdmin } = useAuth();
-  const [currentView, setCurrentView] = useState<ViewState>(isAdmin ? "admin" : "catalog");
+  const [currentView, setCurrentView] = useState<ViewState>("catalog");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [userProgress, setUserProgress] = useState(getUserProgress());
   const { toast } = useToast();
+
+  // Redirect admin to admin dashboard on mount
+  useEffect(() => {
+    if (isAdmin) {
+      setCurrentView("admin");
+    }
+  }, [isAdmin]);
 
   const filteredCourses = coursesData.filter(course =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
