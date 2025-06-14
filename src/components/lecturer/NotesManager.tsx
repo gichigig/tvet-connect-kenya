@@ -61,9 +61,11 @@ export const NotesManager = () => {
         type: 'notes' as const,
         title: formData.title || file.name,
         description: formData.description,
+        unitId: selectedUnit.id,
         unitCode: formData.unitCode,
         unitName: selectedUnit.name,
         lecturerId: user?.id || '',
+        isVisible: true,
         createdAt: new Date().toISOString(),
         fileName: file.name,
         topic: formData.topic

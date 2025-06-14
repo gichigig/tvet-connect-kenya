@@ -53,14 +53,16 @@ export const AssignmentManager = () => {
       type: 'assignment' as const,
       title: formData.title,
       description: formData.description,
+      unitId: selectedUnit.id,
       unitCode: formData.unitCode,
       unitName: selectedUnit.name,
       lecturerId: user?.id || '',
+      isVisible: true,
       createdAt: new Date().toISOString(),
       dueDate: formData.dueDate,
       assignmentType: formData.assignmentType as 'practical' | 'theory' | 'project',
       acceptedFormats: formData.acceptedFormats,
-      questionFileName: formData.attachments?.[0]?.name
+      questionFileName: formData.attachments?.[0]?.name || ''
     };
 
     addCreatedContent(newAssignment);

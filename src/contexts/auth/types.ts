@@ -87,6 +87,7 @@ export interface CreatedContent {
   acceptedFormats?: string[];
   // Notes specific properties
   fileName?: string;
+  topic?: string;
 }
 
 export interface AuthContextType {
