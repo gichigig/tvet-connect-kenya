@@ -1,176 +1,40 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-export interface PendingUnitRegistration {
-  id: string;
-  studentId: string;
-  studentName: string;
-  studentEmail: string;
-  unitCode: string;
-  unitName: string;
-  course: string;
-  year: number;
-  semester: number;
-  submittedDate: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
-
-export interface Guardian {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  relationship: string;
-}
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: string;
-  approved: boolean;
-  blocked?: boolean;
-  course?: string;
-  level?: string;
-  year?: number;
-  semester?: number;
-  admissionNumber?: string;
-  department?: string;
-  intake?: string;
-  guardians?: Guardian[];
-}
-
-export interface ExamResult {
-  id: string;
-  studentId: string;
-  studentName: string;
-  unitCode: string;
-  unitName: string;
-  examType: 'cat' | 'exam';
-  score: number;
-  maxScore: number;
-  grade: string;
-  status: 'pass' | 'fail';
-  examDate: string;
-  semester: number;
-  year: number;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string, role?: string) => Promise<void>;
-  signup: (userData: any) => Promise<void>;
-  logout: () => void;
-  users: User[];
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  updateUserApproval: (userId: string, approved: boolean) => void;
-  approveUser: (userId: string) => void;
-  approveStudent: (userId: string) => void;
-  rejectUser: (userId: string) => void;
-  blockUser: (userId: string) => void;
-  unblockUser: (userId: string) => void;
-  getPendingUsers: () => User[];
-  getAllUsers: () => User[];
-  pendingUnitRegistrations: PendingUnitRegistration[];
-  addPendingUnitRegistration: (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => void;
-  updateUnitRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected') => void;
-  getPendingUnitRegistrations: () => PendingUnitRegistration[];
-  examResults: ExamResult[];
-  addExamResult: (result: Omit<ExamResult, 'id'>) => void;
-  sendResultsNotification: (resultIds: string[], sendToGuardians: boolean) => Promise<void>;
-}
+import { 
+  User, 
+  PendingUnitRegistration, 
+  ExamResult, 
+  AuthContextType 
+} from './auth/types';
+import { 
+  mockUsers, 
+  mockPendingUnitRegistrations, 
+  mockExamResults 
+} from './auth/mockData';
+import { 
+  createNewUser, 
+  findUserByEmail, 
+  updateUserInList, 
+  removeUserFromList, 
+  getPendingUsers 
+} from './auth/authUtils';
+import { sendResultsNotification as sendNotifications } from './auth/notificationUtils';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@student.edu",
-      phone: "+254712345678",
-      role: "student",
-      approved: true,
-      course: "Computer Science",
-      level: "Diploma",
-      year: 2,
-      semester: 1,
-      admissionNumber: "CS/2023/001",
-      guardians: [
-        {
-          id: "g1",
-          name: "Jane Doe",
-          email: "jane.doe@email.com",
-          phone: "+254722345678",
-          relationship: "Mother"
-        }
-      ]
-    },
-    {
-      id: "2",
-      firstName: "Admin",
-      lastName: "User",
-      email: "admin@tvet.edu",
-      role: "admin",
-      approved: true,
-      department: "Administration"
-    },
-    {
-      id: "3",
-      firstName: "Dr. Smith",
-      lastName: "HOD",
-      email: "hod@tvet.edu",
-      role: "hod",
-      approved: true,
-      department: "Computer Science"
-    }
-  ]);
+  const [users, setUsers] = useState<User[]>(mockUsers);
   const navigate = useNavigate();
   
-  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>([
-    {
-      id: "1",
-      studentId: "1",
-      studentName: "John Doe",
-      studentEmail: "john.doe@student.edu",
-      unitCode: "CS101",
-      unitName: "Introduction to Computer Science",
-      course: "Computer Science",
-      year: 1,
-      semester: 1,
-      submittedDate: "2024-01-15",
-      status: 'pending'
-    }
-  ]);
-
-  const [examResults, setExamResults] = useState<ExamResult[]>([
-    {
-      id: "1",
-      studentId: "1",
-      studentName: "John Doe",
-      unitCode: "CS101",
-      unitName: "Introduction to Computer Science",
-      examType: "exam",
-      score: 85,
-      maxScore: 100,
-      grade: "A",
-      status: "pass",
-      examDate: "2024-01-20",
-      semester: 1,
-      year: 2024
-    }
-  ]);
+  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
+  const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    // Initialize with mock data - no Firebase needed
     const fetchUsers = async () => {
       const storedUsers = localStorage.getItem('users');
       if (storedUsers) {
@@ -183,8 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string, role?: string) => {
     try {
-      // Mock login - find user by email
-      const foundUser = users.find(u => u.email === email);
+      const foundUser = findUserByEmail(users, email);
       if (foundUser && foundUser.approved) {
         setUser(foundUser);
         navigate('/');
@@ -199,22 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (userData: any) => {
     try {
-      const { email, password, firstName, lastName, role, course, level, year, semester, admissionNumber } = userData;
-      
-      const newUser: User = {
-        id: Date.now().toString(),
-        firstName,
-        lastName,
-        email,
-        role,
-        approved: role === 'admin',
-        course,
-        level,
-        year,
-        semester,
-        admissionNumber
-      };
-
+      const newUser = createNewUser(userData);
       setUsers(prevUsers => [...prevUsers, newUser]);
       setUser(newUser);
       navigate('/');
@@ -234,11 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserApproval = (userId: string, approved: boolean) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId ? { ...user, approved } : user
-      )
-    );
+    setUsers(prevUsers => updateUserInList(prevUsers, userId, { approved }));
   };
 
   const approveUser = (userId: string) => {
@@ -250,27 +94,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const rejectUser = (userId: string) => {
-    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+    setUsers(prevUsers => removeUserFromList(prevUsers, userId));
   };
 
   const blockUser = (userId: string) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId ? { ...user, blocked: true } : user
-      )
-    );
+    setUsers(prevUsers => updateUserInList(prevUsers, userId, { blocked: true }));
   };
 
   const unblockUser = (userId: string) => {
-    setUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.id === userId ? { ...user, blocked: false } : user
-      )
-    );
-  };
-
-  const getPendingUsers = () => {
-    return users.filter(user => !user.approved);
+    setUsers(prevUsers => updateUserInList(prevUsers, userId, { blocked: false }));
   };
 
   const getAllUsers = () => {
@@ -308,34 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendResultsNotification = async (resultIds: string[], sendToGuardians: boolean) => {
-    try {
-      const selectedResults = examResults.filter(result => resultIds.includes(result.id));
-      
-      for (const result of selectedResults) {
-        const student = users.find(u => u.id === result.studentId);
-        if (!student) continue;
-
-        // Send to student
-        console.log(`Sending result notification to student: ${student.email}`);
-        console.log(`SMS to: ${student.phone}`);
-        console.log(`Result: ${result.unitName} - ${result.grade} (${result.status})`);
-
-        // Send to guardians if requested
-        if (sendToGuardians && student.guardians) {
-          for (const guardian of student.guardians) {
-            console.log(`Sending result notification to guardian: ${guardian.email}`);
-            console.log(`SMS to guardian: ${guardian.phone}`);
-            console.log(`Student: ${student.firstName} ${student.lastName} - ${result.unitName} - ${result.grade} (${result.status})`);
-          }
-        }
-      }
-
-      // In a real implementation, this would call actual email/SMS services
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Failed to send notifications:", error);
-      throw error;
-    }
+    return sendNotifications(resultIds, sendToGuardians, examResults, users);
   };
 
   const value = {
@@ -352,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     rejectUser,
     blockUser,
     unblockUser,
-    getPendingUsers,
+    getPendingUsers: () => getPendingUsers(users),
     getAllUsers,
     pendingUnitRegistrations,
     addPendingUnitRegistration,
@@ -377,3 +182,6 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Re-export types for convenience
+export type { User, PendingUnitRegistration, ExamResult, Guardian } from './auth/types';
