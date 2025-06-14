@@ -20,7 +20,9 @@ const Index = () => {
   const filteredCourses = coursesData.filter(course =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.instructor.toLowerCase().includes(searchQuery.toLowerCase())
+    course.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.level.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEnrollCourse = (courseId: string) => {
@@ -90,6 +92,15 @@ const Index = () => {
     setSelectedLesson(null);
   };
 
+  // Group courses by category for better organization
+  const coursesByCategory = filteredCourses.reduce((acc, course) => {
+    if (!acc[course.category]) {
+      acc[course.category] = [];
+    }
+    acc[course.category].push(course);
+    return acc;
+  }, {} as Record<string, Course[]>);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {currentView === "catalog" && (
@@ -98,32 +109,37 @@ const Index = () => {
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Discover Your Next Skill
+                TVET Courses in Kenya
               </h2>
               <p className="text-lg text-gray-600">
-                Choose from our expert-crafted courses and start learning today.
+                Choose from our comprehensive Technical and Vocational Education and Training courses.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  description={course.description}
-                  instructor={course.instructor}
-                  duration={course.duration}
-                  students={course.students}
-                  rating={course.rating}
-                  progress={userProgress[course.id]}
-                  image={course.image}
-                  onEnroll={handleEnrollCourse}
-                />
-              ))}
-            </div>
-            
-            {filteredCourses.length === 0 && (
+            {Object.keys(coursesByCategory).length > 0 ? (
+              Object.entries(coursesByCategory).map(([category, courses]) => (
+                <div key={category} className="mb-12">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-6">{category}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        id={course.id}
+                        title={course.title}
+                        description={course.description}
+                        instructor={course.instructor}
+                        duration={course.duration}
+                        students={course.students}
+                        rating={course.rating}
+                        progress={userProgress[course.id]}
+                        image={course.image}
+                        onEnroll={handleEnrollCourse}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">
                   No courses found matching your search.
