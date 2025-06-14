@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer";
 
 export const useViewState = () => {
   const { isAdmin, user } = useAuth();
@@ -11,7 +11,7 @@ export const useViewState = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
-  // Redirect admin to admin dashboard on mount
+  // Redirect users to their respective dashboards on mount
   useEffect(() => {
     console.log("useViewState - user:", user);
     console.log("useViewState - isAdmin:", isAdmin);
@@ -20,14 +20,21 @@ export const useViewState = () => {
     if (isAdmin) {
       console.log("Setting view to admin");
       setCurrentView("admin");
+    } else if (user?.role === "lecturer") {
+      console.log("Setting view to lecturer");
+      setCurrentView("lecturer");
     } else {
-      console.log("Not admin, setting view to catalog");
+      console.log("Setting view to catalog");
       setCurrentView("catalog");
     }
   }, [isAdmin, user]);
 
   const handleBackToCatalog = () => {
-    setCurrentView("catalog");
+    if (user?.role === "lecturer") {
+      setCurrentView("lecturer");
+    } else {
+      setCurrentView("catalog");
+    }
     setSelectedCourse(null);
     setSelectedLesson(null);
   };

@@ -5,10 +5,11 @@ import { CourseDetail } from "@/components/CourseDetail";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { VirtualClassroom } from "@/components/VirtualClassroom";
 import { AdminDashboard } from "@/components/AdminDashboard";
+import { LecturerDashboard } from "@/components/LecturerDashboard";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer";
 
 interface AppViewRendererProps {
   currentView: ViewState;
@@ -43,7 +44,7 @@ export const AppViewRenderer = ({
   onCompleteLesson,
   onJoinClassroom
 }: AppViewRendererProps) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   if (currentView === "admin" && isAdmin) {
     return (
@@ -51,6 +52,17 @@ export const AppViewRenderer = ({
         <Header onSearch={onSearch} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AdminDashboard />
+        </main>
+      </>
+    );
+  }
+
+  if (currentView === "lecturer" && user?.role === "lecturer") {
+    return (
+      <>
+        <Header onSearch={onSearch} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <LecturerDashboard />
         </main>
       </>
     );
