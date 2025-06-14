@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,19 +5,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Upload, Trash2 } from "lucide-react";
+import { Plus, Upload, Trash2, FileText } from "lucide-react";
 
 interface AssignmentFormProps {
   onAddAssignment: (assignment: any) => void;
 }
 
 export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
-  const [assignmentType, setAssignmentType] = useState<"multiple_choice" | "file_upload">("file_upload");
+  const [assignmentType, setAssignmentType] = useState<"multiple_choice" | "file_upload" | "question_file">("file_upload");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [acceptedFormats, setAcceptedFormats] = useState<string[]>(["pdf"]);
   const [questions, setQuestions] = useState([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
+  const [questionFile, setQuestionFile] = useState<File | null>(null);
 
   const handleAddQuestion = () => {
     setQuestions([...questions, { question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
@@ -40,6 +40,12 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
+  const handleQuestionFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setQuestionFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = () => {
     const assignment = {
       type: "assignment",
@@ -49,6 +55,8 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
       dueDate,
       acceptedFormats: assignmentType === "file_upload" ? acceptedFormats : [],
       questions: assignmentType === "multiple_choice" ? questions : [],
+      questionFile: assignmentType === "question_file" ? questionFile : null,
+      questionFileName: questionFile?.name || "",
       createdAt: new Date().toISOString()
     };
     
@@ -59,6 +67,7 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
     setDescription("");
     setDueDate("");
     setQuestions([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
+    setQuestionFile(null);
   };
 
   return (
@@ -80,6 +89,7 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
               <SelectContent>
                 <SelectItem value="file_upload">File Upload</SelectItem>
                 <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                <SelectItem value="question_file">Question File Upload</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -132,6 +142,60 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
                   {format.toUpperCase()}
                 </Button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {assignmentType === "question_file" && (
+          <div className="space-y-4">
+            <div>
+              <Label>Upload Question File</Label>
+              <div className="mt-2">
+                <Input
+                  type="file"
+                  onChange={handleQuestionFileUpload}
+                  accept=".pdf,.doc,.docx,.txt"
+                  className="cursor-pointer"
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Upload a file containing assignment questions (PDF, DOC, DOCX, TXT)
+                </p>
+              </div>
+              {questionFile && (
+                <div className="mt-2 p-2 bg-gray-50 rounded-md flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
+                  <span className="text-sm">{questionFile.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setQuestionFile(null)}
+                    className="ml-auto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label>Accepted Submission Formats</Label>
+              <div className="flex gap-2 mt-2">
+                {["pdf", "doc", "docx", "txt", "zip"].map((format) => (
+                  <Button
+                    key={format}
+                    variant={acceptedFormats.includes(format) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      if (acceptedFormats.includes(format)) {
+                        setAcceptedFormats(acceptedFormats.filter(f => f !== format));
+                      } else {
+                        setAcceptedFormats([...acceptedFormats, format]);
+                      }
+                    }}
+                  >
+                    {format.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         )}
