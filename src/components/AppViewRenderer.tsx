@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { CourseView } from "@/components/CourseView";
 import { CourseDetail } from "@/components/CourseDetail";
@@ -6,10 +7,11 @@ import { VirtualClassroom } from "@/components/VirtualClassroom";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { LecturerDashboard } from "@/components/LecturerDashboard";
 import { RegistrarDashboard } from "@/components/RegistrarDashboard";
+import { HodDashboard } from "@/components/HodDashboard";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod";
 
 interface AppViewRendererProps {
   currentView: ViewState;
@@ -52,6 +54,17 @@ export const AppViewRenderer = ({
         <Header onSearch={onSearch} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AdminDashboard />
+        </main>
+      </>
+    );
+  }
+
+  if (currentView === "hod" && user?.role === "hod") {
+    return (
+      <>
+        <Header onSearch={onSearch} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <HodDashboard />
         </main>
       </>
     );
