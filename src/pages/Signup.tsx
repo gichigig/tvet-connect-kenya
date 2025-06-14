@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,42 @@ import { BookOpen, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+
+const KENYA_DEPARTMENTS = [
+  "Mechanical Engineering",
+  "Electrical Engineering",
+  "Civil Engineering",
+  "Automotive Engineering",
+  "Welding and Fabrication",
+  "Plumbing and Pipe Fitting",
+  "Building and Construction",
+  "Carpentry and Joinery",
+  "Masonry",
+  "Information Communication Technology (ICT)",
+  "Computer Studies",
+  "Business Studies",
+  "Accountancy",
+  "Human Resource Management",
+  "Marketing",
+  "Supply Chain Management",
+  "Hospitality and Tourism",
+  "Food and Beverage",
+  "Catering",
+  "Fashion Design and Garment Making",
+  "Hairdressing and Beauty Therapy",
+  "Agriculture",
+  "Horticulture",
+  "Animal Husbandry",
+  "Cooperative Management",
+  "Social Work and Community Development",
+  "Early Childhood Development Education (ECDE)",
+  "Art and Design",
+  "Music",
+  "Journalism and Mass Communication",
+  "Office Administration",
+  "Secretarial Studies",
+  "Records Management"
+];
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -38,6 +73,13 @@ const Signup = () => {
     setFormData({
       ...formData,
       role: value,
+    });
+  };
+
+  const handleDepartmentChange = (value: string) => {
+    setFormData({
+      ...formData,
+      department: value,
     });
   };
 
@@ -163,15 +205,18 @@ const Signup = () => {
             {requiresDepartment && (
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                <Input
-                  id="department"
-                  name="department"
-                  type="text"
-                  placeholder="e.g., Mechanical Engineering"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                />
+                <Select onValueChange={handleDepartmentChange} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your department" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {KENYA_DEPARTMENTS.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <div className="space-y-2">
