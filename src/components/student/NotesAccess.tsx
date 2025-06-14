@@ -1,112 +1,45 @@
 
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, FileText, Download, Eye, Calendar, User } from "lucide-react";
-
-interface Note {
-  id: string;
-  title: string;
-  unitCode: string;
-  unitName: string;
-  lecturer: string;
-  type: 'lecture' | 'tutorial' | 'assignment' | 'reference';
-  uploadDate: string;
-  fileSize: string;
-  downloadUrl: string;
-  description: string;
-}
-
-const notes: Note[] = [
-  {
-    id: "1",
-    title: "Introduction to OOP Concepts",
-    unitCode: "SE101",
-    unitName: "Introduction to Software Engineering",
-    lecturer: "Dr. John Kamau",
-    type: 'lecture',
-    uploadDate: "2024-01-15",
-    fileSize: "2.5 MB",
-    downloadUrl: "#",
-    description: "Comprehensive guide to Object-Oriented Programming principles"
-  },
-  {
-    id: "2",
-    title: "Database Normalization Tutorial",
-    unitCode: "DB201",
-    unitName: "Database Management Systems",
-    lecturer: "Prof. Mary Wanjiku",
-    type: 'tutorial',
-    uploadDate: "2024-01-18",
-    fileSize: "1.8 MB",
-    downloadUrl: "#",
-    description: "Step-by-step guide to database normalization techniques"
-  },
-  {
-    id: "3",
-    title: "Web Development Assignment 1",
-    unitCode: "WEB301",
-    unitName: "Web Development",
-    lecturer: "Mr. Peter Mwangi",
-    type: 'assignment',
-    uploadDate: "2024-01-20",
-    fileSize: "500 KB",
-    downloadUrl: "#",
-    description: "Create a responsive landing page using HTML, CSS, and JavaScript"
-  },
-  {
-    id: "4",
-    title: "Programming Reference Manual",
-    unitCode: "PROG101",
-    unitName: "Programming Fundamentals",
-    lecturer: "Ms. Grace Njeri",
-    type: 'reference',
-    uploadDate: "2024-01-10",
-    fileSize: "5.2 MB",
-    downloadUrl: "#",
-    description: "Complete reference guide for programming concepts and syntax"
-  }
-];
+import { Search, FileText, Download, Eye, Calendar, User, GraduationCap } from "lucide-react";
 
 export const NotesAccess = () => {
+  const { user, pendingUnitRegistrations } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<'all' | 'lecture' | 'tutorial' | 'assignment' | 'reference'>('all');
 
-  const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.unitCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.unitName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || note.type === filterType;
-    return matchesSearch && matchesType;
-  });
+  // Get approved units for the current user
+  const approvedRegistrations = pendingUnitRegistrations.filter(
+    reg => reg.studentId === user?.id && reg.status === 'approved'
+  );
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'lecture':
-        return 'bg-blue-100 text-blue-800';
-      case 'tutorial':
-        return 'bg-green-100 text-green-800';
-      case 'assignment':
-        return 'bg-orange-100 text-orange-800';
-      case 'reference':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleDownload = (note: Note) => {
-    // In a real application, this would trigger the actual download
-    console.log(`Downloading: ${note.title}`);
-  };
-
-  const handlePreview = (note: Note) => {
-    // In a real application, this would open a preview modal or new tab
-    console.log(`Previewing: ${note.title}`);
-  };
+  if (approvedRegistrations.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Notes & Materials</h2>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <FileText className="w-12 h-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Notes Available</h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            You need to have approved unit registrations to access course materials.
+          </p>
+          <div className="text-sm text-gray-500">
+            <p>Register for units and wait for approval to see course materials here.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -172,70 +105,25 @@ export const NotesAccess = () => {
         </div>
       </div>
 
-      {/* Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredNotes.map((note) => (
-          <Card key={note.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{note.title}</CardTitle>
-                  <CardDescription>{note.unitCode} - {note.unitName}</CardDescription>
-                </div>
-                <Badge className={getTypeColor(note.type)}>
-                  {note.type.charAt(0).toUpperCase() + note.type.slice(1)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600 line-clamp-3">{note.description}</p>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>{note.lecturer}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(note.uploadDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  <span>{note.fileSize}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handlePreview(note)}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleDownload(note)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredNotes.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">
-            No notes found matching your search criteria.
-          </p>
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+          <GraduationCap className="w-12 h-12 text-gray-400" />
         </div>
-      )}
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Materials Available Yet</h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          Your lecturers haven't uploaded any course materials yet for your registered units.
+        </p>
+        <div className="space-y-2 text-sm text-gray-500">
+          <p>Registered Units:</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {approvedRegistrations.map((reg) => (
+              <Badge key={reg.id} variant="outline">
+                {reg.unitCode} - {reg.unitName}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
