@@ -1,15 +1,6 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  User as FirebaseUser,
-  sendEmailVerification
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export interface PendingUnitRegistration {
   id: string;
@@ -180,25 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setUser({ id: firebaseUser.uid, ...userDoc.data() } as User);
-        } else {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
+    // Initialize with mock data - no Firebase needed
     const fetchUsers = async () => {
-      // Fetch users from local storage
       const storedUsers = localStorage.getItem('users');
       if (storedUsers) {
         setUsers(JSON.parse(storedUsers));
