@@ -86,7 +86,7 @@ export const UnitManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">My Allocated Units</h2>
-          <p className="text-gray-600">Click on a unit to manage its content</p>
+          <p className="text-gray-600">Click on a unit to manage its content and create assignments, CATs, exams, notes, and online classes</p>
         </div>
       </div>
 

@@ -1,9 +1,13 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Calendar, FileText, Video } from "lucide-react";
-import { ContentForm } from "./ContentForm";
 import { UnitSettingsTab } from "./UnitSettingsTab";
+import { AssignmentForm } from "./AssignmentForm";
+import { CATForm } from "./CATForm";
+import { ExamForm } from "./ExamForm";
+import { NotesForm } from "./NotesForm";
+import { OnlineClassForm } from "./OnlineClassForm";
+import { useToast } from "@/hooks/use-toast";
 
 interface UnitDetailsDialogProps {
   isOpen: boolean;
@@ -34,7 +38,49 @@ export const UnitDetailsDialog = ({
   onEnableDiscussionGroup,
   onAddItem
 }: UnitDetailsDialogProps) => {
+  const { toast } = useToast();
+
   if (!unit) return null;
+
+  const handleAddAssignment = (assignment: any) => {
+    toast({
+      title: "Assignment Created",
+      description: `${assignment.title} has been created successfully.`,
+    });
+    console.log("Assignment created:", assignment);
+  };
+
+  const handleAddCAT = (cat: any) => {
+    toast({
+      title: "CAT Scheduled",
+      description: `${cat.title} has been scheduled successfully.`,
+    });
+    console.log("CAT scheduled:", cat);
+  };
+
+  const handleAddExam = (exam: any) => {
+    toast({
+      title: "Exam Submitted for Approval",
+      description: `${exam.title} has been submitted to HOD for approval.`,
+    });
+    console.log("Exam submitted:", exam);
+  };
+
+  const handleAddNotes = (notes: any) => {
+    toast({
+      title: "Notes Uploaded",
+      description: `${notes.title} has been uploaded successfully.`,
+    });
+    console.log("Notes uploaded:", notes);
+  };
+
+  const handleAddOnlineClass = (onlineClass: any) => {
+    toast({
+      title: "Online Class Scheduled",
+      description: `${onlineClass.title} has been scheduled successfully.`,
+    });
+    console.log("Online class scheduled:", onlineClass);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -55,65 +101,23 @@ export const UnitDetailsDialog = ({
           </TabsList>
 
           <TabsContent value="assignments" className="space-y-4">
-            <ContentForm
-              title="Add New Assignment"
-              icon={<Upload className="w-4 h-4 mr-2" />}
-              newItem={newItem}
-              onItemChange={setNewItem}
-              onAddItem={onAddItem}
-              type="Assignment"
-              linkPlaceholder="Assignment link or file URL"
-            />
+            <AssignmentForm onAddAssignment={handleAddAssignment} />
           </TabsContent>
 
           <TabsContent value="cats" className="space-y-4">
-            <ContentForm
-              title="Add New CAT"
-              icon={<Calendar className="w-4 h-4 mr-2" />}
-              newItem={newItem}
-              onItemChange={setNewItem}
-              onAddItem={onAddItem}
-              type="CAT"
-              linkPlaceholder="CAT link or document URL"
-            />
+            <CATForm onAddCAT={handleAddCAT} />
           </TabsContent>
 
           <TabsContent value="exams" className="space-y-4">
-            <ContentForm
-              title="Add New Exam"
-              icon={<FileText className="w-4 h-4 mr-2" />}
-              newItem={newItem}
-              onItemChange={setNewItem}
-              onAddItem={onAddItem}
-              type="Exam"
-              linkPlaceholder="Exam link or document URL"
-            />
+            <ExamForm onAddExam={handleAddExam} />
           </TabsContent>
 
           <TabsContent value="notes" className="space-y-4">
-            <ContentForm
-              title="Add New Notes"
-              icon={<FileText className="w-4 h-4 mr-2" />}
-              newItem={newItem}
-              onItemChange={setNewItem}
-              onAddItem={onAddItem}
-              type="Notes"
-              linkLabel="File Link"
-              linkPlaceholder="Notes file URL or document link"
-            />
+            <NotesForm onAddNotes={handleAddNotes} />
           </TabsContent>
 
           <TabsContent value="classes" className="space-y-4">
-            <ContentForm
-              title="Add Online Class"
-              icon={<Video className="w-4 h-4 mr-2" />}
-              newItem={newItem}
-              onItemChange={setNewItem}
-              onAddItem={onAddItem}
-              type="Online Class"
-              linkLabel="Meeting Link"
-              linkPlaceholder="Zoom, Teams, or other meeting link"
-            />
+            <OnlineClassForm onAddOnlineClass={handleAddOnlineClass} />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">
