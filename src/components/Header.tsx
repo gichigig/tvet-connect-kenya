@@ -1,14 +1,17 @@
 
 import { Button } from "@/components/ui/button";
-import { BookOpen, User, Search } from "lucide-react";
+import { BookOpen, User, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   onSearch: (query: string) => void;
 }
 
 export const Header = ({ onSearch }: HeaderProps) => {
+  const { user, logout, isAuthenticated } = useAuth();
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,17 +37,34 @@ export const Header = ({ onSearch }: HeaderProps) => {
             <Button variant="ghost" size="sm">
               My Courses
             </Button>
-            <Link to="/login">
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4 mr-2" />
-                Login
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button size="sm">
-                Sign Up
-              </Button>
-            </Link>
+            {isAuthenticated && user ? (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {user.firstName} {user.lastName}
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
