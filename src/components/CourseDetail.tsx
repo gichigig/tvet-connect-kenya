@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Play, Clock, Users, Star, ArrowLeft } from "lucide-react";
+import { Play, Clock, Users, Star, ArrowLeft, User } from "lucide-react";
 
 interface Lesson {
   id: string;
