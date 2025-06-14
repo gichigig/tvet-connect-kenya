@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import { CourseView } from "@/components/CourseView";
 import { CourseDetail } from "@/components/CourseDetail";
@@ -6,10 +5,11 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { VirtualClassroom } from "@/components/VirtualClassroom";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { LecturerDashboard } from "@/components/LecturerDashboard";
+import { RegistrarDashboard } from "@/components/RegistrarDashboard";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar";
 
 interface AppViewRendererProps {
   currentView: ViewState;
@@ -63,6 +63,17 @@ export const AppViewRenderer = ({
         <Header onSearch={onSearch} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <LecturerDashboard />
+        </main>
+      </>
+    );
+  }
+
+  if (currentView === "registrar" && user?.role === "registrar") {
+    return (
+      <>
+        <Header onSearch={onSearch} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <RegistrarDashboard />
         </main>
       </>
     );

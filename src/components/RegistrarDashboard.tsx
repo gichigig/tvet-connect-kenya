@@ -1,0 +1,130 @@
+
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserCheck, GraduationCap, FileText, Clock, BookOpen } from "lucide-react";
+import { StudentApproval } from "@/components/registrar/StudentApproval";
+import { UnitAllocation } from "@/components/registrar/UnitAllocation";
+import { ExamManager } from "@/components/registrar/ExamManager";
+import { RetakeManager } from "@/components/registrar/RetakeManager";
+
+export const RegistrarDashboard = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("students");
+
+  // Mock data for dashboard stats
+  const stats = {
+    pendingStudents: 15,
+    totalStudents: 1250,
+    pendingExams: 8,
+    retakeRequests: 12
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Registrar Dashboard</h1>
+          <p className="text-gray-600">Student registration and academic management</p>
+        </div>
+        <GraduationCap className="w-8 h-8 text-blue-600" />
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Students</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingStudents}</div>
+            <p className="text-xs text-muted-foreground">
+              Students awaiting approval
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{stats.totalStudents}</div>
+            <p className="text-xs text-muted-foreground">
+              Active enrolled students
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Exams</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{stats.pendingExams}</div>
+            <p className="text-xs text-muted-foreground">
+              Special/Supplementary exams
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Retake Requests</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.retakeRequests}</div>
+            <p className="text-xs text-muted-foreground">
+              Unit retake applications
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="students" className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4" />
+            Student Approval
+          </TabsTrigger>
+          <TabsTrigger value="units" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Unit Allocation
+          </TabsTrigger>
+          <TabsTrigger value="exams" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Exam Management
+          </TabsTrigger>
+          <TabsTrigger value="retakes" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Retake Management
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="students" className="space-y-4">
+          <StudentApproval />
+        </TabsContent>
+
+        <TabsContent value="units" className="space-y-4">
+          <UnitAllocation />
+        </TabsContent>
+
+        <TabsContent value="exams" className="space-y-4">
+          <ExamManager />
+        </TabsContent>
+
+        <TabsContent value="retakes" className="space-y-4">
+          <RetakeManager />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
