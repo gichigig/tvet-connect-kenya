@@ -20,23 +20,6 @@ interface Unit {
   semester: string;
 }
 
-interface Assignment {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: 'pending' | 'submitted' | 'graded';
-  grade?: number;
-  maxGrade: number;
-}
-
-interface CourseMaterial {
-  id: string;
-  title: string;
-  type: 'pdf' | 'video' | 'slides';
-  uploadDate: string;
-  size: string;
-}
-
 export const MyUnits = () => {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const { user, pendingUnitRegistrations } = useAuth();
@@ -59,56 +42,6 @@ export const MyUnits = () => {
     semester: `Semester ${reg.semester}`
   }));
 
-  // Mock course work data for when units are available
-  const mockAssignments: Assignment[] = [
-    {
-      id: "1",
-      title: "Programming Assignment 1",
-      dueDate: "2024-02-15",
-      status: 'pending',
-      maxGrade: 100
-    },
-    {
-      id: "2",
-      title: "Database Design Project",
-      dueDate: "2024-02-10",
-      status: 'submitted',
-      maxGrade: 100
-    },
-    {
-      id: "3",
-      title: "Web Development Portfolio",
-      dueDate: "2024-01-30",
-      status: 'graded',
-      grade: 85,
-      maxGrade: 100
-    }
-  ];
-
-  const mockMaterials: CourseMaterial[] = [
-    {
-      id: "1",
-      title: "Introduction to Programming - Lecture Notes",
-      type: 'pdf',
-      uploadDate: "2024-01-15",
-      size: "2.5 MB"
-    },
-    {
-      id: "2",
-      title: "Object-Oriented Programming Video Tutorial",
-      type: 'video',
-      uploadDate: "2024-01-20",
-      size: "150 MB"
-    },
-    {
-      id: "3",
-      title: "Java Programming Slides",
-      type: 'slides',
-      uploadDate: "2024-01-18",
-      size: "5.2 MB"
-    }
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -119,32 +52,6 @@ export const MyUnits = () => {
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getAssignmentStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-red-100 text-red-800';
-      case 'submitted':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'graded':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case 'pdf':
-        return <FileText className="w-4 h-4 text-red-600" />;
-      case 'video':
-        return <Video className="w-4 h-4 text-blue-600" />;
-      case 'slides':
-        return <FileText className="w-4 h-4 text-green-600" />;
-      default:
-        return <FileText className="w-4 h-4" />;
     }
   };
 
@@ -239,95 +146,27 @@ export const MyUnits = () => {
               </TabsContent>
 
               <TabsContent value="assignments" className="space-y-4">
-                <div className="space-y-4">
-                  {mockAssignments.map((assignment) => (
-                    <Card key={assignment.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{assignment.title}</h3>
-                            <p className="text-sm text-gray-600">Due: {assignment.dueDate}</p>
-                            {assignment.grade && (
-                              <p className="text-sm font-medium">Grade: {assignment.grade}/{assignment.maxGrade}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getAssignmentStatusColor(assignment.status)}>
-                              {assignment.status}
-                            </Badge>
-                            {assignment.status === 'pending' && (
-                              <Button size="sm">
-                                <Upload className="w-4 h-4 mr-2" />
-                                Submit
-                              </Button>
-                            )}
-                            {assignment.status === 'graded' && (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="text-center py-8 text-gray-500">
+                  <PenTool className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p>No assignments available yet.</p>
+                  <p className="text-sm">Assignments will appear here once the lecturer uploads them.</p>
                 </div>
               </TabsContent>
 
               <TabsContent value="materials" className="space-y-4">
-                <div className="space-y-4">
-                  {mockMaterials.map((material) => (
-                    <Card key={material.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {getFileIcon(material.type)}
-                            <div>
-                              <h3 className="font-semibold">{material.title}</h3>
-                              <p className="text-sm text-gray-600">
-                                Uploaded: {material.uploadDate} • Size: {material.size}
-                              </p>
-                            </div>
-                          </div>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p>No course materials available yet.</p>
+                  <p className="text-sm">Materials will appear here once the lecturer uploads them.</p>
                 </div>
               </TabsContent>
 
               <TabsContent value="grades" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Grade Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">85%</div>
-                          <div className="text-sm text-gray-600">Current Average</div>
-                        </div>
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">3/5</div>
-                          <div className="text-sm text-gray-600">Assignments Completed</div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="font-semibold">Individual Grades</h4>
-                        {mockAssignments.filter(a => a.grade).map((assignment) => (
-                          <div key={assignment.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                            <span className="text-sm">{assignment.title}</span>
-                            <span className="font-medium">{assignment.grade}/{assignment.maxGrade}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="text-center py-8 text-gray-500">
+                  <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p>No grades available yet.</p>
+                  <p className="text-sm">Grades will appear here once assignments are graded.</p>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
