@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Users, Clock, Shield } from "lucide-react";
+import { CheckCircle, XCircle, Users, Clock, Shield, Ban, Unlock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const AdminDashboard = () => {
-  const { getPendingUsers, getAllUsers, approveUser, rejectUser } = useAuth();
+  const { getPendingUsers, getAllUsers, approveUser, rejectUser, blockUser, unblockUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const { toast } = useToast();
 
   const pendingUsers = getPendingUsers();
   const allUsers = getAllUsers();
+  const blockedUsers = allUsers.filter(u => u.blocked);
 
   const handleApprove = (userId: string, userName: string) => {
     approveUser(userId);
@@ -30,6 +31,23 @@ export const AdminDashboard = () => {
       title: "User Rejected",
       description: `${userName}'s application has been rejected.`,
       variant: "destructive",
+    });
+  };
+
+  const handleBlock = (userId: string, userName: string) => {
+    blockUser(userId);
+    toast({
+      title: "User Blocked",
+      description: `${userName} has been blocked from accessing the system.`,
+      variant: "destructive",
+    });
+  };
+
+  const handleUnblock = (userId: string, userName: string) => {
+    unblockUser(userId);
+    toast({
+      title: "User Unblocked",
+      description: `${userName} can now access the system again.`,
     });
   };
 
@@ -56,7 +74,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
@@ -97,6 +115,19 @@ export const AdminDashboard = () => {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Blocked Users</CardTitle>
+            <Ban className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{blockedUsers.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Users blocked from access
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Navigation Tabs */}
@@ -126,7 +157,7 @@ export const AdminDashboard = () => {
           <CardDescription>
             {activeTab === 'pending' 
               ? 'Review and approve new user registrations'
-              : 'View all registered users in the system'
+              : 'View all registered users in the system and manage their access'
             }
           </CardDescription>
         </CardHeader>
@@ -139,7 +170,7 @@ export const AdminDashboard = () => {
                 <TableHead>Role</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Status</TableHead>
-                {activeTab === 'pending' && <TableHead>Actions</TableHead>}
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -156,32 +187,64 @@ export const AdminDashboard = () => {
                   </TableCell>
                   <TableCell>{user.department || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={user.approved ? 'default' : 'secondary'}>
-                      {user.approved ? 'Approved' : 'Pending'}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant={user.approved ? 'default' : 'secondary'}>
+                        {user.approved ? 'Approved' : 'Pending'}
+                      </Badge>
+                      {user.blocked && (
+                        <Badge variant="destructive">
+                          Blocked
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
-                  {activeTab === 'pending' && (
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(user.id, `${user.firstName} ${user.lastName}`)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleReject(user.id, `${user.firstName} ${user.lastName}`)}
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      {activeTab === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(user.id, `${user.firstName} ${user.lastName}`)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleReject(user.id, `${user.firstName} ${user.lastName}`)}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      {activeTab === 'all' && user.role !== 'admin' && (
+                        <>
+                          {!user.blocked ? (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleBlock(user.id, `${user.firstName} ${user.lastName}`)}
+                            >
+                              <Ban className="w-4 h-4 mr-1" />
+                              Block
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUnblock(user.id, `${user.firstName} ${user.lastName}`)}
+                            >
+                              <Unlock className="w-4 h-4 mr-1" />
+                              Unblock
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

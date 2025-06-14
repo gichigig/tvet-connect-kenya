@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -8,6 +7,7 @@ interface User {
   lastName: string;
   role: 'student' | 'lecturer' | 'hod' | 'registrar' | 'finance' | 'admin';
   approved: boolean;
+  blocked?: boolean;
   department?: string;
 }
 
@@ -20,6 +20,8 @@ interface AuthContextType {
   isAdmin: boolean;
   approveUser: (userId: string) => void;
   rejectUser: (userId: string) => void;
+  blockUser: (userId: string) => void;
+  unblockUser: (userId: string) => void;
   getAllUsers: () => User[];
   getPendingUsers: () => User[];
 }
@@ -46,7 +48,8 @@ const mockUsers: User[] = [
     firstName: 'Billy',
     lastName: 'Blund',
     role: 'admin',
-    approved: true
+    approved: true,
+    blocked: false
   }
 ];
 
@@ -61,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const parsedUser = JSON.parse(savedUser);
       // Ensure admin user has correct role
       if (parsedUser.email === ADMIN_EMAIL) {
-        const adminUser = { ...parsedUser, role: 'admin', approved: true };
+        const adminUser = { ...parsedUser, role: 'admin', approved: true, blocked: false };
         setUser(adminUser);
         localStorage.setItem('user', JSON.stringify(adminUser));
       } else {
@@ -81,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem('users', JSON.stringify(updatedUsers));
       } else if (adminExists.role !== 'admin') {
         const updatedUsers = parsedUsers.map((u: User) => 
-          u.email === ADMIN_EMAIL ? { ...u, role: 'admin', approved: true } : u
+          u.email === ADMIN_EMAIL ? { ...u, role: 'admin', approved: true, blocked: false } : u
         );
         setUsers(updatedUsers);
         localStorage.setItem('users', JSON.stringify(updatedUsers));
@@ -103,7 +106,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         firstName: 'Billy',
         lastName: 'Blund',
         role: 'admin' as const,
-        approved: true
+        approved: true,
+        blocked: false
       };
       setUser(adminUser);
       localStorage.setItem('user', JSON.stringify(adminUser));
@@ -116,6 +120,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (!foundUser) {
       throw new Error('User not found');
+    }
+    
+    if (foundUser.blocked) {
+      throw new Error('Account has been blocked. Please contact support.');
     }
     
     if (!foundUser.approved && foundUser.role !== 'admin') {
@@ -141,6 +149,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       lastName: userData.lastName,
       role: userData.role as User['role'],
       approved: userData.role === 'student', // Students are auto-approved
+      blocked: false,
       department: userData.department
     };
     
@@ -176,6 +185,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('users', JSON.stringify(updatedUsers));
   };
 
+  const blockUser = (userId: string) => {
+    const updatedUsers = users.map(u => 
+      u.id === userId ? { ...u, blocked: true } : u
+    );
+    setUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    
+    // If the current user is being blocked, log them out
+    if (user?.id === userId) {
+      logout();
+    }
+  };
+
+  const unblockUser = (userId: string) => {
+    const updatedUsers = users.map(u => 
+      u.id === userId ? { ...u, blocked: false } : u
+    );
+    setUsers(updatedUsers);
+    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  };
+
   const getAllUsers = () => users;
   
   const getPendingUsers = () => users.filter(u => !u.approved && u.role !== 'admin');
@@ -192,6 +222,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isAdmin: user?.role === 'admin',
     approveUser,
     rejectUser,
+    blockUser,
+    unblockUser,
     getAllUsers,
     getPendingUsers
   };
