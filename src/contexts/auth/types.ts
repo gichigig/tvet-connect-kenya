@@ -1,9 +1,10 @@
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'student' | 'lecturer' | 'registrar' | 'hod';
+  role: 'admin' | 'student' | 'lecturer' | 'registrar' | 'hod' | 'finance';
   approved: boolean;
   blocked?: boolean;
   department?: string;
@@ -90,6 +91,48 @@ export interface CreatedContent {
   topic?: string;
 }
 
+export interface SupplyRequest {
+  id: string;
+  requestedBy: string;
+  requestedByName: string;
+  department: string;
+  items: SupplyItem[];
+  totalAmount: number;
+  requestDate: string;
+  status: 'pending' | 'approved' | 'rejected' | 'verified';
+  verifiedBy?: string;
+  verificationDate?: string;
+  verificationNotes?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+}
+
+export interface SupplyItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  category: string;
+  description?: string;
+}
+
+export interface StudentFee {
+  id: string;
+  studentId: string;
+  studentName: string;
+  feeType: 'supplementary_exam' | 'special_exam' | 'unit_retake';
+  amount: number;
+  unitCode?: string;
+  unitName?: string;
+  description: string;
+  dueDate: string;
+  status: 'pending' | 'paid' | 'overdue';
+  createdDate: string;
+  paidDate?: string;
+  academicYear: string;
+  semester: number;
+}
+
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role?: string) => Promise<void>;
@@ -122,4 +165,10 @@ export interface AuthContextType {
   addCreatedContent: (content: CreatedContent) => void;
   updateCreatedContent: (contentId: string, updates: Partial<CreatedContent>) => void;
   deleteCreatedContent: (contentId: string) => void;
+  supplyRequests: SupplyRequest[];
+  addSupplyRequest: (request: Omit<SupplyRequest, 'id' | 'requestDate' | 'status'>) => void;
+  updateSupplyRequestStatus: (requestId: string, status: SupplyRequest['status'], verificationNotes?: string) => void;
+  studentFees: StudentFee[];
+  addStudentFee: (fee: Omit<StudentFee, 'id' | 'createdDate' | 'status'>) => void;
+  updateFeeStatus: (feeId: string, status: StudentFee['status'], paidDate?: string) => void;
 }

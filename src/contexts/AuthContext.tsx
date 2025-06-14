@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -6,7 +5,9 @@ import {
   PendingUnitRegistration, 
   ExamResult, 
   AuthContextType,
-  CreatedContent
+  CreatedContent,
+  SupplyRequest,
+  StudentFee
 } from './auth/types';
 import { 
   mockUsers, 
@@ -34,6 +35,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
   const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
   const [createdContent, setCreatedContent] = useState<CreatedContent[]>([]);
+  const [supplyRequests, setSupplyRequests] = useState<SupplyRequest[]>([]);
+  const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
@@ -182,6 +185,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCreatedContent(prev => prev.filter(content => content.id !== contentId));
   };
 
+  const addSupplyRequest = (request: Omit<SupplyRequest, 'id' | 'requestDate' | 'status'>) => {
+    const newRequest: SupplyRequest = {
+      ...request,
+      id: Date.now().toString(),
+      requestDate: new Date().toISOString().split('T')[0],
+      status: 'pending'
+    };
+    setSupplyRequests(prev => [...prev, newRequest]);
+  };
+
+  const updateSupplyRequestStatus = (requestId: string, status: SupplyRequest['status'], verificationNotes?: string) => {
+    setSupplyRequests(prev =>
+      prev.map(request =>
+        request.id === requestId 
+          ? { 
+              ...request, 
+              status, 
+              verifiedBy: user?.id,
+              verificationDate: new Date().toISOString().split('T')[0],
+              verificationNotes 
+            }
+          : request
+      )
+    );
+  };
+
+  const addStudentFee = (fee: Omit<StudentFee, 'id' | 'createdDate' | 'status'>) => {
+    const newFee: StudentFee = {
+      ...fee,
+      id: Date.now().toString(),
+      createdDate: new Date().toISOString().split('T')[0],
+      status: 'pending'
+    };
+    setStudentFees(prev => [...prev, newFee]);
+  };
+
+  const updateFeeStatus = (feeId: string, status: StudentFee['status'], paidDate?: string) => {
+    setStudentFees(prev =>
+      prev.map(fee =>
+        fee.id === feeId 
+          ? { ...fee, status, paidDate }
+          : fee
+      )
+    );
+  };
+
   const value = {
     user,
     login,
@@ -213,7 +262,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     createdContent,
     addCreatedContent,
     updateCreatedContent,
-    deleteCreatedContent
+    deleteCreatedContent,
+    supplyRequests,
+    addSupplyRequest,
+    updateSupplyRequestStatus,
+    studentFees,
+    addStudentFee,
+    updateFeeStatus
   };
 
   return (
