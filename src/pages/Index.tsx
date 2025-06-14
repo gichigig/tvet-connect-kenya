@@ -1,15 +1,15 @@
-
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseDetail } from "@/components/CourseDetail";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { VirtualClassroom } from "@/components/VirtualClassroom";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { coursesData, getUserProgress, Course, Lesson } from "@/data/coursesData";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -84,6 +84,16 @@ const Index = () => {
     }
   };
 
+  const handleJoinClassroom = () => {
+    if (selectedCourse) {
+      setCurrentView("classroom");
+      toast({
+        title: "Joining Virtual Classroom",
+        description: `Welcome to ${selectedCourse.title} virtual classroom!`,
+      });
+    }
+  };
+
   const handleBackToCatalog = () => {
     setCurrentView("catalog");
     setSelectedCourse(null);
@@ -93,6 +103,10 @@ const Index = () => {
   const handleBackToCourse = () => {
     setCurrentView("course");
     setSelectedLesson(null);
+  };
+
+  const handleBackFromClassroom = () => {
+    setCurrentView("course");
   };
 
   // Group courses by category for better organization
@@ -168,6 +182,7 @@ const Index = () => {
           progress={userProgress[selectedCourse.id] || 0}
           onBack={handleBackToCatalog}
           onPlayLesson={handlePlayLesson}
+          onJoinClassroom={handleJoinClassroom}
         />
       )}
       
@@ -176,6 +191,14 @@ const Index = () => {
           lesson={selectedLesson}
           onBack={handleBackToCourse}
           onComplete={handleCompleteLesson}
+        />
+      )}
+
+      {currentView === "classroom" && selectedCourse && (
+        <VirtualClassroom
+          courseId={selectedCourse.id}
+          courseTitle={selectedCourse.title}
+          onBack={handleBackFromClassroom}
         />
       )}
     </div>
