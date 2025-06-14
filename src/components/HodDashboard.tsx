@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, FileCheck, Users, AlertTriangle, TrendingUp, UserCheck, DollarSign, BookOpen, FlaskConical, Building2 } from "lucide-react";
+import { GraduationCap, FileCheck, Users, AlertTriangle, TrendingUp, UserCheck, DollarSign, BookOpen, FlaskConical, Building2, Mail } from "lucide-react";
 import { ResultsApproval } from "@/components/hod/ResultsApproval";
 import { StudentResults } from "@/components/hod/StudentResults";
 import { RetakeRecommendations } from "@/components/hod/RetakeRecommendations";
@@ -14,6 +14,7 @@ import { BudgetManagement } from "@/components/hod/BudgetManagement";
 import { CurriculumOversight } from "@/components/hod/CurriculumOversight";
 import { ResearchCoordination } from "@/components/hod/ResearchCoordination";
 import { IndustryLiaison } from "@/components/hod/IndustryLiaison";
+import { EmailManager } from "@/components/hod/EmailManager";
 
 export const HodDashboard = () => {
   const { user } = useAuth();
@@ -28,7 +29,8 @@ export const HodDashboard = () => {
     staffMembers: 15,
     budgetUtilization: 78,
     activeCourses: 24,
-    researchProjects: 6
+    researchProjects: 6,
+    unreadEmails: 4
   };
 
   return (
@@ -43,7 +45,7 @@ export const HodDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
@@ -87,11 +89,22 @@ export const HodDashboard = () => {
             <p className="text-xs text-muted-foreground">Annual budget used</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unread Emails</CardTitle>
+            <Mail className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.unreadEmails}</div>
+            <p className="text-xs text-muted-foreground">Attachments & internships</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
           <TabsTrigger value="results" className="flex items-center gap-1 text-xs">
             <FileCheck className="w-3 h-3" />
             Results
@@ -123,6 +136,10 @@ export const HodDashboard = () => {
           <TabsTrigger value="industry" className="flex items-center gap-1 text-xs">
             <Building2 className="w-3 h-3" />
             Industry
+          </TabsTrigger>
+          <TabsTrigger value="emails" className="flex items-center gap-1 text-xs">
+            <Mail className="w-3 h-3" />
+            Emails
           </TabsTrigger>
         </TabsList>
 
@@ -156,6 +173,10 @@ export const HodDashboard = () => {
 
         <TabsContent value="industry" className="space-y-4">
           <IndustryLiaison />
+        </TabsContent>
+
+        <TabsContent value="emails" className="space-y-4">
+          <EmailManager />
         </TabsContent>
       </Tabs>
     </div>
