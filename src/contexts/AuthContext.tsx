@@ -1,267 +1,238 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../firebase';
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  User as FirebaseUser,
+  sendEmailVerification
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-interface User {
+export interface PendingUnitRegistration {
   id: string;
-  email: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  unitCode: string;
+  unitName: string;
+  course: string;
+  year: number;
+  semester: number;
+  submittedDate: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface User {
+  id: string;
   firstName: string;
   lastName: string;
-  role: 'student' | 'lecturer' | 'hod' | 'registrar' | 'finance' | 'admin';
+  email: string;
+  role: string;
   approved: boolean;
-  blocked?: boolean;
-  department?: string;
-  admissionNumber?: string;
   course?: string;
-  level?: 'diploma' | 'certificate';
-  intake?: 'january' | 'may' | 'september';
+  level?: string;
   year?: number;
   semester?: number;
+  admissionNumber?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string; course?: string; level?: 'diploma' | 'certificate'; intake?: 'january' | 'may' | 'september' }) => Promise<boolean>;
+  login: (email: string, password: string, role: string) => Promise<void>;
+  signup: (userData: any) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  approveUser: (userId: string) => void;
-  rejectUser: (userId: string) => void;
-  blockUser: (userId: string) => void;
-  unblockUser: (userId: string) => void;
-  getAllUsers: () => User[];
+  users: User[];
+  updateUserApproval: (userId: string, approved: boolean) => void;
   getPendingUsers: () => User[];
-  approveStudent: (userId: string) => void;
+  getAllUsers: () => User[];
+  pendingUnitRegistrations: PendingUnitRegistration[];
+  addPendingUnitRegistration: (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => void;
+  updateUnitRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected') => void;
+  getPendingUnitRegistrations: () => PendingUnitRegistration[];
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// Admin credentials
-const ADMIN_EMAIL = 'billyblund17@gmail.com';
-const ADMIN_PASSWORD = 'admin123';
-
-// Mock users database
-const mockUsers: User[] = [
-  {
-    id: 'admin-1',
-    email: ADMIN_EMAIL,
-    firstName: 'Billy',
-    lastName: 'Blund',
-    role: 'admin',
-    approved: true,
-    blocked: false
-  }
-];
-
-// Function to generate admission number
-const generateAdmissionNumber = (course: string, level: 'diploma' | 'certificate', intake: 'january' | 'may' | 'september'): string => {
-  const levelCode = level === 'diploma' ? 'D' : 'C';
-  const courseInitials = course.split(' ').map(word => word.charAt(0)).join('').toUpperCase();
-  const intakeCode = intake === 'january' ? '01' : intake === 'may' ? '02' : '03';
-  const studentNumber = Math.floor(Math.random() * 9000) + 1000; // Random 4-digit number
-  const year = new Date().getFullYear();
-  
-  return `${levelCode}${courseInitials}-${intakeCode}-${studentNumber}/${year}`;
-};
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const navigate = useNavigate();
+  
+  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>([
+    {
+      id: "1",
+      studentId: "1",
+      studentName: "John Doe",
+      studentEmail: "john.doe@student.edu",
+      unitCode: "CS101",
+      unitName: "Introduction to Computer Science",
+      course: "Computer Science",
+      year: 1,
+      semester: 1,
+      submittedDate: "2024-01-15",
+      status: 'pending'
+    }
+  ]);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      // Ensure admin user has correct role
-      if (parsedUser.email === ADMIN_EMAIL) {
-        const adminUser = { ...parsedUser, role: 'admin', approved: true, blocked: false };
-        setUser(adminUser);
-        localStorage.setItem('user', JSON.stringify(adminUser));
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          setUser({ id: firebaseUser.uid, ...userDoc.data() } as User);
+        } else {
+          setUser(null);
+        }
       } else {
-        setUser(parsedUser);
+        setUser(null);
       }
-    }
-    
-    // Load users from localStorage
-    const savedUsers = localStorage.getItem('users');
-    if (savedUsers) {
-      const parsedUsers = JSON.parse(savedUsers);
-      // Ensure admin user exists and has correct role
-      const adminExists = parsedUsers.find((u: User) => u.email === ADMIN_EMAIL);
-      if (!adminExists) {
-        const updatedUsers = [...parsedUsers, mockUsers[0]];
-        setUsers(updatedUsers);
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-      } else if (adminExists.role !== 'admin') {
-        const updatedUsers = parsedUsers.map((u: User) => 
-          u.email === ADMIN_EMAIL ? { ...u, role: 'admin', approved: true, blocked: false } : u
-        );
-        setUsers(updatedUsers);
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-      } else {
-        setUsers(parsedUsers);
-      }
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    console.log("Login attempt - email:", email, "password:", password);
-    
-    // Check for admin credentials first
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      console.log("Admin login detected");
-      const adminUser = {
-        id: 'admin-1',
-        email: ADMIN_EMAIL,
-        firstName: 'Billy',
-        lastName: 'Blund',
-        role: 'admin' as const,
-        approved: true,
-        blocked: false
-      };
-      setUser(adminUser);
-      localStorage.setItem('user', JSON.stringify(adminUser));
-      console.log("Admin user set:", adminUser);
-      return true;
-    }
-    
-    // Find user in our mock database
-    const foundUser = users.find(u => u.email === email);
-    
-    if (!foundUser) {
-      throw new Error('User not found');
-    }
-    
-    if (foundUser.blocked) {
-      throw new Error('Account has been blocked. Please contact support.');
-    }
-    
-    if (!foundUser.approved && foundUser.role !== 'admin') {
-      throw new Error('Account pending approval');
-    }
-    
-    setUser(foundUser);
-    localStorage.setItem('user', JSON.stringify(foundUser));
-    return true;
-  };
-
-  const signup = async (userData: { firstName: string; lastName: string; email: string; password: string; role: string; department?: string; course?: string; level?: 'diploma' | 'certificate'; intake?: 'january' | 'may' | 'september' }): Promise<boolean> => {
-    // Check if user already exists
-    const existingUser = users.find(u => u.email === userData.email);
-    if (existingUser) {
-      throw new Error('User already exists');
-    }
-    
-    const newUser: User = {
-      id: Date.now().toString(),
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: userData.role as User['role'],
-      approved: false, // All users including students now need approval
-      blocked: false,
-      department: userData.department,
-      course: userData.course,
-      level: userData.level,
-      intake: userData.intake
+  useEffect(() => {
+    const fetchUsers = async () => {
+      // Fetch users from local storage
+      const storedUsers = localStorage.getItem('users');
+      if (storedUsers) {
+        setUsers(JSON.parse(storedUsers));
+      }
     };
-    
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    
-    return true;
-  };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
+    fetchUsers();
+  }, []);
 
-  const approveUser = (userId: string) => {
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, approved: true } : u
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-  };
-
-  const approveStudent = (userId: string) => {
-    const userToApprove = users.find(u => u.id === userId);
-    if (userToApprove && userToApprove.role === 'student') {
-      const admissionNumber = generateAdmissionNumber(
-        userToApprove.course || 'General Studies',
-        userToApprove.level || 'diploma',
-        userToApprove.intake || 'january'
-      );
+  const login = async (email: string, password: string, role: string) => {
+    try {
+      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
       
-      const updatedUsers = users.map(u => 
-        u.id === userId ? { ...u, approved: true, admissionNumber } : u
-      );
-      setUsers(updatedUsers);
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as User;
+        if (userData.approved) {
+          setUser({ id: firebaseUser.uid, ...userData });
+          navigate('/');
+        } else {
+          signOut(auth);
+          throw new Error('Your account is not yet approved. Please wait for admin approval.');
+        }
+      } else {
+        throw new Error('User data not found in Firestore.');
+      }
+    } catch (error: any) {
+      console.error("Login failed:", error.message);
+      throw error;
+    }
+  };
+
+  const signup = async (userData: any) => {
+    try {
+      const { email, password, firstName, lastName, role, course, level, year, semester, admissionNumber } = userData;
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(firebaseUser, {
+        displayName: `${firstName} ${lastName}`,
+      });
+
+      await sendEmailVerification(firebaseUser);
+      
+      const newUser: User = {
+        id: firebaseUser.uid,
+        firstName,
+        lastName,
+        email,
+        role,
+        approved: role === 'admin',
+        course,
+        level,
+        year,
+        semester,
+        admissionNumber
+      };
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+      
+      setUsers(prevUsers => [...prevUsers, newUser]);
+      localStorage.setItem('users', JSON.stringify([...users, newUser]));
+
+      setUser(newUser);
+      navigate('/');
+    } catch (error: any) {
+      console.error("Signup failed:", error.message);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      navigate('/login');
+    } catch (error: any) {
+      console.error("Logout failed:", error.message);
+    }
+  };
+
+  const updateUserApproval = (userId: string, approved: boolean) => {
+    setUsers(prevUsers => {
+      const updatedUsers = prevUsers.map(user => {
+        if (user.id === userId) {
+          return { ...user, approved };
+        }
+        return user;
+      });
       localStorage.setItem('users', JSON.stringify(updatedUsers));
-    } else {
-      // For non-students, use regular approval
-      approveUser(userId);
-    }
+      return updatedUsers;
+    });
   };
 
-  const rejectUser = (userId: string) => {
-    const updatedUsers = users.filter(u => u.id !== userId);
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  const getPendingUsers = () => {
+    return users.filter(user => !user.approved);
   };
 
-  const blockUser = (userId: string) => {
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, blocked: true } : u
+  const getAllUsers = () => {
+    return users;
+  };
+
+  const addPendingUnitRegistration = (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
+    const newRegistration: PendingUnitRegistration = {
+      ...registration,
+      id: Date.now().toString(),
+      submittedDate: new Date().toISOString().split('T')[0],
+      status: 'pending'
+    };
+    setPendingUnitRegistrations(prev => [...prev, newRegistration]);
+  };
+
+  const updateUnitRegistrationStatus = (registrationId: string, status: 'approved' | 'rejected') => {
+    setPendingUnitRegistrations(prev =>
+      prev.map(reg =>
+        reg.id === registrationId ? { ...reg, status } : reg
+      )
     );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    
-    // If the current user is being blocked, log them out
-    if (user?.id === userId) {
-      logout();
-    }
   };
 
-  const unblockUser = (userId: string) => {
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, blocked: false } : u
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  const getPendingUnitRegistrations = () => {
+    return pendingUnitRegistrations.filter(reg => reg.status === 'pending');
   };
-
-  const getAllUsers = () => users;
-  
-  const getPendingUsers = () => users.filter(u => !u.approved && u.role !== 'admin');
-
-  console.log("AuthContext - user:", user);
-  console.log("AuthContext - isAdmin:", user?.role === 'admin');
 
   const value = {
     user,
     login,
     signup,
     logout,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
-    approveUser,
-    rejectUser,
-    blockUser,
-    unblockUser,
-    getAllUsers,
+    users,
+    updateUserApproval,
     getPendingUsers,
-    approveStudent
+    getAllUsers,
+    pendingUnitRegistrations,
+    addPendingUnitRegistration,
+    updateUnitRegistrationStatus,
+    getPendingUnitRegistrations
   };
 
   return (
@@ -269,4 +240,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

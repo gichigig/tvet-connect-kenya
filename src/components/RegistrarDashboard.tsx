@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,21 +10,23 @@ import { UnitAllocation } from "@/components/registrar/UnitAllocation";
 import { ExamManager } from "@/components/registrar/ExamManager";
 import { RetakeManager } from "@/components/registrar/RetakeManager";
 import { ApprovedStudents } from "@/components/registrar/ApprovedStudents";
+import { PendingUnitRegistrations } from "@/components/registrar/PendingUnitRegistrations";
 
 export const RegistrarDashboard = () => {
-  const { user, getPendingUsers, getAllUsers } = useAuth();
+  const { user, getPendingUsers, getAllUsers, getPendingUnitRegistrations } = useAuth();
   const [activeTab, setActiveTab] = useState("students");
 
   const pendingUsers = getPendingUsers();
   const allUsers = getAllUsers();
   const pendingStudents = pendingUsers.filter(u => u.role === 'student');
   const totalStudents = allUsers.filter(u => u.role === 'student' && u.approved);
+  const pendingUnitRegistrations = getPendingUnitRegistrations();
 
   // Mock data for dashboard stats
   const stats = {
     pendingStudents: pendingStudents.length,
     totalStudents: totalStudents.length,
-    pendingExams: 8,
+    pendingUnits: pendingUnitRegistrations.length,
     retakeRequests: 12
   };
 
@@ -69,13 +70,13 @@ export const RegistrarDashboard = () => {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Exams</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Units</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.pendingExams}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingUnits}</div>
             <p className="text-xs text-muted-foreground">
-              Special/Supplementary exams
+              Unit registrations awaiting approval
             </p>
           </CardContent>
         </Card>
@@ -96,7 +97,7 @@ export const RegistrarDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
@@ -116,6 +117,10 @@ export const RegistrarDashboard = () => {
           <TabsTrigger value="retakes" className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Retake Management
+          </TabsTrigger>
+          <TabsTrigger value="pending-units" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Pending Units
           </TabsTrigger>
         </TabsList>
 
@@ -137,6 +142,10 @@ export const RegistrarDashboard = () => {
 
         <TabsContent value="retakes" className="space-y-4">
           <RetakeManager />
+        </TabsContent>
+
+        <TabsContent value="pending-units" className="space-y-4">
+          <PendingUnitRegistrations />
         </TabsContent>
       </Tabs>
     </div>
