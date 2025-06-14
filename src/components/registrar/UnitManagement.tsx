@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, BookOpen, User, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -153,7 +153,7 @@ export const UnitManagement = () => {
               Create Unit
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Create New Unit</DialogTitle>
               <DialogDescription>
@@ -161,128 +161,132 @@ export const UnitManagement = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Unit Code *</Label>
-                <Input
-                  id="code"
-                  value={newUnit.code}
-                  onChange={(e) => setNewUnit(prev => ({ ...prev, code: e.target.value }))}
-                  placeholder="e.g., CS101"
-                />
+            <ScrollArea className="h-[70vh] pr-4">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="code">Unit Code *</Label>
+                    <Input
+                      id="code"
+                      value={newUnit.code}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, code: e.target.value }))}
+                      placeholder="e.g., CS101"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Unit Name *</Label>
+                    <Input
+                      id="name"
+                      value={newUnit.name}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Introduction to Programming"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department *</Label>
+                    <Select value={newUnit.department} onValueChange={(value) => setNewUnit(prev => ({ ...prev, department: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map(dept => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="course">Course *</Label>
+                    <Select value={newUnit.course} onValueChange={(value) => setNewUnit(prev => ({ ...prev, course: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select course" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses.map(course => (
+                          <SelectItem key={course} value={course}>{course}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="year">Year</Label>
+                    <Select value={newUnit.year.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, year: parseInt(value) }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Year 1</SelectItem>
+                        <SelectItem value="2">Year 2</SelectItem>
+                        <SelectItem value="3">Year 3</SelectItem>
+                        <SelectItem value="4">Year 4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="semester">Semester</Label>
+                    <Select value={newUnit.semester.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, semester: parseInt(value) }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Semester 1</SelectItem>
+                        <SelectItem value="2">Semester 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="credits">Credits</Label>
+                    <Input
+                      id="credits"
+                      type="number"
+                      value={newUnit.credits}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, credits: parseInt(e.target.value) || 0 }))}
+                      min="1"
+                      max="6"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">Capacity</Label>
+                    <Input
+                      id="capacity"
+                      type="number"
+                      value={newUnit.capacity}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))}
+                      min="1"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newUnit.description}
+                    onChange={(e) => setNewUnit(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief description of the unit..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="schedule">Schedule (Optional)</Label>
+                  <Input
+                    id="schedule"
+                    value={newUnit.schedule}
+                    onChange={(e) => setNewUnit(prev => ({ ...prev, schedule: e.target.value }))}
+                    placeholder="e.g., Mon, Wed, Fri 8:00-10:00 AM"
+                  />
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="name">Unit Name *</Label>
-                <Input
-                  id="name"
-                  value={newUnit.name}
-                  onChange={(e) => setNewUnit(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Introduction to Programming"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="department">Department *</Label>
-                <Select value={newUnit.department} onValueChange={(value) => setNewUnit(prev => ({ ...prev, department: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="course">Course *</Label>
-                <Select value={newUnit.course} onValueChange={(value) => setNewUnit(prev => ({ ...prev, course: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map(course => (
-                      <SelectItem key={course} value={course}>{course}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="year">Year</Label>
-                <Select value={newUnit.year.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, year: parseInt(value) }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Year 1</SelectItem>
-                    <SelectItem value="2">Year 2</SelectItem>
-                    <SelectItem value="3">Year 3</SelectItem>
-                    <SelectItem value="4">Year 4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="semester">Semester</Label>
-                <Select value={newUnit.semester.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, semester: parseInt(value) }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Semester 1</SelectItem>
-                    <SelectItem value="2">Semester 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="credits">Credits</Label>
-                <Input
-                  id="credits"
-                  type="number"
-                  value={newUnit.credits}
-                  onChange={(e) => setNewUnit(prev => ({ ...prev, credits: parseInt(e.target.value) || 0 }))}
-                  min="1"
-                  max="6"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={newUnit.capacity}
-                  onChange={(e) => setNewUnit(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))}
-                  min="1"
-                />
-              </div>
-            </div>
+            </ScrollArea>
             
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newUnit.description}
-                onChange={(e) => setNewUnit(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Brief description of the unit..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="schedule">Schedule (Optional)</Label>
-              <Input
-                id="schedule"
-                value={newUnit.schedule}
-                onChange={(e) => setNewUnit(prev => ({ ...prev, schedule: e.target.value }))}
-                placeholder="e.g., Mon, Wed, Fri 8:00-10:00 AM"
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
