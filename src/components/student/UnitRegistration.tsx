@@ -4,28 +4,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PendingRegistrations } from "./registration/PendingRegistrations";
 import { CourseYearSelector } from "./registration/CourseYearSelector";
 import { UnitCard } from "./registration/UnitCard";
 import { courseUnits } from "./registration/courseUnitsData";
 import { PendingRegistration } from "./registration/types";
 
-const initialPendingRegistrations: PendingRegistration[] = [
-  {
-    id: "1",
-    unitCode: "PROG101",
-    unitName: "Introduction to Programming",
-    status: 'pending',
-    submittedDate: "2024-01-15"
-  }
-];
-
 export const UnitRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>(initialPendingRegistrations);
   const { toast } = useToast();
+  const { user, addPendingUnitRegistration, pendingUnitRegistrations } = useAuth();
+
+  // Filter pending registrations for current user
+  const userPendingRegistrations: PendingRegistration[] = pendingUnitRegistrations
+    .filter(reg => reg.studentId === user?.id)
+    .map(reg => ({
+      id: reg.id,
+      unitCode: reg.unitCode,
+      unitName: reg.unitName,
+      status: reg.status,
+      submittedDate: reg.submittedDate
+    }));
 
   const availableUnits = selectedCourse && selectedYear 
     ? courseUnits[selectedCourse]?.[parseInt(selectedYear)] || []
@@ -38,16 +40,18 @@ export const UnitRegistration = () => {
 
   const handleRegister = (unitId: string) => {
     const unit = availableUnits.find(u => u.id === unitId);
-    if (unit) {
-      const newRegistration: PendingRegistration = {
-        id: Date.now().toString(),
+    if (unit && user) {
+      // Add to global context
+      addPendingUnitRegistration({
+        studentId: user.id,
+        studentName: `${user.firstName} ${user.lastName}`,
+        studentEmail: user.email,
         unitCode: unit.code,
         unitName: unit.name,
-        status: 'pending',
-        submittedDate: new Date().toISOString().split('T')[0]
-      };
-      
-      setPendingRegistrations(prev => [...prev, newRegistration]);
+        course: user.course || selectedCourse,
+        year: parseInt(selectedYear),
+        semester: parseInt(unit.semester)
+      });
       
       toast({
         title: "Registration Pending for Approval", 
@@ -73,7 +77,7 @@ export const UnitRegistration = () => {
         <h2 className="text-2xl font-bold">Unit Registration</h2>
       </div>
 
-      <PendingRegistrations registrations={pendingRegistrations} />
+      <PendingRegistrations registrations={userPendingRegistrations} />
 
       <CourseYearSelector
         selectedCourse={selectedCourse}
@@ -104,7 +108,7 @@ export const UnitRegistration = () => {
             <UnitCard
               key={unit.id}
               unit={unit}
-              pendingRegistrations={pendingRegistrations}
+              pendingRegistrations={userPendingRegistrations}
               onRegister={handleRegister}
               onJoinWhatsApp={handleJoinWhatsApp}
               onJoinDiscussion={handleJoinDiscussion}
