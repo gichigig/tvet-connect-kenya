@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -14,6 +13,8 @@ interface User {
   course?: string;
   level?: 'diploma' | 'certificate';
   intake?: 'january' | 'may' | 'september';
+  year?: number;
+  semester?: number;
 }
 
 interface AuthContextType {
