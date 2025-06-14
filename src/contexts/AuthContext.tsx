@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -34,13 +33,17 @@ export const useAuth = () => {
   return context;
 };
 
+// Admin credentials
+const ADMIN_EMAIL = 'billyblund17@gmail.com';
+const ADMIN_PASSWORD = 'billybill';
+
 // Mock users database
 const mockUsers: User[] = [
   {
     id: 'admin-1',
-    email: 'admin@tvetkenya.ac.ke',
-    firstName: 'Admin',
-    lastName: 'User',
+    email: ADMIN_EMAIL,
+    firstName: 'Billy',
+    lastName: 'Blund',
     role: 'admin',
     approved: true
   }
@@ -65,6 +68,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    // Check for admin credentials first
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const adminUser = users.find(u => u.email === ADMIN_EMAIL) || mockUsers[0];
+      setUser(adminUser);
+      localStorage.setItem('user', JSON.stringify(adminUser));
+      return true;
+    }
+    
     // Find user in our mock database
     const foundUser = users.find(u => u.email === email);
     
