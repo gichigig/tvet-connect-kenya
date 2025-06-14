@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PendingRegistrations } from "./registration/PendingRegistrations";
 import { CourseYearSelector } from "./registration/CourseYearSelector";
 import { UnitCard } from "./registration/UnitCard";
-import { courseUnits } from "./registration/courseUnitsData";
 import { PendingRegistration } from "./registration/types";
 
 export const UnitRegistration = () => {
@@ -29,8 +28,13 @@ export const UnitRegistration = () => {
       submittedDate: reg.submittedDate
     }));
 
+  // Mock units data - this should come from the registrar's created units
+  // In a real app, this would be fetched from the context or API
   const availableUnits = selectedCourse && selectedYear 
-    ? courseUnits[selectedCourse]?.[parseInt(selectedYear)] || []
+    ? [
+        // For now, showing empty array since registrar needs to create units first
+        // This will be populated when registrar creates units for specific courses/years
+      ]
     : [];
 
   const filteredUnits = availableUnits.filter(unit =>
@@ -120,7 +124,10 @@ export const UnitRegistration = () => {
       {selectedCourse && selectedYear && filteredUnits.length === 0 && !searchTerm && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No units available for {selectedCourse} Year {selectedYear}.
+            No units have been created yet for {selectedCourse} Year {selectedYear}.
+          </p>
+          <p className="text-gray-400 text-sm mt-2">
+            Please contact the registrar to set up units for your course.
           </p>
         </div>
       )}
