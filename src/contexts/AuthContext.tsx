@@ -25,40 +25,121 @@ export interface PendingUnitRegistration {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+export interface Guardian {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  relationship: string;
+}
+
 export interface User {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string;
   role: string;
   approved: boolean;
+  blocked?: boolean;
   course?: string;
   level?: string;
   year?: number;
   semester?: number;
   admissionNumber?: string;
+  department?: string;
+  intake?: string;
+  guardians?: Guardian[];
+}
+
+export interface ExamResult {
+  id: string;
+  studentId: string;
+  studentName: string;
+  unitCode: string;
+  unitName: string;
+  examType: 'cat' | 'exam';
+  score: number;
+  maxScore: number;
+  grade: string;
+  status: 'pass' | 'fail';
+  examDate: string;
+  semester: number;
+  year: number;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: string) => Promise<void>;
+  login: (email: string, password: string, role?: string) => Promise<void>;
   signup: (userData: any) => Promise<void>;
   logout: () => void;
   users: User[];
+  isAuthenticated: boolean;
+  isAdmin: boolean;
   updateUserApproval: (userId: string, approved: boolean) => void;
+  approveUser: (userId: string) => void;
+  approveStudent: (userId: string) => void;
+  rejectUser: (userId: string) => void;
+  blockUser: (userId: string) => void;
+  unblockUser: (userId: string) => void;
   getPendingUsers: () => User[];
   getAllUsers: () => User[];
   pendingUnitRegistrations: PendingUnitRegistration[];
   addPendingUnitRegistration: (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => void;
   updateUnitRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected') => void;
   getPendingUnitRegistrations: () => PendingUnitRegistration[];
+  examResults: ExamResult[];
+  addExamResult: (result: Omit<ExamResult, 'id'>) => void;
+  sendResultsNotification: (resultIds: string[], sendToGuardians: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: "1",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@student.edu",
+      phone: "+254712345678",
+      role: "student",
+      approved: true,
+      course: "Computer Science",
+      level: "Diploma",
+      year: 2,
+      semester: 1,
+      admissionNumber: "CS/2023/001",
+      guardians: [
+        {
+          id: "g1",
+          name: "Jane Doe",
+          email: "jane.doe@email.com",
+          phone: "+254722345678",
+          relationship: "Mother"
+        }
+      ]
+    },
+    {
+      id: "2",
+      firstName: "Admin",
+      lastName: "User",
+      email: "admin@tvet.edu",
+      role: "admin",
+      approved: true,
+      department: "Administration"
+    },
+    {
+      id: "3",
+      firstName: "Dr. Smith",
+      lastName: "HOD",
+      email: "hod@tvet.edu",
+      role: "hod",
+      approved: true,
+      department: "Computer Science"
+    }
+  ]);
   const navigate = useNavigate();
   
   const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>([
@@ -76,6 +157,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'pending'
     }
   ]);
+
+  const [examResults, setExamResults] = useState<ExamResult[]>([
+    {
+      id: "1",
+      studentId: "1",
+      studentName: "John Doe",
+      unitCode: "CS101",
+      unitName: "Introduction to Computer Science",
+      examType: "exam",
+      score: 85,
+      maxScore: 100,
+      grade: "A",
+      status: "pass",
+      examDate: "2024-01-20",
+      semester: 1,
+      year: 2024
+    }
+  ]);
+
+  const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
@@ -106,22 +208,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUsers();
   }, []);
 
-  const login = async (email: string, password: string, role: string) => {
+  const login = async (email: string, password: string, role?: string) => {
     try {
-      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
-      
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        if (userData.approved) {
-          setUser({ id: firebaseUser.uid, ...userData });
-          navigate('/');
-        } else {
-          signOut(auth);
-          throw new Error('Your account is not yet approved. Please wait for admin approval.');
-        }
+      // Mock login - find user by email
+      const foundUser = users.find(u => u.email === email);
+      if (foundUser && foundUser.approved) {
+        setUser(foundUser);
+        navigate('/');
       } else {
-        throw new Error('User data not found in Firestore.');
+        throw new Error('Invalid credentials or account not approved.');
       }
     } catch (error: any) {
       console.error("Login failed:", error.message);
@@ -132,16 +227,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (userData: any) => {
     try {
       const { email, password, firstName, lastName, role, course, level, year, semester, admissionNumber } = userData;
-      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
-
-      await updateProfile(firebaseUser, {
-        displayName: `${firstName} ${lastName}`,
-      });
-
-      await sendEmailVerification(firebaseUser);
       
       const newUser: User = {
-        id: firebaseUser.uid,
+        id: Date.now().toString(),
         firstName,
         lastName,
         email,
@@ -154,11 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         admissionNumber
       };
 
-      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-      
       setUsers(prevUsers => [...prevUsers, newUser]);
-      localStorage.setItem('users', JSON.stringify([...users, newUser]));
-
       setUser(newUser);
       navigate('/');
     } catch (error: any) {
@@ -169,7 +253,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await signOut(auth);
       setUser(null);
       navigate('/login');
     } catch (error: any) {
@@ -178,16 +261,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserApproval = (userId: string, approved: boolean) => {
-    setUsers(prevUsers => {
-      const updatedUsers = prevUsers.map(user => {
-        if (user.id === userId) {
-          return { ...user, approved };
-        }
-        return user;
-      });
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-      return updatedUsers;
-    });
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId ? { ...user, approved } : user
+      )
+    );
+  };
+
+  const approveUser = (userId: string) => {
+    updateUserApproval(userId, true);
+  };
+
+  const approveStudent = (userId: string) => {
+    updateUserApproval(userId, true);
+  };
+
+  const rejectUser = (userId: string) => {
+    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+  };
+
+  const blockUser = (userId: string) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId ? { ...user, blocked: true } : user
+      )
+    );
+  };
+
+  const unblockUser = (userId: string) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId ? { ...user, blocked: false } : user
+      )
+    );
   };
 
   const getPendingUsers = () => {
@@ -220,19 +326,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return pendingUnitRegistrations.filter(reg => reg.status === 'pending');
   };
 
+  const addExamResult = (result: Omit<ExamResult, 'id'>) => {
+    const newResult: ExamResult = {
+      ...result,
+      id: Date.now().toString()
+    };
+    setExamResults(prev => [...prev, newResult]);
+  };
+
+  const sendResultsNotification = async (resultIds: string[], sendToGuardians: boolean) => {
+    try {
+      const selectedResults = examResults.filter(result => resultIds.includes(result.id));
+      
+      for (const result of selectedResults) {
+        const student = users.find(u => u.id === result.studentId);
+        if (!student) continue;
+
+        // Send to student
+        console.log(`Sending result notification to student: ${student.email}`);
+        console.log(`SMS to: ${student.phone}`);
+        console.log(`Result: ${result.unitName} - ${result.grade} (${result.status})`);
+
+        // Send to guardians if requested
+        if (sendToGuardians && student.guardians) {
+          for (const guardian of student.guardians) {
+            console.log(`Sending result notification to guardian: ${guardian.email}`);
+            console.log(`SMS to guardian: ${guardian.phone}`);
+            console.log(`Student: ${student.firstName} ${student.lastName} - ${result.unitName} - ${result.grade} (${result.status})`);
+          }
+        }
+      }
+
+      // In a real implementation, this would call actual email/SMS services
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Failed to send notifications:", error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     login,
     signup,
     logout,
     users,
+    isAuthenticated,
+    isAdmin,
     updateUserApproval,
+    approveUser,
+    approveStudent,
+    rejectUser,
+    blockUser,
+    unblockUser,
     getPendingUsers,
     getAllUsers,
     pendingUnitRegistrations,
     addPendingUnitRegistration,
     updateUnitRegistrationStatus,
-    getPendingUnitRegistrations
+    getPendingUnitRegistrations,
+    examResults,
+    addExamResult,
+    sendResultsNotification
   };
 
   return (
