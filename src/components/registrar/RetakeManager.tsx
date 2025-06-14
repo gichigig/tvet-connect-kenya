@@ -51,7 +51,7 @@ export const RetakeManager = () => {
     {
       id: "2",
       studentId: "STU2024002",
-      unitName: "Jane Smith",
+      studentName: "Jane Smith",
       unitCode: "MATH101",
       unitName: "Calculus I",
       previousGrade: "D",
