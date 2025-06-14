@@ -10,47 +10,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Upload, Download, Eye, Edit, Trash2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Note {
-  id: string;
-  title: string;
-  course: string;
-  topic: string;
-  uploadDate: string;
-  fileSize: string;
-  downloads: number;
-  type: 'pdf' | 'doc' | 'ppt' | 'txt';
-}
+import { useAuth } from "@/contexts/AuthContext";
 
 export const NotesManager = () => {
   const { toast } = useToast();
+  const { user, createdUnits, createdContent, addCreatedContent } = useAuth();
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: 'Introduction to Algorithms',
-      course: 'Computer Science 101',
-      topic: 'Sorting Algorithms',
-      uploadDate: '2024-06-10',
-      fileSize: '2.5 MB',
-      downloads: 45,
-      type: 'pdf'
-    },
-    {
-      id: '2',
-      title: 'Calculus Fundamentals',
-      course: 'Mathematics 201',
-      topic: 'Derivatives and Integrals',
-      uploadDate: '2024-06-12',
-      fileSize: '1.8 MB',
-      downloads: 32,
-      type: 'pdf'
-    }
-  ]);
+
+  // Get units assigned to current lecturer
+  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+  
+  // Get notes created by current lecturer
+  const notes = createdContent.filter(content => 
+    content.type === 'notes' && content.lecturerId === user?.id
+  );
 
   const [formData, setFormData] = useState({
     title: '',
-    course: '',
+    unitCode: '',
     topic: '',
     description: '',
     files: null as File[] | null
@@ -68,24 +45,36 @@ export const NotesManager = () => {
       return;
     }
 
+    const selectedUnit = assignedUnits.find(unit => unit.code === formData.unitCode);
+    if (!selectedUnit) {
+      toast({
+        title: "Error",
+        description: "Please select a valid unit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     formData.files.forEach((file, index) => {
-      const newNote: Note = {
+      const newNote = {
         id: `${Date.now()}-${index}`,
+        type: 'notes' as const,
         title: formData.title || file.name,
-        course: formData.course,
-        topic: formData.topic,
-        uploadDate: new Date().toISOString().split('T')[0],
-        fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        downloads: 0,
-        type: file.name.split('.').pop() as Note['type'] || 'pdf'
+        description: formData.description,
+        unitCode: formData.unitCode,
+        unitName: selectedUnit.name,
+        lecturerId: user?.id || '',
+        createdAt: new Date().toISOString(),
+        fileName: file.name,
+        topic: formData.topic
       };
 
-      setNotes(prev => [...prev, newNote]);
+      addCreatedContent(newNote);
     });
 
     setFormData({
       title: '',
-      course: '',
+      unitCode: '',
       topic: '',
       description: '',
       files: null
@@ -104,14 +93,22 @@ export const NotesManager = () => {
     }
   };
 
-  const getFileTypeColor = (type: string) => {
-    switch (type) {
+  const getFileTypeColor = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
       case 'pdf': return 'bg-red-100 text-red-800';
-      case 'doc': return 'bg-blue-100 text-blue-800';
-      case 'ppt': return 'bg-orange-100 text-orange-800';
+      case 'doc':
+      case 'docx': return 'bg-blue-100 text-blue-800';
+      case 'ppt':
+      case 'pptx': return 'bg-orange-100 text-orange-800';
       case 'txt': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getFileSize = (fileName: string) => {
+    // Since we don't have actual file size, return a placeholder
+    return "N/A";
   };
 
   return (
@@ -146,16 +143,17 @@ export const NotesManager = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="course">Course</Label>
-                  <Select value={formData.course} onValueChange={(value) => setFormData({ ...formData, course: value })}>
+                  <Label htmlFor="unitCode">Unit</Label>
+                  <Select value={formData.unitCode} onValueChange={(value) => setFormData({ ...formData, unitCode: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
+                      <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Computer Science 101">Computer Science 101</SelectItem>
-                      <SelectItem value="Mathematics 201">Mathematics 201</SelectItem>
-                      <SelectItem value="Physics 301">Physics 301</SelectItem>
-                      <SelectItem value="Chemistry 101">Chemistry 101</SelectItem>
+                      {assignedUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.code}>
+                          {unit.code} - {unit.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -222,58 +220,64 @@ export const NotesManager = () => {
           <CardDescription>Manage your uploaded course materials</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Topic</TableHead>
-                <TableHead>Upload Date</TableHead>
-                <TableHead>File Size</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Downloads</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {notes.map((note) => (
-                <TableRow key={note.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      <FileText className="w-4 h-4 mr-2 text-gray-500" />
-                      {note.title}
-                    </div>
-                  </TableCell>
-                  <TableCell>{note.course}</TableCell>
-                  <TableCell>{note.topic}</TableCell>
-                  <TableCell>{new Date(note.uploadDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{note.fileSize}</TableCell>
-                  <TableCell>
-                    <Badge className={getFileTypeColor(note.type)}>
-                      {note.type.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{note.downloads}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {notes.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Topic</TableHead>
+                  <TableHead>Upload Date</TableHead>
+                  <TableHead>File Size</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {notes.map((note) => (
+                  <TableRow key={note.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2 text-gray-500" />
+                        {note.title}
+                      </div>
+                    </TableCell>
+                    <TableCell>{note.unitCode}</TableCell>
+                    <TableCell>{note.topic || '-'}</TableCell>
+                    <TableCell>{new Date(note.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{getFileSize(note.fileName || '')}</TableCell>
+                    <TableCell>
+                      <Badge className={getFileTypeColor(note.fileName || '')}>
+                        {note.fileName?.split('.').pop()?.toUpperCase() || 'FILE'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p>No course materials uploaded yet.</p>
+              <p className="text-sm">Upload your first notes using the button above.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

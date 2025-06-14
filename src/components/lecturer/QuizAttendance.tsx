@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Clock, Play, Square, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QuizQuestion {
   id: string;
@@ -20,7 +22,8 @@ interface QuizQuestion {
 interface AttendanceQuiz {
   id: string;
   title: string;
-  course: string;
+  unitCode: string;
+  unitName: string;
   questions: QuizQuestion[];
   timeLimit: number; // in minutes
   isActive: boolean;
@@ -32,30 +35,16 @@ interface AttendanceQuiz {
 
 export const QuizAttendance = () => {
   const { toast } = useToast();
+  const { user, createdUnits } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [quizzes, setQuizzes] = useState<AttendanceQuiz[]>([
-    {
-      id: '1',
-      title: 'Daily Attendance Quiz - CS101',
-      course: 'Computer Science 101',
-      questions: [
-        {
-          id: '1',
-          question: 'What is the time complexity of binary search?',
-          options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
-          correctAnswer: 1
-        }
-      ],
-      timeLimit: 5,
-      isActive: false,
-      responses: 23,
-      createdDate: '2024-06-14'
-    }
-  ]);
+  const [quizzes, setQuizzes] = useState<AttendanceQuiz[]>([]);
+
+  // Get units assigned to current lecturer
+  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
 
   const [formData, setFormData] = useState({
     title: '',
-    course: '',
+    unitCode: '',
     timeLimit: '5',
     questions: [
       {
@@ -108,10 +97,21 @@ export const QuizAttendance = () => {
       return;
     }
 
+    const selectedUnit = assignedUnits.find(unit => unit.code === formData.unitCode);
+    if (!selectedUnit) {
+      toast({
+        title: "Error",
+        description: "Please select a valid unit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newQuiz: AttendanceQuiz = {
       id: Date.now().toString(),
       title: formData.title,
-      course: formData.course,
+      unitCode: formData.unitCode,
+      unitName: selectedUnit.name,
       questions: validQuestions.map((q, index) => ({
         id: (index + 1).toString(),
         question: q.question,
@@ -127,7 +127,7 @@ export const QuizAttendance = () => {
     setQuizzes([...quizzes, newQuiz]);
     setFormData({
       title: '',
-      course: '',
+      unitCode: '',
       timeLimit: '5',
       questions: [
         {
@@ -246,16 +246,17 @@ export const QuizAttendance = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="course">Course</Label>
-                  <Select value={formData.course} onValueChange={(value) => setFormData({ ...formData, course: value })}>
+                  <Label htmlFor="unitCode">Unit</Label>
+                  <Select value={formData.unitCode} onValueChange={(value) => setFormData({ ...formData, unitCode: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
+                      <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Computer Science 101">Computer Science 101</SelectItem>
-                      <SelectItem value="Mathematics 201">Mathematics 201</SelectItem>
-                      <SelectItem value="Physics 301">Physics 301</SelectItem>
-                      <SelectItem value="Chemistry 101">Chemistry 101</SelectItem>
+                      {assignedUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.code}>
+                          {unit.code} - {unit.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -351,63 +352,70 @@ export const QuizAttendance = () => {
           <CardDescription>Manage your attendance verification quizzes</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Questions</TableHead>
-                <TableHead>Time Limit</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Responses</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quizzes.map((quiz) => (
-                <TableRow key={quiz.id}>
-                  <TableCell className="font-medium">{quiz.title}</TableCell>
-                  <TableCell>{quiz.course}</TableCell>
-                  <TableCell>{quiz.questions.length}</TableCell>
-                  <TableCell>{quiz.timeLimit} min</TableCell>
-                  <TableCell>
-                    {quiz.isActive ? (
-                      <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Active
-                        </Badge>
-                        {activeQuizTimer[quiz.id] && (
-                          <span className="text-sm font-mono text-red-600">
-                            {formatTime(activeQuizTimer[quiz.id])}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{quiz.responses}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {quiz.isActive ? (
-                        <Button size="sm" variant="destructive" onClick={() => handleStopQuiz(quiz.id)}>
-                          <Square className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <Button size="sm" onClick={() => handleStartQuiz(quiz.id)}>
-                          <Play className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {quizzes.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Questions</TableHead>
+                  <TableHead>Time Limit</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Responses</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {quizzes.map((quiz) => (
+                  <TableRow key={quiz.id}>
+                    <TableCell className="font-medium">{quiz.title}</TableCell>
+                    <TableCell>{quiz.unitCode} - {quiz.unitName}</TableCell>
+                    <TableCell>{quiz.questions.length}</TableCell>
+                    <TableCell>{quiz.timeLimit} min</TableCell>
+                    <TableCell>
+                      {quiz.isActive ? (
+                        <div className="flex items-center space-x-2">
+                          <Badge className="bg-green-100 text-green-800">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Active
+                          </Badge>
+                          {activeQuizTimer[quiz.id] && (
+                            <span className="text-sm font-mono text-red-600">
+                              {formatTime(activeQuizTimer[quiz.id])}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge variant="secondary">Inactive</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{quiz.responses}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {quiz.isActive ? (
+                          <Button size="sm" variant="destructive" onClick={() => handleStopQuiz(quiz.id)}>
+                            <Square className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => handleStartQuiz(quiz.id)}>
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No attendance quizzes created yet.</p>
+              <p className="text-sm">Create your first quiz using the button above.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Users, Save, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Student {
   id: string;
@@ -21,7 +22,8 @@ interface Student {
 
 interface AttendanceRecord {
   id: string;
-  course: string;
+  unitCode: string;
+  unitName: string;
   date: string;
   totalStudents: number;
   presentStudents: number;
@@ -30,33 +32,21 @@ interface AttendanceRecord {
 
 export const AttendanceManager = () => {
   const { toast } = useToast();
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const { user, createdUnits } = useAuth();
+  const [selectedUnit, setSelectedUnit] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
+
+  // Get units assigned to current lecturer
+  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+
+  // Mock students for the selected unit - in a real app, this would come from enrollment data
   const [students, setStudents] = useState<Student[]>([
     { id: '1', name: 'John Smith', studentId: 'CS001', email: 'john@student.edu', present: false },
     { id: '2', name: 'Jane Doe', studentId: 'CS002', email: 'jane@student.edu', present: false },
     { id: '3', name: 'Bob Johnson', studentId: 'CS003', email: 'bob@student.edu', present: false },
     { id: '4', name: 'Alice Brown', studentId: 'CS004', email: 'alice@student.edu', present: false },
     { id: '5', name: 'Charlie Davis', studentId: 'CS005', email: 'charlie@student.edu', present: false },
-  ]);
-
-  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([
-    {
-      id: '1',
-      course: 'Computer Science 101',
-      date: '2024-06-10',
-      totalStudents: 25,
-      presentStudents: 23,
-      attendanceRate: 92
-    },
-    {
-      id: '2',
-      course: 'Mathematics 201',
-      date: '2024-06-11',
-      totalStudents: 30,
-      presentStudents: 28,
-      attendanceRate: 93.3
-    }
   ]);
 
   const handleStudentAttendance = (studentId: string, present: boolean) => {
@@ -70,10 +60,20 @@ export const AttendanceManager = () => {
   };
 
   const handleSaveAttendance = () => {
-    if (!selectedCourse) {
+    if (!selectedUnit) {
       toast({
         title: "Error",
-        description: "Please select a course first.",
+        description: "Please select a unit first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedUnitData = assignedUnits.find(unit => unit.code === selectedUnit);
+    if (!selectedUnitData) {
+      toast({
+        title: "Error",
+        description: "Selected unit not found.",
         variant: "destructive",
       });
       return;
@@ -84,7 +84,8 @@ export const AttendanceManager = () => {
 
     const newRecord: AttendanceRecord = {
       id: Date.now().toString(),
-      course: selectedCourse,
+      unitCode: selectedUnitData.code,
+      unitName: selectedUnitData.name,
       date: selectedDate,
       totalStudents: students.length,
       presentStudents,
@@ -95,7 +96,7 @@ export const AttendanceManager = () => {
 
     toast({
       title: "Attendance Saved",
-      description: `Attendance for ${selectedCourse} on ${selectedDate} has been saved.`,
+      description: `Attendance for ${selectedUnitData.code} on ${selectedDate} has been saved.`,
     });
 
     // Reset attendance for next session
@@ -127,16 +128,17 @@ export const AttendanceManager = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="course">Course</Label>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <Label htmlFor="unit">Unit</Label>
+              <Select value={selectedUnit} onValueChange={setSelectedUnit}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select course" />
+                  <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Computer Science 101">Computer Science 101</SelectItem>
-                  <SelectItem value="Mathematics 201">Mathematics 201</SelectItem>
-                  <SelectItem value="Physics 301">Physics 301</SelectItem>
-                  <SelectItem value="Chemistry 101">Chemistry 101</SelectItem>
+                  {assignedUnits.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.code}>
+                      {unit.code} - {unit.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -151,7 +153,7 @@ export const AttendanceManager = () => {
             </div>
           </div>
 
-          {selectedCourse && (
+          {selectedUnit && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -222,34 +224,43 @@ export const AttendanceManager = () => {
               Export Report
             </Button>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Total Students</TableHead>
-                <TableHead>Present</TableHead>
-                <TableHead>Attendance Rate</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendanceHistory.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.course}</TableCell>
-                  <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{record.totalStudents}</TableCell>
-                  <TableCell>{record.presentStudents}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={record.attendanceRate >= 80 ? "default" : "destructive"}
-                    >
-                      {record.attendanceRate}%
-                    </Badge>
-                  </TableCell>
+          {attendanceHistory.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Total Students</TableHead>
+                  <TableHead>Present</TableHead>
+                  <TableHead>Attendance Rate</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {attendanceHistory.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">
+                      {record.unitCode} - {record.unitName}
+                    </TableCell>
+                    <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{record.totalStudents}</TableCell>
+                    <TableCell>{record.presentStudents}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={record.attendanceRate >= 80 ? "default" : "destructive"}
+                      >
+                        {record.attendanceRate}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No attendance records yet.</p>
+              <p className="text-sm">Records will appear here after you save attendance.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

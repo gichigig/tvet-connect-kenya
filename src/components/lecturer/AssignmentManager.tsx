@@ -10,74 +10,67 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Upload, Eye, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Assignment {
-  id: string;
-  title: string;
-  course: string;
-  description: string;
-  dueDate: string;
-  totalMarks: number;
-  submissions: number;
-  status: 'active' | 'closed' | 'draft';
-}
+import { useAuth } from "@/contexts/AuthContext";
 
 export const AssignmentManager = () => {
   const { toast } = useToast();
+  const { user, createdUnits, createdContent, addCreatedContent } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [assignments, setAssignments] = useState<Assignment[]>([
-    {
-      id: '1',
-      title: 'Data Structures Project',
-      course: 'Computer Science 101',
-      description: 'Implement a binary search tree with full CRUD operations',
-      dueDate: '2024-07-01',
-      totalMarks: 100,
-      submissions: 23,
-      status: 'active'
-    },
-    {
-      id: '2',
-      title: 'Calculus Problem Set',
-      course: 'Mathematics 201',
-      description: 'Solve integration and differentiation problems',
-      dueDate: '2024-06-25',
-      totalMarks: 50,
-      submissions: 31,
-      status: 'active'
-    }
-  ]);
+
+  // Get units assigned to current lecturer
+  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+  
+  // Get assignments created by current lecturer
+  const assignments = createdContent.filter(content => 
+    content.type === 'assignment' && content.lecturerId === user?.id
+  );
 
   const [formData, setFormData] = useState({
     title: '',
-    course: '',
+    unitCode: '',
     description: '',
     dueDate: '',
-    totalMarks: '',
+    assignmentType: 'practical',
+    acceptedFormats: [] as string[],
     attachments: null as File[] | null
   });
 
   const handleCreateAssignment = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newAssignment: Assignment = {
+    const selectedUnit = assignedUnits.find(unit => unit.code === formData.unitCode);
+    if (!selectedUnit) {
+      toast({
+        title: "Error",
+        description: "Please select a valid unit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newAssignment = {
       id: Date.now().toString(),
+      type: 'assignment' as const,
       title: formData.title,
-      course: formData.course,
       description: formData.description,
+      unitCode: formData.unitCode,
+      unitName: selectedUnit.name,
+      lecturerId: user?.id || '',
+      createdAt: new Date().toISOString(),
       dueDate: formData.dueDate,
-      totalMarks: parseInt(formData.totalMarks),
-      submissions: 0,
-      status: 'active'
+      assignmentType: formData.assignmentType as 'practical' | 'theory' | 'project',
+      acceptedFormats: formData.acceptedFormats,
+      questionFileName: formData.attachments?.[0]?.name
     };
 
-    setAssignments([...assignments, newAssignment]);
+    addCreatedContent(newAssignment);
     setFormData({
       title: '',
-      course: '',
+      unitCode: '',
       description: '',
       dueDate: '',
-      totalMarks: '',
+      assignmentType: 'practical',
+      acceptedFormats: [],
       attachments: null
     });
     setShowCreateForm(false);
@@ -94,13 +87,24 @@ export const AssignmentManager = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-red-100 text-red-800';
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleFormatChange = (format: string, checked: boolean) => {
+    if (checked) {
+      setFormData({ ...formData, acceptedFormats: [...formData.acceptedFormats, format] });
+    } else {
+      setFormData({ 
+        ...formData, 
+        acceptedFormats: formData.acceptedFormats.filter(f => f !== format) 
+      });
     }
+  };
+
+  const getStatusColor = (dueDate: string) => {
+    const due = new Date(dueDate);
+    const now = new Date();
+    const isOverdue = due < now;
+    
+    if (isOverdue) return 'bg-red-100 text-red-800';
+    return 'bg-green-100 text-green-800';
   };
 
   return (
@@ -136,16 +140,17 @@ export const AssignmentManager = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="course">Course</Label>
-                  <Select value={formData.course} onValueChange={(value) => setFormData({ ...formData, course: value })}>
+                  <Label htmlFor="unitCode">Unit</Label>
+                  <Select value={formData.unitCode} onValueChange={(value) => setFormData({ ...formData, unitCode: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
+                      <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Computer Science 101">Computer Science 101</SelectItem>
-                      <SelectItem value="Mathematics 201">Mathematics 201</SelectItem>
-                      <SelectItem value="Physics 301">Physics 301</SelectItem>
-                      <SelectItem value="Chemistry 101">Chemistry 101</SelectItem>
+                      {assignedUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.code}>
+                          {unit.code} - {unit.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -168,32 +173,49 @@ export const AssignmentManager = () => {
                   <Label htmlFor="dueDate">Due Date</Label>
                   <Input
                     id="dueDate"
-                    type="date"
+                    type="datetime-local"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="totalMarks">Total Marks</Label>
-                  <Input
-                    id="totalMarks"
-                    type="number"
-                    value={formData.totalMarks}
-                    onChange={(e) => setFormData({ ...formData, totalMarks: e.target.value })}
-                    placeholder="Enter total marks"
-                    required
-                  />
+                  <Label htmlFor="assignmentType">Assignment Type</Label>
+                  <Select value={formData.assignmentType} onValueChange={(value) => setFormData({ ...formData, assignmentType: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="practical">Practical</SelectItem>
+                      <SelectItem value="theory">Theory</SelectItem>
+                      <SelectItem value="project">Project</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="attachments">Attachments (Optional)</Label>
+                <Label>Accepted Submission Formats</Label>
+                <div className="flex gap-4">
+                  {['pdf', 'doc', 'docx', 'txt'].map((format) => (
+                    <label key={format} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.acceptedFormats.includes(format)}
+                        onChange={(e) => handleFormatChange(format, e.target.checked)}
+                      />
+                      <span className="text-sm">{format.toUpperCase()}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="attachments">Question File (Optional)</Label>
                 <Input
                   id="attachments"
                   type="file"
                   onChange={handleFileUpload}
-                  multiple
                   accept=".pdf,.doc,.docx,.txt"
                 />
                 {formData.attachments && (
@@ -220,48 +242,59 @@ export const AssignmentManager = () => {
           <CardDescription>Manage your created assignments</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Total Marks</TableHead>
-                <TableHead>Submissions</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assignments.map((assignment) => (
-                <TableRow key={assignment.id}>
-                  <TableCell className="font-medium">{assignment.title}</TableCell>
-                  <TableCell>{assignment.course}</TableCell>
-                  <TableCell>{new Date(assignment.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{assignment.totalMarks}</TableCell>
-                  <TableCell>{assignment.submissions}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(assignment.status)}>
-                      {assignment.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {assignments.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {assignments.map((assignment) => (
+                  <TableRow key={assignment.id}>
+                    <TableCell className="font-medium">{assignment.title}</TableCell>
+                    <TableCell>{assignment.unitCode}</TableCell>
+                    <TableCell>
+                      {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {assignment.assignmentType?.toUpperCase() || 'ASSIGNMENT'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={assignment.dueDate ? getStatusColor(assignment.dueDate) : 'bg-gray-100 text-gray-800'}>
+                        {assignment.dueDate && new Date(assignment.dueDate) < new Date() ? 'OVERDUE' : 'ACTIVE'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No assignments created yet.</p>
+              <p className="text-sm">Create your first assignment using the button above.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
