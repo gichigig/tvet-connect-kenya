@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Clock, Play, Stop, Eye } from "lucide-react";
+import { Plus, Clock, Play, Square, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuizQuestion {
@@ -393,7 +392,7 @@ export const QuizAttendance = () => {
                     <div className="flex space-x-2">
                       {quiz.isActive ? (
                         <Button size="sm" variant="destructive" onClick={() => handleStopQuiz(quiz.id)}>
-                          <Stop className="w-4 h-4" />
+                          <Square className="w-4 h-4" />
                         </Button>
                       ) : (
                         <Button size="sm" onClick={() => handleStartQuiz(quiz.id)}>
