@@ -64,11 +64,12 @@ export const UnitRegistration = () => {
         return;
       }
 
-      // Add to global context
+      // Add to global context with unitId included
       addPendingUnitRegistration({
         studentId: user.id,
         studentName: `${user.firstName} ${user.lastName}`,
         studentEmail: user.email,
+        unitId: unit.id,
         unitCode: unit.code,
         unitName: unit.name,
         course: user.course || selectedCourse,
