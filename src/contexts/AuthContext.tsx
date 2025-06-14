@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -57,22 +58,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check if user is logged in from localStorage
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      // Ensure admin user has correct role
+      if (parsedUser.email === ADMIN_EMAIL) {
+        const adminUser = { ...parsedUser, role: 'admin', approved: true };
+        setUser(adminUser);
+        localStorage.setItem('user', JSON.stringify(adminUser));
+      } else {
+        setUser(parsedUser);
+      }
     }
     
     // Load users from localStorage
     const savedUsers = localStorage.getItem('users');
     if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
+      const parsedUsers = JSON.parse(savedUsers);
+      // Ensure admin user exists and has correct role
+      const adminExists = parsedUsers.find((u: User) => u.email === ADMIN_EMAIL);
+      if (!adminExists) {
+        const updatedUsers = [...parsedUsers, mockUsers[0]];
+        setUsers(updatedUsers);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } else if (adminExists.role !== 'admin') {
+        const updatedUsers = parsedUsers.map((u: User) => 
+          u.email === ADMIN_EMAIL ? { ...u, role: 'admin', approved: true } : u
+        );
+        setUsers(updatedUsers);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } else {
+        setUsers(parsedUsers);
+      }
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log("Login attempt - email:", email, "password:", password);
+    
     // Check for admin credentials first
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const adminUser = users.find(u => u.email === ADMIN_EMAIL) || mockUsers[0];
+      console.log("Admin login detected");
+      const adminUser = {
+        id: 'admin-1',
+        email: ADMIN_EMAIL,
+        firstName: 'Billy',
+        lastName: 'Blund',
+        role: 'admin' as const,
+        approved: true
+      };
       setUser(adminUser);
       localStorage.setItem('user', JSON.stringify(adminUser));
+      console.log("Admin user set:", adminUser);
       return true;
     }
     
@@ -144,6 +179,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const getAllUsers = () => users;
   
   const getPendingUsers = () => users.filter(u => !u.approved && u.role !== 'admin');
+
+  console.log("AuthContext - user:", user);
+  console.log("AuthContext - isAdmin:", user?.role === 'admin');
 
   const value = {
     user,
