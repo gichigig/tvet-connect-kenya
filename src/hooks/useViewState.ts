@@ -17,25 +17,30 @@ export const useViewState = () => {
     console.log("useViewState - isAdmin:", isAdmin);
     console.log("useViewState - user role:", user?.role);
     
+    if (!user) {
+      console.log("No user, staying on current view");
+      return;
+    }
+
     if (isAdmin) {
       console.log("Setting view to admin");
       setCurrentView("admin");
-    } else if (user?.role === "finance") {
+    } else if (user.role === "finance") {
       console.log("Setting view to finance");
       setCurrentView("finance");
-    } else if (user?.role === "hod") {
+    } else if (user.role === "hod") {
       console.log("Setting view to hod");
       setCurrentView("hod");
-    } else if (user?.role === "lecturer") {
+    } else if (user.role === "lecturer") {
       console.log("Setting view to lecturer");
       setCurrentView("lecturer");
-    } else if (user?.role === "registrar") {
+    } else if (user.role === "registrar") {
       console.log("Setting view to registrar");
       setCurrentView("registrar");
-    } else if (user?.role === "student") {
+    } else if (user.role === "student") {
       console.log("Setting view to student");
       setCurrentView("student");
-    } else if (user) {
+    } else {
       console.log("Setting view to catalog for authenticated user");
       setCurrentView("catalog");
     }
