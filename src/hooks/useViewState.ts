@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod" | "student";
+type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod" | "student" | "finance";
 
 export const useViewState = () => {
   const { isAdmin, user } = useAuth();
@@ -20,6 +20,9 @@ export const useViewState = () => {
     if (isAdmin) {
       console.log("Setting view to admin");
       setCurrentView("admin");
+    } else if (user?.role === "finance") {
+      console.log("Setting view to finance");
+      setCurrentView("finance");
     } else if (user?.role === "hod") {
       console.log("Setting view to hod");
       setCurrentView("hod");
@@ -39,7 +42,9 @@ export const useViewState = () => {
   }, [isAdmin, user]);
 
   const handleBackToCatalog = () => {
-    if (user?.role === "hod") {
+    if (user?.role === "finance") {
+      setCurrentView("finance");
+    } else if (user?.role === "hod") {
       setCurrentView("hod");
     } else if (user?.role === "lecturer") {
       setCurrentView("lecturer");
