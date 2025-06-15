@@ -6,27 +6,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const NotificationSystem = () => {
   const { toast } = useToast();
-  const { studentFees, getAllUsers } = useAuth();
+  const { studentFees, getAllUsers, blockUser } = useAuth();
   const [messageType, setMessageType] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [sendSMS, setSendSMS] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [percentageThreshold, setPercentageThreshold] = useState("");
 
   const students = getAllUsers().filter(user => user.role === 'student' && user.approved);
 
+  const getStudentFinancialInfo = (studentId: string) => {
+    const studentFeeRecords = studentFees.filter(fee => fee.studentId === studentId);
+    const totalOwed = studentFeeRecords
+      .filter(fee => fee.status !== 'paid')
+      .reduce((total, fee) => total + (fee.amount - (fee.paidAmount || 0)), 0);
+    
+    const totalFees = studentFeeRecords.reduce((total, fee) => total + fee.amount, 0);
+    const totalPaid = studentFeeRecords.reduce((total, fee) => total + (fee.paidAmount || 0), 0);
+    
+    const percentagePaid = totalFees > 0 ? (totalPaid / totalFees) * 100 : 100;
+    const percentageOwing = 100 - percentagePaid;
+    
+    return {
+      totalOwed,
+      totalFees,
+      totalPaid,
+      percentagePaid,
+      percentageOwing
+    };
+  };
+
+  const getStudentsByPercentageThreshold = (threshold: number) => {
+    return students.filter(student => {
+      const financial = getStudentFinancialInfo(student.id);
+      return financial.percentageOwing >= threshold;
+    });
+  };
+
   const getStudentsWithOutstanding = () => {
     return students.filter(student => {
-      const balance = studentFees
-        .filter(fee => fee.studentId === student.id && fee.status !== 'paid')
-        .reduce((total, fee) => total + (fee.amount - (fee.paidAmount || 0)), 0);
-      return balance > 0;
+      const financial = getStudentFinancialInfo(student.id);
+      return financial.totalOwed > 0;
     });
   };
 
@@ -40,10 +67,11 @@ export const NotificationSystem = () => {
   };
 
   const messageTemplates = {
-    payment_reminder: "Dear {studentName}, this is a friendly reminder that you have an outstanding fee balance of KSh {amount}. Please make payment by {dueDate} to avoid any inconvenience. Thank you.",
-    overdue_notice: "Dear {studentName}, your payment of KSh {amount} is now overdue. Please settle this amount immediately to maintain your student status. Contact the finance office for assistance.",
+    payment_reminder: "Dear {studentName}, this is a friendly reminder that you have an outstanding fee balance of KSh {amount} ({percentage}% of total fees). Please make payment by {dueDate} to avoid any inconvenience. Thank you.",
+    overdue_notice: "Dear {studentName}, your payment of KSh {amount} is now overdue ({percentage}% of total fees unpaid). Please settle this amount immediately to maintain your student status. Contact the finance office for assistance.",
     payment_confirmation: "Dear {studentName}, we confirm receipt of your payment of KSh {amount} for {feeType}. Your receipt number is {receiptNumber}. Thank you for your payment.",
-    clearance_reminder: "Dear {studentName}, please ensure all outstanding fees are cleared before your clearance deadline. Current balance: KSh {amount}. Visit the finance office for more details."
+    clearance_reminder: "Dear {studentName}, please ensure all outstanding fees are cleared before your clearance deadline. Current balance: KSh {amount} ({percentage}% unpaid). Visit the finance office for more details.",
+    percentage_warning: "Dear {studentName}, you currently owe {percentage}% of your total fees (KSh {amount}). Immediate payment is required to avoid service interruption. Please visit the finance office."
   };
 
   const handleSendNotifications = () => {
@@ -66,6 +94,17 @@ export const NotificationSystem = () => {
       case 'overdue_notice':
         targetStudents = getOverdueStudents();
         break;
+      case 'percentage_warning':
+        if (!percentageThreshold) {
+          toast({
+            title: "Select Percentage",
+            description: "Please select a percentage threshold.",
+            variant: "destructive",
+          });
+          return;
+        }
+        targetStudents = getStudentsByPercentageThreshold(parseInt(percentageThreshold));
+        break;
       case 'custom':
         targetStudents = students.filter(s => selectedStudents.includes(s.id));
         messageTemplate = customMessage;
@@ -83,15 +122,14 @@ export const NotificationSystem = () => {
       return;
     }
 
-    // Simulate sending notifications
+    // Send notifications to selected students
     targetStudents.forEach(student => {
-      const balance = studentFees
-        .filter(fee => fee.studentId === student.id && fee.status !== 'paid')
-        .reduce((total, fee) => total + (fee.amount - (fee.paidAmount || 0)), 0);
-
+      const financial = getStudentFinancialInfo(student.id);
+      
       const personalizedMessage = messageTemplate
         .replace('{studentName}', `${student.firstName} ${student.lastName}`)
-        .replace('{amount}', balance.toLocaleString())
+        .replace('{amount}', financial.totalOwed.toLocaleString())
+        .replace('{percentage}', financial.percentageOwing.toFixed(1))
         .replace('{dueDate}', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString());
 
       if (sendSMS) {
@@ -112,6 +150,25 @@ export const NotificationSystem = () => {
     setMessageType("");
     setCustomMessage("");
     setSelectedStudents([]);
+    setPercentageThreshold("");
+  };
+
+  const handleBulkBlockByPercentage = (threshold: number) => {
+    const targetStudents = getStudentsByPercentageThreshold(threshold);
+    let blockedCount = 0;
+
+    targetStudents.forEach(student => {
+      if (!student.blocked) {
+        blockUser(student.id);
+        blockedCount++;
+      }
+    });
+
+    toast({
+      title: "Bulk Block Completed",
+      description: `${blockedCount} students with ${threshold}%+ unpaid fees have been blocked.`,
+      variant: "destructive",
+    });
   };
 
   const handleBulkReminder = (type: 'all' | 'overdue' | 'defaulters') => {
@@ -134,13 +191,12 @@ export const NotificationSystem = () => {
     }
 
     targetStudents.forEach(student => {
-      const balance = studentFees
-        .filter(fee => fee.studentId === student.id && fee.status !== 'paid')
-        .reduce((total, fee) => total + (fee.amount - (fee.paidAmount || 0)), 0);
+      const financial = getStudentFinancialInfo(student.id);
 
       const personalizedMessage = messageTemplate
         .replace('{studentName}', `${student.firstName} ${student.lastName}`)
-        .replace('{amount}', balance.toLocaleString());
+        .replace('{amount}', financial.totalOwed.toLocaleString())
+        .replace('{percentage}', financial.percentageOwing.toFixed(1));
 
       console.log(`Bulk notification to ${student.firstName}: ${personalizedMessage}`);
     });
@@ -157,10 +213,10 @@ export const NotificationSystem = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            Notification System
+            Notification & Access Control System
           </CardTitle>
           <CardDescription>
-            Send SMS and email reminders to students about payments
+            Send messages and block access based on payment percentages
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -169,40 +225,76 @@ export const NotificationSystem = () => {
               onClick={() => handleBulkReminder('all')}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Remind All Outstanding
+              Message All Outstanding
             </Button>
             <Button
               onClick={() => handleBulkReminder('overdue')}
               className="bg-orange-600 hover:bg-orange-700"
             >
-              Remind Overdue
+              Message Overdue
             </Button>
             <Button
               onClick={() => handleBulkReminder('defaulters')}
               className="bg-red-600 hover:bg-red-700"
             >
-              Remind Defaulters
+              Message Defaulters
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Percentage-Based Actions
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                onClick={() => handleBulkBlockByPercentage(40)}
+                variant="outline"
+                className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+              >
+                Block 40%+ Unpaid
+              </Button>
+              <Button
+                onClick={() => handleBulkBlockByPercentage(80)}
+                variant="outline"
+                className="border-orange-500 text-orange-700 hover:bg-orange-50"
+              >
+                Block 80%+ Unpaid
+              </Button>
+              <Button
+                onClick={() => handleBulkBlockByPercentage(100)}
+                variant="outline"
+                className="border-red-500 text-red-700 hover:bg-red-50"
+              >
+                Block 100% Unpaid
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-blue-600">
                 {getStudentsWithOutstanding().length}
               </div>
               <div className="text-sm text-blue-800">Outstanding Balances</div>
             </div>
+            <div className="bg-yellow-50 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {getStudentsByPercentageThreshold(40).length}
+              </div>
+              <div className="text-sm text-yellow-800">40%+ Unpaid</div>
+            </div>
             <div className="bg-orange-50 p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {getOverdueStudents().length}
+                {getStudentsByPercentageThreshold(80).length}
               </div>
-              <div className="text-sm text-orange-800">Overdue Payments</div>
+              <div className="text-sm text-orange-800">80%+ Unpaid</div>
             </div>
             <div className="bg-red-50 p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-red-600">
-                {students.filter(s => s.financialStatus === 'defaulter').length}
+                {getStudentsByPercentageThreshold(100).length}
               </div>
-              <div className="text-sm text-red-800">Defaulters</div>
+              <div className="text-sm text-red-800">100% Unpaid</div>
             </div>
           </div>
         </CardContent>
@@ -226,12 +318,30 @@ export const NotificationSystem = () => {
                 <SelectContent>
                   <SelectItem value="payment_reminder">Payment Reminder</SelectItem>
                   <SelectItem value="overdue_notice">Overdue Notice</SelectItem>
+                  <SelectItem value="percentage_warning">Percentage Warning</SelectItem>
                   <SelectItem value="payment_confirmation">Payment Confirmation</SelectItem>
                   <SelectItem value="clearance_reminder">Clearance Reminder</SelectItem>
                   <SelectItem value="custom">Custom Message</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {messageType === 'percentage_warning' && (
+              <div>
+                <Label htmlFor="percentage-threshold">Percentage Threshold</Label>
+                <Select value={percentageThreshold} onValueChange={setPercentageThreshold}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select percentage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="40">40% or more unpaid</SelectItem>
+                    <SelectItem value="60">60% or more unpaid</SelectItem>
+                    <SelectItem value="80">80% or more unpaid</SelectItem>
+                    <SelectItem value="100">100% unpaid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -262,7 +372,7 @@ export const NotificationSystem = () => {
                 rows={4}
               />
               <p className="text-sm text-gray-500 mt-1">
-                Use {"{studentName}"}, {"{amount}"}, {"{dueDate}"} for personalization
+                Use {"{studentName}"}, {"{amount}"}, {"{percentage}"}, {"{dueDate}"} for personalization
               </p>
             </div>
           )}
