@@ -85,6 +85,7 @@ export const mockPendingUnitRegistrations: PendingUnitRegistration[] = [
     unitId: 'cs201',
     unitCode: 'CS201',
     unitName: 'Data Structures',
+    course: 'Computer Science',
     year: 2,
     semester: 1,
     status: 'pending',
