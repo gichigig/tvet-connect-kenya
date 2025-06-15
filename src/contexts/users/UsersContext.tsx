@@ -241,6 +241,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getAllUsers = () => users;
 
   const addPendingUnitRegistration = async (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
+    // Convert camelCase keys to Supabase's snake_case.
     const newRegistration = {
       student_id: registration.studentId,
       student_name: registration.studentName,
@@ -274,6 +275,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addExamResult = async (result: Omit<ExamResult, 'id'>) => {
+    // Convert camelCase keys to Supabase's snake_case.
     const newResult = {
       student_id: result.studentId,
       student_name: result.studentName,
