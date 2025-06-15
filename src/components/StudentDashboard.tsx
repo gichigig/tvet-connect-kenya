@@ -73,7 +73,10 @@ export const StudentDashboard = () => {
 
     doc.text(`Name: ${user.firstName} ${user.lastName}`, 20, 45);
     doc.text(`Admission Number: ${user.admissionNumber || "-"}`, 20, 55);
-    doc.text(`Year of Study: ${user.yearOfStudy || "-"}`, 20, 65);
+
+    // Updated this line to use user.year, fallback to "-" if missing
+    doc.text(`Year of Study: ${user.year != null ? user.year : "-"}`, 20, 65);
+
     doc.text(`Course: ${user.course || "-"}`, 20, 75);
 
     doc.text("Units Registered:", 20, 85);
