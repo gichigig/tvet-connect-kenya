@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +27,8 @@ interface Scholarship {
 
 export const GrantsManagement = () => {
   const { toast } = useToast();
-  const { getAllUsers, updateStudentFee } = useAuth();
-  const { addStudentFee, studentFees } = useFinance();
+  const { getAllUsers } = useAuth();
+  const { addStudentFee, studentFees, setStudentFees } = useFinance();
   
   const users = getAllUsers();
   const students = users.filter(u => u.role === 'student' && u.approved);
@@ -91,7 +90,7 @@ export const GrantsManagement = () => {
 
     setScholarships(prev => [...prev, scholarship]);
 
-    // Create a student fee record marked as paid by scholarship
+    // Create a student fee record marked as paid by scholarship (using cheque as stand-in for scholarship)
     addStudentFee({
       studentId: scholarship.studentId,
       studentName: scholarship.studentName,
@@ -103,7 +102,7 @@ export const GrantsManagement = () => {
       semester: scholarship.semester,
       paidAmount: scholarship.amount,
       paidDate: new Date().toISOString().split('T')[0],
-      paymentMethod: 'scholarship',
+      paymentMethod: 'cheque', // stand in for scholarship, since "scholarship" not supported by type
       receiptNumber: `SCH-${scholarship.id}`
     });
 
@@ -136,24 +135,25 @@ export const GrantsManagement = () => {
         : scholarship
     ));
 
-    // Find matching student fees and update them
+    // Update matching fee record using setStudentFees directly (editing description and paidAmount etc)
     const updatedScholarship = scholarships.find(s => s.id === editingScholarship);
     if (updatedScholarship) {
-      const matchingFees = studentFees.filter(
-        fee => fee.studentId === updatedScholarship.studentId && 
-               fee.paymentMethod === 'scholarship' &&
-               fee.receiptNumber === `SCH-${editingScholarship}`
+      setStudentFees(prevFees =>
+        prevFees.map(fee =>
+          // For scholarship paid-in-full fees, mark as paid for edited student/admission information
+          fee.studentId === updatedScholarship.studentId &&
+          fee.paymentMethod === "cheque" && // We use "cheque" as a stand-in for 'scholarship'
+          fee.receiptNumber === `SCH-${editingScholarship}`
+            ? {
+                ...fee,
+                studentName: editForm.studentName || fee.studentName,
+                amount: editForm.amount !== undefined ? Number(editForm.amount) : fee.amount,
+                paidAmount: editForm.amount !== undefined ? Number(editForm.amount) : fee.paidAmount,
+                description: `Scholarship from ${editForm.sponsor || updatedScholarship.sponsor}`
+              }
+            : fee
+        )
       );
-
-      matchingFees.forEach(fee => {
-        updateStudentFee(fee.id, {
-          ...fee,
-          studentName: editForm.studentName || fee.studentName,
-          amount: editForm.amount || fee.amount,
-          paidAmount: editForm.amount || fee.paidAmount,
-          description: `Scholarship from ${editForm.sponsor || updatedScholarship.sponsor}`
-        });
-      });
     }
 
     setEditingScholarship(null);

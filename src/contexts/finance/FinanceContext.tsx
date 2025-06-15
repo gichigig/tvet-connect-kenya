@@ -52,6 +52,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       labFee: 5000,
       activityFee: 1500,
       medicalFee: 1000,
+      cautionMoney: 2000,
+      totalFee: 57500,
+      createdBy: "system",
       isActive: true,
       createdDate: '2024-01-01'
     },
@@ -67,6 +70,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       labFee: 4000,
       activityFee: 1500,
       medicalFee: 1000,
+      cautionMoney: 2000,
+      totalFee: 51500,
+      createdBy: "system",
       isActive: true,
       createdDate: '2024-01-01'
     }
