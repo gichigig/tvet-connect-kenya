@@ -47,16 +47,49 @@ export const StudentDashboard = () => {
   // Exam card download handler
   const handleDownloadExamCard = () => {
     if (!user) return;
+    // Generate a serial number: EXM-[admission]-[yy][mm][dd]-[timestamp]
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const datePart = `${now.getFullYear().toString().substr(-2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    const serial =
+      `EXM-${user.admissionNumber || "UNKNOWN"}-${datePart}-${now.getTime().toString().slice(-5)}`;
+
+    // Prepare units list for PDF
+    const enrolledUnitList = enrolledUnits
+      .map(
+        (reg, idx) =>
+          `${idx + 1}. ${reg.unitCode || "-"} - ${reg.unitName || "-"}`
+      )
+      .join("\n");
+
     const doc = new jsPDF();
+
     doc.setFontSize(20);
-    doc.text("Examination Card", 20, 30);
+    doc.text("EXAMINATION CARD", 20, 30);
+
+    doc.setFontSize(12);
+    doc.text(`Serial No: ${serial}`, 150, 20);
     doc.setFontSize(14);
+
     doc.text(`Name: ${user.firstName} ${user.lastName}`, 20, 45);
     doc.text(`Admission Number: ${user.admissionNumber || "-"}`, 20, 55);
-    doc.text(`Course: ${user.course || "-"}`, 20, 65);
-    doc.text(`Units Registered: ${enrolledUnits.length}`, 20, 75);
-    doc.text("Status: CLEARED", 20, 85);
-    doc.text("This card allows you to sit for all registered examinations this semester.", 20, 95, { maxWidth: 170 });
+    doc.text(`Year of Study: ${user.yearOfStudy || "-"}`, 20, 65);
+    doc.text(`Course: ${user.course || "-"}`, 20, 75);
+
+    doc.text("Units Registered:", 20, 85);
+    doc.setFontSize(12);
+    doc.text(enrolledUnitList || "No units found.", 25, 93);
+
+    doc.setFontSize(14);
+    doc.text("Status: CLEARED", 20, 120);
+
+    doc.setFontSize(11);
+    doc.text(
+      "This card allows you to sit for all listed examinations for this semester. Carry this card for every exam.",
+      20,
+      130,
+      { maxWidth: 170 }
+    );
     doc.save(`ExamCard_${user.firstName}_${user.lastName}.pdf`);
   };
 
