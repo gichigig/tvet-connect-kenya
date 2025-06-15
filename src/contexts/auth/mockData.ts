@@ -81,16 +81,14 @@ export const mockPendingUnitRegistrations: PendingUnitRegistration[] = [
     id: '1',
     studentId: '6',
     studentName: 'Alice Student',
-    course: 'Computer Science',
+    studentEmail: 'student@tvet.edu',
+    unitId: 'cs201',
+    unitCode: 'CS201',
+    unitName: 'Data Structures',
     year: 2,
     semester: 1,
-    units: [
-      { code: 'CS201', name: 'Data Structures', credits: 3 },
-      { code: 'CS202', name: 'Database Systems', credits: 3 },
-      { code: 'CS203', name: 'Web Development', credits: 4 }
-    ],
-    submittedDate: '2024-01-15',
-    status: 'pending'
+    status: 'pending',
+    submittedDate: '2024-01-15'
   }
 ];
 
@@ -99,16 +97,16 @@ export const mockExamResults: ExamResult[] = [
     id: '1',
     studentId: '6',
     studentName: 'Alice Student',
-    course: 'Computer Science',
-    year: 2,
-    semester: 1,
     unitCode: 'CS201',
     unitName: 'Data Structures',
-    catScore: 15,
-    examScore: 65,
-    totalScore: 80,
+    examType: 'Final Exam',
+    score: 80,
+    maxScore: 100,
     grade: 'A',
-    academicYear: '2023/2024',
-    examDate: '2024-01-20'
+    semester: 1,
+    year: 2,
+    examDate: '2024-01-20',
+    lecturerName: 'David Brown',
+    status: 'pass'
   }
 ];
