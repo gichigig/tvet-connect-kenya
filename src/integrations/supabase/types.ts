@@ -24,6 +24,162 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_results: {
+        Row: {
+          exam_date: string
+          exam_type: string
+          grade: string
+          id: string
+          lecturer_name: string
+          max_score: number
+          score: number
+          semester: number
+          status: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_name: string
+          year: number
+        }
+        Insert: {
+          exam_date: string
+          exam_type: string
+          grade: string
+          id?: string
+          lecturer_name: string
+          max_score: number
+          score: number
+          semester: number
+          status: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_name: string
+          year: number
+        }
+        Update: {
+          exam_date?: string
+          exam_type?: string
+          grade?: string
+          id?: string
+          lecturer_name?: string
+          max_score?: number
+          score?: number
+          semester?: number
+          status?: string
+          student_id?: string
+          student_name?: string
+          unit_code?: string
+          unit_name?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      pending_unit_registrations: {
+        Row: {
+          course: string
+          id: string
+          semester: number
+          status: string
+          student_email: string
+          student_id: string
+          student_name: string
+          submitted_date: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          year: number
+        }
+        Insert: {
+          course: string
+          id?: string
+          semester: number
+          status?: string
+          student_email: string
+          student_id: string
+          student_name: string
+          submitted_date?: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          year: number
+        }
+        Update: {
+          course?: string
+          id?: string
+          semester?: number
+          status?: string
+          student_email?: string
+          student_id?: string
+          student_name?: string
+          submitted_date?: string
+          unit_code?: string
+          unit_id?: string
+          unit_name?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          admission_number: string | null
+          approved: boolean
+          blocked: boolean
+          course: string | null
+          department: string | null
+          email: string
+          financial_status: string | null
+          first_name: string
+          id: string
+          intake: string | null
+          last_name: string
+          level: string | null
+          phone: string | null
+          role: string
+          semester: number | null
+          total_fees_owed: number | null
+          year: number | null
+        }
+        Insert: {
+          admission_number?: string | null
+          approved?: boolean
+          blocked?: boolean
+          course?: string | null
+          department?: string | null
+          email: string
+          financial_status?: string | null
+          first_name: string
+          id?: string
+          intake?: string | null
+          last_name: string
+          level?: string | null
+          phone?: string | null
+          role: string
+          semester?: number | null
+          total_fees_owed?: number | null
+          year?: number | null
+        }
+        Update: {
+          admission_number?: string | null
+          approved?: boolean
+          blocked?: boolean
+          course?: string | null
+          department?: string | null
+          email?: string
+          financial_status?: string | null
+          first_name?: string
+          id?: string
+          intake?: string | null
+          last_name?: string
+          level?: string | null
+          phone?: string | null
+          role?: string
+          semester?: number | null
+          total_fees_owed?: number | null
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

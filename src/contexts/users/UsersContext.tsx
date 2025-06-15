@@ -11,6 +11,59 @@ import {
 import { sendResultsNotification as sendNotifications } from '../auth/notificationUtils';
 import { supabase } from "@/integrations/supabase/client";
 
+// Types from Supabase
+type SupaUser = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  approved: boolean;
+  blocked: boolean;
+  department?: string | null;
+  course?: string | null;
+  year?: number | null;
+  semester?: number | null;
+  level?: string | null;
+  intake?: string | null;
+  phone?: string | null;
+  admission_number?: string | null;
+  financial_status?: string | null;
+  total_fees_owed?: number | null;
+};
+
+type SupaPendingUnitRegistration = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  unit_id: string;
+  unit_code: string;
+  unit_name: string;
+  course: string;
+  year: number;
+  semester: number;
+  status: string;
+  submitted_date: string;
+};
+
+type SupaExamResult = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  unit_code: string;
+  unit_name: string;
+  exam_type: string;
+  score: number;
+  max_score: number;
+  grade: string;
+  semester: number;
+  year: number;
+  exam_date: string;
+  lecturer_name: string;
+  status: string;
+};
+
 interface UsersContextType {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
@@ -33,10 +86,63 @@ interface UsersContextType {
   updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void;
 }
 
-// Define Supabase table names
 const USERS_TABLE = 'users';
 const UNIT_REG_TABLE = 'pending_unit_registrations';
 const EXAM_RESULTS_TABLE = 'exam_results';
+
+const ADMIN_EMAIL = 'billyblun17@gmail.com';
+
+const mapSupaUserToUser = (supa: SupaUser): User => ({
+  id: supa.id,
+  email: supa.email,
+  firstName: supa.first_name,
+  lastName: supa.last_name,
+  role: supa.role,
+  approved: supa.approved,
+  course: supa.course || undefined,
+  department: supa.department || undefined,
+  year: supa.year ?? undefined,
+  semester: supa.semester ?? undefined,
+  level: supa.level || undefined,
+  intake: supa.intake || undefined,
+  phone: supa.phone || undefined,
+  admissionNumber: supa.admission_number || undefined,
+  financialStatus: supa.financial_status || undefined,
+  totalFeesOwed: supa.total_fees_owed ?? undefined,
+  blocked: supa.blocked ?? false,
+});
+
+const mapSupaPendingUnitRegToPendingUnitReg = (reg: SupaPendingUnitRegistration): PendingUnitRegistration => ({
+  id: reg.id,
+  studentId: reg.student_id,
+  studentName: reg.student_name,
+  studentEmail: reg.student_email,
+  unitId: reg.unit_id,
+  unitCode: reg.unit_code,
+  unitName: reg.unit_name,
+  course: reg.course,
+  year: reg.year,
+  semester: reg.semester,
+  status: reg.status as 'pending' | 'approved' | 'rejected',
+  submittedDate: reg.submitted_date,
+});
+
+const mapSupaExamResultToExamResult = (res: SupaExamResult): ExamResult => ({
+  id: res.id,
+  studentId: res.student_id,
+  studentName: res.student_name,
+  unitCode: res.unit_code,
+  unitName: res.unit_name,
+  examType: res.exam_type,
+  score: res.score,
+  maxScore: res.max_score,
+  grade: res.grade,
+  semester: res.semester,
+  year: res.year,
+  examDate: res.exam_date,
+  lecturerName: res.lecturer_name,
+  status: res.status,
+});
 
 const UsersContext = createContext<UsersContextType | null>(null);
 
@@ -49,7 +155,32 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const fetchUsers = async () => {
       const { data, error } = await supabase.from(USERS_TABLE).select('*');
-      if (!error && data) setUsers(data as User[]);
+      if (!error && data) {
+        let mapped = (data as SupaUser[]).map(mapSupaUserToUser);
+
+        // Promote admin email to admin+approved if it exists (this runs only once)
+        let needsAdminPatch = false;
+        mapped = mapped.map((user) => {
+          if (user.email === ADMIN_EMAIL && (user.role !== 'admin' || !user.approved)) {
+            needsAdminPatch = true;
+            return { ...user, role: 'admin', approved: true };
+          }
+          return user;
+        });
+
+        setUsers(mapped);
+
+        // If needs promotion, patch it in Supabase
+        if (needsAdminPatch) {
+          const adminUser = data.find(u => u.email === ADMIN_EMAIL);
+          if (adminUser) {
+            await supabase
+              .from(USERS_TABLE)
+              .update({ role: 'admin', approved: true })
+              .eq('email', ADMIN_EMAIL);
+          }
+        }
+      }
     };
     fetchUsers();
   }, []);
@@ -57,7 +188,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const fetchPending = async () => {
       const { data, error } = await supabase.from(UNIT_REG_TABLE).select('*');
-      if (!error && data) setPendingUnitRegistrations(data as PendingUnitRegistration[]);
+      if (!error && data) setPendingUnitRegistrations((data as SupaPendingUnitRegistration[]).map(mapSupaPendingUnitRegToPendingUnitReg));
     };
     fetchPending();
   }, []);
@@ -65,7 +196,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const fetchExamResults = async () => {
       const { data, error } = await supabase.from(EXAM_RESULTS_TABLE).select('*');
-      if (!error && data) setExamResults(data as ExamResult[]);
+      if (!error && data) setExamResults((data as SupaExamResult[]).map(mapSupaExamResultToExamResult));
     };
     fetchExamResults();
   }, []);
@@ -99,12 +230,12 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addPendingUnitRegistration = async (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
     const newRegistration = {
       ...registration,
-      submittedDate: new Date().toISOString().split('T')[0],
-      status: 'pending'
+      submitted_date: new Date().toISOString().split('T')[0],
+      status: 'pending',
     };
     const { data } = await supabase.from(UNIT_REG_TABLE).insert([newRegistration]).select();
     if (data && data.length > 0) {
-      setPendingUnitRegistrations(prev => [...prev, data[0] as PendingUnitRegistration]);
+      setPendingUnitRegistrations(prev => [...prev, mapSupaPendingUnitRegToPendingUnitReg(data[0] as SupaPendingUnitRegistration)]);
     }
   };
 
@@ -124,7 +255,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addExamResult = async (result: Omit<ExamResult, 'id'>) => {
     const { data } = await supabase.from(EXAM_RESULTS_TABLE).insert([result]).select();
     if (data && data.length > 0) {
-      setExamResults(prev => [...prev, data[0] as ExamResult]);
+      setExamResults(prev => [...prev, mapSupaExamResultToExamResult(data[0] as SupaExamResult)]);
     }
   };
 
@@ -133,7 +264,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateStudentFinancialStatus = async (studentId: string, status: User['financialStatus'], totalOwed?: number) => {
-    await supabase.from(USERS_TABLE).update({ financialStatus: status, totalFeesOwed: totalOwed }).eq('id', studentId);
+    await supabase.from(USERS_TABLE).update({ financial_status: status, total_fees_owed: totalOwed }).eq('id', studentId);
     setUsers(prev => prev.map(user => 
       user.id === studentId 
         ? { ...user, financialStatus: status, totalFeesOwed: totalOwed }
