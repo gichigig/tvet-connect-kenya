@@ -21,6 +21,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { StudentDashboardTopbar } from "@/components/student/StudentDashboardTopbar";
+import { StudentMobileMenu } from "@/components/student/StudentMobileMenu";
+import { StudentStatsGrid } from "@/components/student/StudentStatsGrid";
+import { ExamCardDownloadButton } from "@/components/student/ExamCardDownloadButton";
 
 export const StudentDashboard = () => {
   const { user, pendingUnitRegistrations, studentFees } = useAuth();
@@ -117,136 +121,21 @@ export const StudentDashboard = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-          <p className="text-gray-600">
-            Welcome back, {user?.firstName}!
-          </p>
-          {user?.admissionNumber && (
-            <p className="text-sm text-blue-600 font-medium mt-1">
-              Admission Number: {user.admissionNumber}
-            </p>
-          )}
-        </div>
-        
+        <StudentDashboardTopbar user={user} />
         {/* Mobile Menu */}
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Student Menu</SheetTitle>
-                <SheetDescription>
-                  Navigate through your student portal
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                {menuItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant={activeTab === item.id ? "default" : "ghost"}
-                    className="justify-start"
-                    onClick={() => setActiveTab(item.id)}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </Button>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+        <StudentMobileMenu menuItems={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
       {/* Download Exam Card option */}
-      <div className="flex items-center gap-2">
-        <Button
-          onClick={handleDownloadExamCard}
-          variant="default"
-          className="flex items-center"
-          disabled={!feesAreCleared}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Download Exam Card
-        </Button>
-        {!feesAreCleared && (
-          <span className="text-xs text-red-600 ml-2">
-            You must clear all your fees to download your exam card.
-          </span>
-        )}
-      </div>
+      <ExamCardDownloadButton
+        user={user}
+        enrolledUnits={enrolledUnits}
+        myFees={myFees}
+        totalOwed={totalOwed}
+      />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Enrolled Units</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.enrolledUnits}</div>
-            <p className="text-xs text-muted-foreground">
-              Current semester
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Registrations</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingRegistrations}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting approval
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fees Owed</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">KSh {stats.feesOwed.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Outstanding balance
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Exams</CardTitle>
-            <PenTool className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.upcomingExams}</div>
-            <p className="text-xs text-muted-foreground">
-              Next 2 weeks
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Assignments</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.completedAssignments}</div>
-            <p className="text-xs text-muted-foreground">
-              This semester
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <StudentStatsGrid stats={stats} />
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
