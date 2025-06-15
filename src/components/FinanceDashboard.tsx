@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Upload, Ban, MessageSquare, FileBarChart } from "lucide-react";
+import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Upload, Ban, MessageSquare, FileBarChart, PiggyBank, Users, ShoppingCart, Gift } from "lucide-react";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
@@ -15,6 +15,11 @@ import { ReceiptGeneration } from "@/components/finance/ReceiptGeneration";
 import { AccessControl } from "@/components/finance/AccessControl";
 import { NotificationSystem } from "@/components/finance/NotificationSystem";
 import { FinancialReports } from "@/components/finance/FinancialReports";
+import { BudgetingPlanning } from "@/components/finance/BudgetingPlanning";
+import { PayrollManagement } from "@/components/finance/PayrollManagement";
+import { ProcurementOversight } from "@/components/finance/ProcurementOversight";
+import { FinancialReporting } from "@/components/finance/FinancialReporting";
+import { GrantsManagement } from "@/components/finance/GrantsManagement";
 
 export const FinanceDashboard = () => {
   const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
@@ -131,22 +136,34 @@ export const FinanceDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-10">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <Receipt className="w-3 h-3" />
             <span className="hidden sm:inline">Fees</span>
           </TabsTrigger>
+          <TabsTrigger value="budgeting" className="flex items-center gap-1">
+            <PiggyBank className="w-3 h-3" />
+            <span className="hidden sm:inline">Budget</span>
+          </TabsTrigger>
+          <TabsTrigger value="payroll" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            <span className="hidden sm:inline">Payroll</span>
+          </TabsTrigger>
+          <TabsTrigger value="procurement" className="flex items-center gap-1">
+            <ShoppingCart className="w-3 h-3" />
+            <span className="hidden sm:inline">Procurement</span>
+          </TabsTrigger>
+          <TabsTrigger value="reporting" className="flex items-center gap-1">
+            <FileBarChart className="w-3 h-3" />
+            <span className="hidden sm:inline">Reporting</span>
+          </TabsTrigger>
+          <TabsTrigger value="grants" className="flex items-center gap-1">
+            <Gift className="w-3 h-3" />
+            <span className="hidden sm:inline">Grants</span>
+          </TabsTrigger>
           <TabsTrigger value="structures" className="flex items-center gap-1">
             <Settings className="w-3 h-3" />
             <span className="hidden sm:inline">Structures</span>
-          </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-1">
-            <Upload className="w-3 h-3" />
-            <span className="hidden sm:inline">Upload</span>
-          </TabsTrigger>
-          <TabsTrigger value="receipts" className="flex items-center gap-1">
-            <Receipt className="w-3 h-3" />
-            <span className="hidden sm:inline">Receipts</span>
           </TabsTrigger>
           <TabsTrigger value="access" className="flex items-center gap-1">
             <Ban className="w-3 h-3" />
@@ -155,10 +172,6 @@ export const FinanceDashboard = () => {
           <TabsTrigger value="notifications" className="flex items-center gap-1">
             <MessageSquare className="w-3 h-3" />
             <span className="hidden sm:inline">Notify</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-1">
-            <FileBarChart className="w-3 h-3" />
-            <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
           <TabsTrigger value="invoices" className="flex items-center gap-1">
             <File className="w-3 h-3" />
@@ -178,19 +191,28 @@ export const FinanceDashboard = () => {
           <StudentFeesOverview />
         </TabsContent>
 
+        <TabsContent value="budgeting" className="space-y-4">
+          <BudgetingPlanning />
+        </TabsContent>
+
+        <TabsContent value="payroll" className="space-y-4">
+          <PayrollManagement />
+        </TabsContent>
+
+        <TabsContent value="procurement" className="space-y-4">
+          <ProcurementOversight />
+        </TabsContent>
+
+        <TabsContent value="reporting" className="space-y-4">
+          <FinancialReporting />
+        </TabsContent>
+
+        <TabsContent value="grants" className="space-y-4">
+          <GrantsManagement />
+        </TabsContent>
+
         <TabsContent value="structures" className="space-y-4">
           <FeeStructureManagement />
-        </TabsContent>
-
-        <TabsContent value="upload" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FeeStructureUpload />
-            <FeeManagement />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="receipts" className="space-y-4">
-          <ReceiptGeneration />
         </TabsContent>
 
         <TabsContent value="access" className="space-y-4">
@@ -199,10 +221,6 @@ export const FinanceDashboard = () => {
 
         <TabsContent value="notifications" className="space-y-4">
           <NotificationSystem />
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <FinancialReports />
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4">
