@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { receipt, file, message-square } from "lucide-react";
+import { Receipt, File, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -93,7 +92,7 @@ This is an official receipt for payment received.
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <receipt className="w-5 h-5" />
+          <Receipt className="w-5 h-5" />
           Receipt Generation
         </CardTitle>
         <CardDescription>
@@ -149,7 +148,7 @@ This is an official receipt for payment received.
                             setIsDialogOpen(true);
                           }}
                         >
-                          <receipt className="w-4 h-4 mr-1" />
+                          <Receipt className="w-4 h-4 mr-1" />
                           Receipt
                         </Button>
                       </div>
@@ -189,7 +188,7 @@ This is an official receipt for payment received.
                   }}
                   className="flex items-center gap-2"
                 >
-                  <file className="w-4 h-4" />
+                  <File className="w-4 h-4" />
                   Download PDF
                 </Button>
                 <Button
@@ -200,7 +199,7 @@ This is an official receipt for payment received.
                   }}
                   className="flex items-center gap-2"
                 >
-                  <message-square className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4" />
                   Send SMS
                 </Button>
                 <Button
@@ -211,7 +210,7 @@ This is an official receipt for payment received.
                   }}
                   className="flex items-center gap-2"
                 >
-                  <message-square className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4" />
                   Send Email
                 </Button>
               </div>

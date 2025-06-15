@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, receipt, Settings, file, UserCheck, upload, ban, message-square, file-bar-chart } from "lucide-react";
+import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Upload, Ban, MessageSquare, FileBarChart } from "lucide-react";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
@@ -53,7 +53,7 @@ export const FinanceDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <receipt className="h-4 w-4 text-muted-foreground" />
+            <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">KSh {stats.totalRevenue.toLocaleString()}</div>
@@ -133,7 +133,7 @@ export const FinanceDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="overview" className="flex items-center gap-1">
-            <receipt className="w-3 h-3" />
+            <Receipt className="w-3 h-3" />
             <span className="hidden sm:inline">Fees</span>
           </TabsTrigger>
           <TabsTrigger value="structures" className="flex items-center gap-1">
@@ -141,27 +141,27 @@ export const FinanceDashboard = () => {
             <span className="hidden sm:inline">Structures</span>
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-1">
-            <upload className="w-3 h-3" />
+            <Upload className="w-3 h-3" />
             <span className="hidden sm:inline">Upload</span>
           </TabsTrigger>
           <TabsTrigger value="receipts" className="flex items-center gap-1">
-            <receipt className="w-3 h-3" />
+            <Receipt className="w-3 h-3" />
             <span className="hidden sm:inline">Receipts</span>
           </TabsTrigger>
           <TabsTrigger value="access" className="flex items-center gap-1">
-            <ban className="w-3 h-3" />
+            <Ban className="w-3 h-3" />
             <span className="hidden sm:inline">Access</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-1">
-            <message-square className="w-3 h-3" />
+            <MessageSquare className="w-3 h-3" />
             <span className="hidden sm:inline">Notify</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-1">
-            <file-bar-chart className="w-3 h-3" />
+            <FileBarChart className="w-3 h-3" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
           <TabsTrigger value="invoices" className="flex items-center gap-1">
-            <file className="w-3 h-3" />
+            <File className="w-3 h-3" />
             <span className="hidden sm:inline">Invoices</span>
           </TabsTrigger>
           <TabsTrigger value="clearances" className="flex items-center gap-1">
