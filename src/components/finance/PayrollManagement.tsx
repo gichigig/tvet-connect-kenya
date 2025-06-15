@@ -10,6 +10,7 @@ import { Users, DollarSign, Send, FileText, CheckCircle, Pencil, Save, X } from 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinance } from "@/contexts/finance/FinanceContext";
+import { AddWorkerDialog } from "./AddWorkerDialog";
 
 interface PayrollRecord {
   id: string;
@@ -35,6 +36,10 @@ interface SalarySetting {
   allowances: number;
 }
 
+interface CustomWorker extends PayrollRecord {
+  custom: true;
+}
+
 export const PayrollManagement = () => {
   const { toast } = useToast();
   const { getAllUsers } = useAuth();
@@ -47,6 +52,9 @@ export const PayrollManagement = () => {
   // For editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSalary, setEditSalary] = useState<SalarySetting>({ basicSalary: 0, allowances: 0 });
+
+  // Track custom workers (added via dialog)
+  const [customWorkers, setCustomWorkers] = useState<CustomWorker[]>([]);
 
   const [emailTemplate, setEmailTemplate] = useState({
     subject: 'Payslip for {month} - {employeeName}',
@@ -73,7 +81,44 @@ Best regards,
 Finance Department`
   });
 
-  // Generate payroll using set salary settings where available.
+  // Add custom worker to payroll
+  const handleAddWorker = (worker: {
+    name: string;
+    email: string;
+    position: string;
+    department: string;
+    basicSalary: number;
+    allowances: number;
+    bankAccount?: string;
+    taxPin?: string;
+  }) => {
+    const now = Date.now();
+    const newWorker: CustomWorker = {
+      id: `custom-${now}`,
+      employeeId: `EXT${now % 10000}`,
+      name: worker.name,
+      email: worker.email,
+      position: worker.position,
+      department: worker.department,
+      basicSalary: worker.basicSalary,
+      allowances: worker.allowances,
+      nssf: 1200,
+      nhif: 1700,
+      paye: Math.floor(worker.basicSalary * 0.12), // Flat 12% for demo
+      netSalary: worker.basicSalary + worker.allowances - 1200 - 1700 - Math.floor(worker.basicSalary * 0.12),
+      status: 'pending',
+      month: new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+      bankAccount: worker.bankAccount || "",
+      taxPin: worker.taxPin || "",
+      custom: true,
+    };
+    setCustomWorkers(prev => [...prev, newWorker]);
+    // Add to payroll immediately for convenience
+    setPayrollRecords(prev => [...prev, newWorker]);
+    toast({ title: "Worker Added", description: "Worker has been added to the payroll." });
+  };
+
+  // Overwrite handleGeneratePayroll to always include custom workers
   const handleGeneratePayroll = () => {
     const employees = users.filter(u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved);
     const defaultRecords = createPayrollForAllEmployees(employees);
@@ -97,11 +142,11 @@ Finance Department`
       }
       return record;
     });
-    setPayrollRecords(recordsWithOverrides);
-
+    // Always append current custom workers to the payroll
+    setPayrollRecords([...recordsWithOverrides, ...customWorkers]);
     toast({
       title: "Payroll Generated",
-      description: `Generated payroll for ${recordsWithOverrides.length} employees.`,
+      description: `Generated payroll for ${recordsWithOverrides.length + customWorkers.length} employees.`,
     });
   };
 
@@ -218,6 +263,11 @@ Finance Department`
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Add Worker Button */}
+          <div className="flex items-center mb-4 gap-4">
+            <AddWorkerDialog onAdd={handleAddWorker} />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">KSh {totalPayroll.toLocaleString()}</div>
