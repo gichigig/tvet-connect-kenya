@@ -9,12 +9,25 @@ export const useAuthHelpers = () => {
   const login = async (email: string, password: string, role: string | undefined, users: User[], setUser: (user: User | null) => void) => {
     try {
       const foundUser = findUserByEmail(users, email);
-      if (foundUser && foundUser.approved) {
-        setUser(foundUser);
-        navigate('/');
-      } else {
+      
+      if (!foundUser) {
         throw new Error('Invalid credentials or account not approved.');
       }
+      
+      if (!foundUser.approved) {
+        throw new Error('Account pending approval. Please contact admin.');
+      }
+      
+      if (foundUser.blocked) {
+        throw new Error('Account has been blocked. Please contact admin.');
+      }
+      
+      // For demo purposes, we'll accept any password for approved users
+      // In a real app, you would validate the password hash here
+      console.log(`Login attempt for ${email} with role ${foundUser.role}`);
+      
+      setUser(foundUser);
+      navigate('/');
     } catch (error: any) {
       console.error("Login failed:", error.message);
       throw error;
