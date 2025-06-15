@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign } from "lucide-react";
+import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign, Download } from "lucide-react";
 import { UnitRegistration } from "@/components/student/UnitRegistration";
 import { OnlineClasses } from "@/components/student/OnlineClasses";
 import { NotesAccess } from "@/components/student/NotesAccess";
@@ -13,6 +12,7 @@ import { ExamsQuizzes } from "@/components/student/ExamsQuizzes";
 import { MyUnits } from "@/components/student/MyUnits";
 import { DiscussionGroups } from "@/components/student/DiscussionGroups";
 import { StudentFees } from "@/components/student/StudentFees";
+import jsPDF from "jspdf";
 import {
   Sheet,
   SheetContent,
@@ -37,6 +37,28 @@ export const StudentDashboard = () => {
 
   const myFees = studentFees.filter(fee => fee.studentId === user?.id);
   const totalOwed = myFees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((sum, fee) => sum + fee.amount, 0);
+
+  // --- Exam Card clearance check ---
+  const feesAreCleared =
+    myFees.length > 0 &&
+    myFees.every(f => f.status === 'paid') &&
+    totalOwed === 0;
+
+  // Exam card download handler
+  const handleDownloadExamCard = () => {
+    if (!user) return;
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text("Examination Card", 20, 30);
+    doc.setFontSize(14);
+    doc.text(`Name: ${user.firstName} ${user.lastName}`, 20, 45);
+    doc.text(`Admission Number: ${user.admissionNumber || "-"}`, 20, 55);
+    doc.text(`Course: ${user.course || "-"}`, 20, 65);
+    doc.text(`Units Registered: ${enrolledUnits.length}`, 20, 75);
+    doc.text("Status: CLEARED", 20, 85);
+    doc.text("This card allows you to sit for all registered examinations this semester.", 20, 95, { maxWidth: 170 });
+    doc.save(`ExamCard_${user.firstName}_${user.lastName}.pdf`);
+  };
 
   const stats = {
     enrolledUnits: enrolledUnits.length,
@@ -102,6 +124,24 @@ export const StudentDashboard = () => {
             </SheetContent>
           </Sheet>
         </div>
+      </div>
+
+      {/* Download Exam Card option */}
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={handleDownloadExamCard}
+          variant="default"
+          className="flex items-center"
+          disabled={!feesAreCleared}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Download Exam Card
+        </Button>
+        {!feesAreCleared && (
+          <span className="text-xs text-red-600 ml-2">
+            You must clear all your fees to download your exam card.
+          </span>
+        )}
       </div>
 
       {/* Stats Cards */}
