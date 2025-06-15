@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { upload, file } from "lucide-react";
+import { Upload, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -125,7 +125,7 @@ export const FeeStructureUpload = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <upload className="w-5 h-5" />
+          <Upload className="w-5 h-5" />
           Upload Fee Structures
         </CardTitle>
         <CardDescription>
@@ -150,7 +150,7 @@ export const FeeStructureUpload = () => {
             onClick={downloadTemplate}
             className="mt-6"
           >
-            <file className="w-4 h-4 mr-2" />
+            <File className="w-4 h-4 mr-2" />
             Download Template
           </Button>
         </div>

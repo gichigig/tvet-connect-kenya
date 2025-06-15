@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ban, search } from "lucide-react";
+import { Ban, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,7 +87,7 @@ export const AccessControl = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ban className="w-5 h-5" />
+            <Ban className="w-5 h-5" />
             Student Access Control
           </CardTitle>
           <CardDescription>
@@ -98,7 +98,7 @@ export const AccessControl = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative flex-1">
-                <search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search students..."
                   value={searchTerm}
@@ -115,7 +115,7 @@ export const AccessControl = () => {
               </div>
             </div>
             <Button onClick={handleBulkBlock} variant="destructive">
-              <ban className="w-4 h-4 mr-2" />
+              <Ban className="w-4 h-4 mr-2" />
               Block All Defaulters
             </Button>
           </div>

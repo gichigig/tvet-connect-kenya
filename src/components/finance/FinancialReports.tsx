@@ -181,7 +181,7 @@ ${Array.from({length: 12}, (_, i) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <file-bar-chart className="w-5 h-5" />
+          <FileBarChart className="w-5 h-5" />
           Financial Reports
         </CardTitle>
         <CardDescription>
@@ -233,7 +233,7 @@ ${Array.from({length: 12}, (_, i) => {
 
           <div className="flex items-end">
             <Button onClick={handleGenerateReport} className="w-full">
-              <file className="w-4 h-4 mr-2" />
+              <File className="w-4 h-4 mr-2" />
               Generate Report
             </Button>
           </div>

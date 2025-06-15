@@ -156,7 +156,7 @@ export const NotificationSystem = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <message-square className="w-5 h-5" />
+            <MessageSquare className="w-5 h-5" />
             Notification System
           </CardTitle>
           <CardDescription>
@@ -235,11 +235,17 @@ export const NotificationSystem = () => {
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Checkbox checked={sendSMS} onCheckedChange={setSendSMS} />
+                <Checkbox 
+                  checked={sendSMS} 
+                  onCheckedChange={(checked) => setSendSMS(checked === true)} 
+                />
                 <Label>Send SMS</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox checked={sendEmail} onCheckedChange={setSendEmail} />
+                <Checkbox 
+                  checked={sendEmail} 
+                  onCheckedChange={(checked) => setSendEmail(checked === true)} 
+                />
                 <Label>Send Email</Label>
               </div>
             </div>
@@ -271,7 +277,7 @@ export const NotificationSystem = () => {
           )}
 
           <Button onClick={handleSendNotifications} className="w-full">
-            <message-square className="w-4 h-4 mr-2" />
+            <MessageSquare className="w-4 h-4 mr-2" />
             Send Notifications
           </Button>
         </CardContent>
