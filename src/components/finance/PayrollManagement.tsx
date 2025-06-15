@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,26 @@ export const PayrollManagement = () => {
   // Track custom workers (added via dialog)
   const [customWorkers, setCustomWorkers] = useState<CustomWorker[]>([]);
 
+  // Load custom workers from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("customPayrollWorkers");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setCustomWorkers(parsed);
+        }
+      } catch (e) {
+        // ignore parse errors, just start with empty list
+      }
+    }
+  }, []);
+
+  // Save custom workers to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("customPayrollWorkers", JSON.stringify(customWorkers));
+  }, [customWorkers]);
+
   const [emailTemplate, setEmailTemplate] = useState({
     subject: 'Payslip for {month} - {employeeName}',
     body: `Dear {employeeName},
@@ -112,7 +132,10 @@ Finance Department`
       taxPin: worker.taxPin || "",
       custom: true,
     };
-    setCustomWorkers(prev => [...prev, newWorker]);
+    setCustomWorkers(prev => {
+      const updated = [...prev, newWorker];
+      return updated;
+    });
     // Add to payroll immediately for convenience
     setPayrollRecords(prev => [...prev, newWorker]);
     toast({ title: "Worker Added", description: "Worker has been added to the payroll." });
@@ -142,7 +165,7 @@ Finance Department`
       }
       return record;
     });
-    // Always append current custom workers to the payroll
+    // Always append current custom workers (from state) to the payroll
     setPayrollRecords([...recordsWithOverrides, ...customWorkers]);
     toast({
       title: "Payroll Generated",
