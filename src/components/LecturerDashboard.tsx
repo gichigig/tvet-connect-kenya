@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
@@ -11,6 +10,7 @@ import { UnitManagement } from "@/components/lecturer/UnitManagement";
 import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardStats";
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
 import { useAuth } from "@/contexts/AuthContext";
+import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
 export const LecturerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,6 +33,17 @@ export const LecturerDashboard = () => {
     upcomingExams: exams.length
   };
 
+  // Hamburger tab menu config
+  const tabItems = [
+    { value: "overview", label: "Overview" },
+    { value: "units", label: `My Units (${assignedUnits.length})` },
+    { value: "assignments", label: `Assignments (${assignments.length})` },
+    { value: "notes", label: `Notes (${notes.length})` },
+    { value: "attendance", label: "Attendance" },
+    { value: "quiz-attendance", label: "Quiz Attendance" },
+    { value: "exams", label: `Exams & CATs (${exams.length})` },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -47,41 +58,41 @@ export const LecturerDashboard = () => {
 
       <LecturerDashboardStats stats={stats} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="units">My Units ({assignedUnits.length})</TabsTrigger>
-          <TabsTrigger value="assignments">Assignments ({assignments.length})</TabsTrigger>
-          <TabsTrigger value="notes">Notes ({notes.length})</TabsTrigger>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="quiz-attendance">Quiz Attendance</TabsTrigger>
-          <TabsTrigger value="exams">Exams & CATs ({exams.length})</TabsTrigger>
-        </TabsList>
+      {/* Responsive hamburger for mobile; triggers on md+ */}
+      <div className="mb-3">
+        <ResponsiveTabsMenu tabs={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+      <div className="hidden md:block mb-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-7">
+            {tabItems.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-0">
         <TabsContent value="overview" className="space-y-4">
           <LecturerDashboardOverview onTabChange={setActiveTab} />
         </TabsContent>
-
         <TabsContent value="units">
           <UnitManagement />
         </TabsContent>
-
         <TabsContent value="assignments">
           <AssignmentManager />
         </TabsContent>
-
         <TabsContent value="notes">
           <NotesManager />
         </TabsContent>
-
         <TabsContent value="attendance">
           <AttendanceManager />
         </TabsContent>
-
         <TabsContent value="quiz-attendance">
           <QuizAttendance />
         </TabsContent>
-
         <TabsContent value="exams">
           <ExamManager />
         </TabsContent>

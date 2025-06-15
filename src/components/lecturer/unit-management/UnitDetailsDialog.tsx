@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UnitSettingsTab } from "./UnitSettingsTab";
@@ -9,6 +8,7 @@ import { NotesForm } from "./NotesForm";
 import { OnlineClassForm } from "./OnlineClassForm";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
 interface UnitDetailsDialogProps {
   isOpen: boolean;
@@ -139,6 +139,16 @@ export const UnitDetailsDialog = ({
     console.log("Online class scheduled:", contentItem);
   };
 
+  // Tab configuration for menu & triggers
+  const tabItems = [
+    { value: "assignments", label: "Assignments" },
+    { value: "cats", label: "CATs" },
+    { value: "exams", label: "Exams" },
+    { value: "notes", label: "Notes" },
+    { value: "classes", label: "Online Classes" },
+    { value: "settings", label: "Settings" },
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -147,36 +157,40 @@ export const UnitDetailsDialog = ({
           <DialogDescription>Manage unit content and settings</DialogDescription>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="cats">CATs</TabsTrigger>
-            <TabsTrigger value="exams">Exams</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-            <TabsTrigger value="classes">Online Classes</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+        {/* Hamburger menu for mobile */}
+        <div className="mb-3">
+          <ResponsiveTabsMenu tabs={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
 
+        {/* Tabs triggers only on md+ screens */}
+        <div className="hidden md:block mb-3">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-6">
+              {tabItems.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-0">
           <TabsContent value="assignments" className="space-y-4">
             <AssignmentForm onAddAssignment={handleAddAssignment} />
           </TabsContent>
-
           <TabsContent value="cats" className="space-y-4">
             <CATForm onAddCAT={handleAddCAT} />
           </TabsContent>
-
           <TabsContent value="exams" className="space-y-4">
             <ExamForm onAddExam={handleAddExam} />
           </TabsContent>
-
           <TabsContent value="notes" className="space-y-4">
             <NotesForm onAddNotes={handleAddNotes} />
           </TabsContent>
-
           <TabsContent value="classes" className="space-y-4">
             <OnlineClassForm onAddOnlineClass={handleAddOnlineClass} />
           </TabsContent>
-
           <TabsContent value="settings" className="space-y-4">
             <UnitSettingsTab
               whatsappLink={whatsappLink}
