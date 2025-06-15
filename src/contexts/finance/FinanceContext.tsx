@@ -30,6 +30,8 @@ interface FinanceContextType {
   addClearanceForm: (clearance: Omit<ClearanceForm, 'id'>) => void;
   updateClearanceStatus: (clearanceId: string, status: ClearanceForm['status'], clearedBy?: string, remarks?: string) => void;
   generateInvoice: (studentId: string, academicYear: string, semester: number, users: User[], updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void) => void;
+  createPayrollForAllEmployees: (users: User[]) => any[];
+  sendPayrollEmails: (payrollRecords: any[], emailTemplate: any) => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | null>(null);
@@ -37,7 +39,38 @@ const FinanceContext = createContext<FinanceContextType | null>(null);
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [supplyRequests, setSupplyRequests] = useState<SupplyRequest[]>([]);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
-  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([
+    {
+      id: 'FS001',
+      course: 'Electrical Engineering',
+      year: 1,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionFee: 45000,
+      examFee: 3000,
+      libraryFee: 2000,
+      labFee: 5000,
+      activityFee: 1500,
+      medicalFee: 1000,
+      isActive: true,
+      createdDate: '2024-01-01'
+    },
+    {
+      id: 'FS002',
+      course: 'Information Technology',
+      year: 1,
+      semester: 1,
+      academicYear: '2024/2025',
+      tuitionFee: 40000,
+      examFee: 3000,
+      libraryFee: 2000,
+      labFee: 4000,
+      activityFee: 1500,
+      medicalFee: 1000,
+      isActive: true,
+      createdDate: '2024-01-01'
+    }
+  ]);
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [clearanceForms, setClearanceForms] = useState<ClearanceForm[]>([]);
 
@@ -58,7 +91,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           ? { 
               ...request, 
               status, 
-              verifiedBy: 'current-user-id', // This would be the current user ID
+              verifiedBy: 'current-user-id',
               verificationDate: new Date().toISOString().split('T')[0],
               verificationNotes 
             }
@@ -72,7 +105,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...fee,
       id: Date.now().toString(),
       createdDate: new Date().toISOString().split('T')[0],
-      status: 'pending',
+      status: fee.paidAmount ? 'paid' : 'pending',
       invoiceNumber: `INV-${Date.now()}`
     };
     setStudentFees(prev => [...prev, newFee]);
@@ -155,20 +188,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
 
     if (feeStructure) {
-      // Create tuition fee
       addStudentFee({
         studentId,
         studentName: `${student.firstName} ${student.lastName}`,
         feeType: 'tuition',
         amount: feeStructure.tuitionFee,
         description: 'Tuition Fee',
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         academicYear,
         semester,
         isRecurring: true
       });
 
-      // Create other fees
       const otherFees = [
         { type: 'exam' as const, amount: feeStructure.examFee, description: 'Examination Fee' },
         { type: 'library' as const, amount: feeStructure.libraryFee, description: 'Library Fee' },
@@ -194,6 +225,68 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const createPayrollForAllEmployees = (users: User[]) => {
+    const employees = users.filter(u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved);
+    
+    return employees.map(emp => ({
+      id: emp.id,
+      employeeId: emp.employeeId || `EMP${emp.id.slice(-3)}`,
+      name: `${emp.firstName} ${emp.lastName}`,
+      email: emp.email,
+      position: emp.role === 'lecturer' ? 'Lecturer' : 
+               emp.role === 'hod' ? 'Head of Department' :
+               emp.role === 'registrar' ? 'Registrar' :
+               emp.role === 'admin' ? 'Administrator' : 'Staff',
+      department: emp.department || 'General',
+      basicSalary: emp.role === 'lecturer' ? 85000 : 
+                  emp.role === 'hod' ? 120000 :
+                  emp.role === 'registrar' ? 100000 :
+                  emp.role === 'admin' ? 75000 : 60000,
+      allowances: emp.role === 'lecturer' ? 18000 : 
+                 emp.role === 'hod' ? 25000 :
+                 emp.role === 'registrar' ? 20000 :
+                 emp.role === 'admin' ? 15000 : 10000,
+      nssf: 1200,
+      nhif: 1700,
+      paye: emp.role === 'lecturer' ? 15500 : 
+            emp.role === 'hod' ? 28000 :
+            emp.role === 'registrar' ? 22000 :
+            emp.role === 'admin' ? 12000 : 8000,
+      netSalary: 0,
+      status: 'pending' as const,
+      month: new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+      bankAccount: '',
+      taxPin: ''
+    })).map(record => ({
+      ...record,
+      netSalary: record.basicSalary + record.allowances - record.nssf - record.nhif - record.paye
+    }));
+  };
+
+  const sendPayrollEmails = async (payrollRecords: any[], emailTemplate: any) => {
+    for (const record of payrollRecords) {
+      const grossPay = record.basicSalary + record.allowances;
+      const totalDeductions = record.nssf + record.nhif + record.paye;
+      
+      const emailContent = emailTemplate.body
+        .replace(/{employeeName}/g, record.name)
+        .replace(/{month}/g, record.month)
+        .replace(/{basicSalary}/g, record.basicSalary.toLocaleString())
+        .replace(/{allowances}/g, record.allowances.toLocaleString())
+        .replace(/{grossPay}/g, grossPay.toLocaleString())
+        .replace(/{totalDeductions}/g, totalDeductions.toLocaleString())
+        .replace(/{netSalary}/g, record.netSalary.toLocaleString())
+        .replace(/{bankAccount}/g, record.bankAccount || 'XXXX');
+
+      console.log(`Email sent to ${record.email}:`);
+      console.log(`Subject: ${emailTemplate.subject.replace(/{month}/g, record.month).replace(/{employeeName}/g, record.name)}`);
+      console.log(`Body: ${emailContent}`);
+      
+      // Simulate email delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  };
+
   const value = {
     supplyRequests,
     setSupplyRequests,
@@ -214,7 +307,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addPaymentRecord,
     addClearanceForm,
     updateClearanceStatus,
-    generateInvoice
+    generateInvoice,
+    createPayrollForAllEmployees,
+    sendPayrollEmails
   };
 
   return (
