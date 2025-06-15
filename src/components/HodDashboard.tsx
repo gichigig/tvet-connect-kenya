@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, FileCheck, Users, AlertTriangle, TrendingUp, UserCheck, DollarSign, BookOpen, FlaskConical, Building2, Mail, Send } from "lucide-react";
+import { GraduationCap, FileCheck, Users, AlertTriangle, TrendingUp, UserCheck, DollarSign, BookOpen, FlaskConical, Building2, Mail, Send, Receipt } from "lucide-react";
 import { ResultsApproval } from "@/components/hod/ResultsApproval";
 import { ResultsNotification } from "@/components/hod/ResultsNotification";
 import { StudentResults } from "@/components/hod/StudentResults";
@@ -16,15 +16,23 @@ import { CurriculumOversight } from "@/components/hod/CurriculumOversight";
 import { ResearchCoordination } from "@/components/hod/ResearchCoordination";
 import { IndustryLiaison } from "@/components/hod/IndustryLiaison";
 import { EmailManager } from "@/components/hod/EmailManager";
+import { StudentFeesOverview } from "@/components/hod/StudentFeesOverview";
 
 export const HodDashboard = () => {
-  const { user, examResults } = useAuth();
+  const { user, examResults, studentFees, getAllUsers } = useAuth();
   const [activeTab, setActiveTab] = useState("results");
+
+  const users = getAllUsers();
+  const students = users.filter(u => u.role === 'student' && u.approved);
+  const departmentStudentFees = studentFees.filter(fee => {
+    const student = students.find(s => s.id === fee.studentId);
+    return student !== undefined;
+  });
 
   // Mock data for dashboard stats
   const stats = {
     pendingApprovals: 12,
-    totalStudents: 340,
+    totalStudents: students.length,
     failedStudents: 8,
     deferredExams: 5,
     staffMembers: 15,
@@ -32,7 +40,8 @@ export const HodDashboard = () => {
     activeCourses: 24,
     researchProjects: 6,
     unreadEmails: 4,
-    pendingNotifications: examResults.length
+    pendingNotifications: examResults.length,
+    totalFeesOwed: departmentStudentFees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((sum, fee) => sum + fee.amount, 0)
   };
 
   return (
@@ -94,12 +103,12 @@ export const HodDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Results to Send</CardTitle>
-            <Send className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Student Fees Owed</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.pendingNotifications}</div>
-            <p className="text-xs text-muted-foreground">Ready for notification</p>
+            <div className="text-2xl font-bold text-red-600">KSh {stats.totalFeesOwed.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Outstanding balances</p>
           </CardContent>
         </Card>
 
@@ -117,7 +126,7 @@ export const HodDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11">
           <TabsTrigger value="results" className="flex items-center gap-1 text-xs">
             <FileCheck className="w-3 h-3" />
             Results
@@ -129,6 +138,10 @@ export const HodDashboard = () => {
           <TabsTrigger value="students" className="flex items-center gap-1 text-xs">
             <Users className="w-3 h-3" />
             Students
+          </TabsTrigger>
+          <TabsTrigger value="fees" className="flex items-center gap-1 text-xs">
+            <Receipt className="w-3 h-3" />
+            Fees
           </TabsTrigger>
           <TabsTrigger value="retakes" className="flex items-center gap-1 text-xs">
             <AlertTriangle className="w-3 h-3" />
@@ -170,6 +183,10 @@ export const HodDashboard = () => {
 
         <TabsContent value="students" className="space-y-4">
           <StudentResults />
+        </TabsContent>
+
+        <TabsContent value="fees" className="space-y-4">
+          <StudentFeesOverview />
         </TabsContent>
 
         <TabsContent value="retakes" className="space-y-4">

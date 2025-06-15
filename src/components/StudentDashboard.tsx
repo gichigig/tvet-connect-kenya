@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle } from "lucide-react";
+import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign } from "lucide-react";
 import { UnitRegistration } from "@/components/student/UnitRegistration";
 import { OnlineClasses } from "@/components/student/OnlineClasses";
 import { NotesAccess } from "@/components/student/NotesAccess";
 import { ExamsQuizzes } from "@/components/student/ExamsQuizzes";
 import { MyUnits } from "@/components/student/MyUnits";
 import { DiscussionGroups } from "@/components/student/DiscussionGroups";
+import { StudentFees } from "@/components/student/StudentFees";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/sheet";
 
 export const StudentDashboard = () => {
-  const { user, pendingUnitRegistrations } = useAuth();
+  const { user, pendingUnitRegistrations, studentFees } = useAuth();
   const [activeTab, setActiveTab] = useState("units");
 
   // Get stats for current user
@@ -34,16 +35,21 @@ export const StudentDashboard = () => {
     reg => reg.studentId === user?.id && reg.status === 'approved'
   );
 
+  const myFees = studentFees.filter(fee => fee.studentId === user?.id);
+  const totalOwed = myFees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((sum, fee) => sum + fee.amount, 0);
+
   const stats = {
     enrolledUnits: enrolledUnits.length,
     pendingRegistrations: userPendingRegistrations.length,
     upcomingExams: 0, // No exams until units are enrolled
-    completedAssignments: 0 // No assignments until units are enrolled
+    completedAssignments: 0, // No assignments until units are enrolled
+    feesOwed: totalOwed
   };
 
   const menuItems = [
     { id: "units", label: "My Units", icon: BookOpen },
     { id: "register", label: "Unit Registration", icon: GraduationCap },
+    { id: "fees", label: "My Fees", icon: DollarSign },
     { id: "classes", label: "Online Classes", icon: Video },
     { id: "notes", label: "Notes & Materials", icon: FileText },
     { id: "exams", label: "Exams & Quizzes", icon: PenTool },
@@ -99,7 +105,7 @@ export const StudentDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Enrolled Units</CardTitle>
@@ -122,6 +128,19 @@ export const StudentDashboard = () => {
             <div className="text-2xl font-bold text-orange-600">{stats.pendingRegistrations}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting approval
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fees Owed</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">KSh {stats.feesOwed.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Outstanding balance
             </p>
           </CardContent>
         </Card>
@@ -155,7 +174,7 @@ export const StudentDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-6">
+        <TabsList className="hidden md:grid w-full grid-cols-7">
           {menuItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
               <item.icon className="w-4 h-4" />
@@ -170,6 +189,10 @@ export const StudentDashboard = () => {
 
         <TabsContent value="register" className="space-y-4">
           <UnitRegistration />
+        </TabsContent>
+
+        <TabsContent value="fees" className="space-y-4">
+          <StudentFees />
         </TabsContent>
 
         <TabsContent value="classes" className="space-y-4">

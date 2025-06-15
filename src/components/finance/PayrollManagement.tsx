@@ -3,274 +3,118 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, DollarSign, FileText, Calendar, Mail, Plus, Edit } from "lucide-react";
+import { Users, DollarSign, Send, FileText, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinance } from "@/contexts/finance/FinanceContext";
+
+interface PayrollRecord {
+  id: string;
+  employeeId: string;
+  name: string;
+  email: string;
+  position: string;
+  department: string;
+  basicSalary: number;
+  allowances: number;
+  nssf: number;
+  nhif: number;
+  paye: number;
+  netSalary: number;
+  status: 'pending' | 'processed';
+  month: string;
+  bankAccount: string;
+  taxPin: string;
+}
 
 export const PayrollManagement = () => {
   const { toast } = useToast();
   const { getAllUsers } = useAuth();
+  const { createPayrollForAllEmployees, sendPayrollEmails } = useFinance();
   
-  const employees = getAllUsers().filter(u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved);
-  
-  const [payrollRecords, setPayrollRecords] = useState(() => {
-    return employees.map(emp => ({
-      id: emp.id,
-      employeeId: emp.employeeId || `EMP${emp.id.slice(-3)}`,
-      name: `${emp.firstName} ${emp.lastName}`,
-      email: emp.email,
-      position: emp.role === 'lecturer' ? 'Lecturer' : 
-               emp.role === 'hod' ? 'Head of Department' :
-               emp.role === 'registrar' ? 'Registrar' :
-               emp.role === 'admin' ? 'Administrator' : 'Staff',
-      department: emp.department || 'General',
-      basicSalary: emp.role === 'lecturer' ? 85000 : 
-                  emp.role === 'hod' ? 120000 :
-                  emp.role === 'registrar' ? 100000 :
-                  emp.role === 'admin' ? 75000 : 60000,
-      allowances: emp.role === 'lecturer' ? 18000 : 
-                 emp.role === 'hod' ? 25000 :
-                 emp.role === 'registrar' ? 20000 :
-                 emp.role === 'admin' ? 15000 : 10000,
-      nssf: 1200,
-      nhif: 1700,
-      paye: emp.role === 'lecturer' ? 15500 : 
-            emp.role === 'hod' ? 28000 :
-            emp.role === 'registrar' ? 22000 :
-            emp.role === 'admin' ? 12000 : 8000,
-      netSalary: 0,
-      status: 'pending' as const,
-      month: 'December 2024',
-      bankAccount: '',
-      taxPin: ''
-    }));
-  });
-
-  const [selectedMonth, setSelectedMonth] = useState('December 2024');
-  const [editingEmployee, setEditingEmployee] = useState(null);
+  const users = getAllUsers();
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [emailTemplate, setEmailTemplate] = useState({
     subject: 'Payslip for {month} - {employeeName}',
     body: `Dear {employeeName},
 
-Please find attached your payslip for {month}.
+Please find below your payslip for {month}:
 
-Salary Details:
-- Basic Salary: KSh {basicSalary}
-- Allowances: KSh {allowances}
-- Gross Pay: KSh {grossPay}
-- Total Deductions: KSh {totalDeductions}
-- Net Pay: KSh {netSalary}
+EARNINGS:
+Basic Salary: KSh {basicSalary}
+Allowances: KSh {allowances}
+Gross Pay: KSh {grossPay}
 
-Payment will be processed to your bank account ending in {bankAccount}.
+DEDUCTIONS:
+NSSF: KSh 1,200
+NHIF: KSh 1,700
+PAYE: KSh {totalDeductions}
+Total Deductions: KSh {totalDeductions}
+
+NET PAY: KSh {netSalary}
+
+Bank Account: {bankAccount}
 
 Best regards,
-Human Resource Department
-Finance Office`
+Finance Department`
   });
 
-  // Calculate net salary for each record
-  useState(() => {
-    setPayrollRecords(prev => prev.map(record => ({
-      ...record,
-      netSalary: record.basicSalary + record.allowances - record.nssf - record.nhif - record.paye
-    })));
-  }, []);
+  const handleGeneratePayroll = () => {
+    const newPayrollRecords = createPayrollForAllEmployees(users);
+    setPayrollRecords(newPayrollRecords);
+    
+    toast({
+      title: "Payroll Generated",
+      description: `Generated payroll for ${newPayrollRecords.length} employees.`,
+    });
+  };
 
-  const processPayroll = (recordId: string) => {
-    setPayrollRecords(prev => 
-      prev.map(record => 
-        record.id === recordId 
-          ? { ...record, status: 'processed' as const }
-          : record
-      )
-    );
+  const handleProcessPayroll = (employeeId: string) => {
+    setPayrollRecords(prev => prev.map(record => 
+      record.id === employeeId ? { ...record, status: 'processed' as const } : record
+    ));
     
     toast({
       title: "Payroll Processed",
-      description: "Employee salary has been processed successfully.",
+      description: "Employee payroll has been processed.",
     });
   };
 
-  const processAllPayroll = () => {
-    const pendingRecords = payrollRecords.filter(r => r.status === 'pending');
+  const handleBulkProcess = () => {
+    setPayrollRecords(prev => prev.map(record => ({ ...record, status: 'processed' as const })));
     
-    setPayrollRecords(prev => 
-      prev.map(record => 
-        record.status === 'pending' 
-          ? { ...record, status: 'processed' as const }
-          : record
-      )
-    );
-
     toast({
-      title: "Bulk Payroll Processed",
-      description: `${pendingRecords.length} employee salaries have been processed.`,
+      title: "Bulk Processing Complete",
+      description: "All payroll records have been processed.",
     });
   };
 
-  const sendPayslipEmail = (record: any) => {
-    const grossPay = record.basicSalary + record.allowances;
-    const totalDeductions = record.nssf + record.nhif + record.paye;
+  const handleSendEmails = async () => {
+    if (payrollRecords.length === 0) {
+      toast({
+        title: "No Payroll Data",
+        description: "Please generate payroll first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await sendPayrollEmails(payrollRecords, emailTemplate);
     
-    const emailContent = emailTemplate.body
-      .replace(/{employeeName}/g, record.name)
-      .replace(/{month}/g, record.month)
-      .replace(/{basicSalary}/g, record.basicSalary.toLocaleString())
-      .replace(/{allowances}/g, record.allowances.toLocaleString())
-      .replace(/{grossPay}/g, grossPay.toLocaleString())
-      .replace(/{totalDeductions}/g, totalDeductions.toLocaleString())
-      .replace(/{netSalary}/g, record.netSalary.toLocaleString())
-      .replace(/{bankAccount}/g, record.bankAccount || 'XXXX');
-
-    // Simulate email sending
-    console.log(`Sending email to ${record.email}:`);
-    console.log(`Subject: ${emailTemplate.subject.replace(/{month}/g, record.month).replace(/{employeeName}/g, record.name)}`);
-    console.log(`Body: ${emailContent}`);
-
     toast({
-      title: "Payslip Sent",
-      description: `Payslip has been sent to ${record.name} at ${record.email}`,
+      title: "Emails Sent",
+      description: `Payslips sent to ${payrollRecords.length} employees.`,
     });
   };
 
-  const sendAllPayslips = () => {
-    const processedRecords = payrollRecords.filter(r => r.status === 'processed');
-    
-    processedRecords.forEach(record => {
-      setTimeout(() => sendPayslipEmail(record), Math.random() * 1000);
-    });
-
-    toast({
-      title: "Bulk Email Sent",
-      description: `Payslips sent to ${processedRecords.length} employees`,
-    });
-  };
-
-  const generatePayslip = (record: any) => {
-    const grossPay = record.basicSalary + record.allowances;
-    const totalDeductions = record.nssf + record.nhif + record.paye;
-    
-    const payslipData = `
-PAYSLIP - ${record.month}
-Employee: ${record.name} (${record.employeeId})
-Position: ${record.position}
-Department: ${record.department}
-Email: ${record.email}
-
-EARNINGS:
-Basic Salary: KSh ${record.basicSalary.toLocaleString()}
-Allowances: KSh ${record.allowances.toLocaleString()}
-Gross Pay: KSh ${grossPay.toLocaleString()}
-
-DEDUCTIONS:
-NSSF: KSh ${record.nssf.toLocaleString()}
-NHIF: KSh ${record.nhif.toLocaleString()}
-PAYE: KSh ${record.paye.toLocaleString()}
-Total Deductions: KSh ${totalDeductions.toLocaleString()}
-
-NET PAY: KSh ${record.netSalary.toLocaleString()}
-
-Bank Account: ${record.bankAccount || 'Not provided'}
-Tax PIN: ${record.taxPin || 'Not provided'}
-
-Generated: ${new Date().toLocaleDateString()}
-Status: ${record.status.toUpperCase()}
-    `;
-
-    const blob = new Blob([payslipData], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `payslip_${record.employeeId}_${record.month.replace(' ', '_')}.txt`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Payslip Generated",
-      description: `Payslip for ${record.name} has been downloaded.`,
-    });
-  };
-
-  const updateEmployeeDetails = () => {
-    if (!editingEmployee) return;
-
-    setPayrollRecords(prev => prev.map(record => 
-      record.id === editingEmployee.id ? {
-        ...editingEmployee,
-        netSalary: editingEmployee.basicSalary + editingEmployee.allowances - editingEmployee.nssf - editingEmployee.nhif - editingEmployee.paye
-      } : record
-    ));
-
-    setEditingEmployee(null);
-    toast({
-      title: "Employee Updated",
-      description: "Employee payroll details have been updated.",
-    });
-  };
-
-  const generateSummaryReport = () => {
-    const totalGross = payrollRecords.reduce((sum, record) => sum + record.basicSalary + record.allowances, 0);
-    const totalNet = payrollRecords.reduce((sum, record) => sum + record.netSalary, 0);
-    const totalDeductions = totalGross - totalNet;
-
-    const report = `
-PAYROLL SUMMARY REPORT - ${selectedMonth}
-Generated: ${new Date().toLocaleDateString()}
-
-OVERVIEW:
-Total Employees: ${payrollRecords.length}
-Processed: ${payrollRecords.filter(r => r.status === 'processed').length}
-Pending: ${payrollRecords.filter(r => r.status === 'pending').length}
-
-FINANCIAL SUMMARY:
-Total Gross Pay: KSh ${totalGross.toLocaleString()}
-Total Deductions: KSh ${totalDeductions.toLocaleString()}
-Total Net Pay: KSh ${totalNet.toLocaleString()}
-
-DEPARTMENT BREAKDOWN:
-${Array.from(new Set(payrollRecords.map(r => r.department))).map(dept => {
-  const deptRecords = payrollRecords.filter(r => r.department === dept);
-  const deptTotal = deptRecords.reduce((sum, r) => sum + r.netSalary, 0);
-  return `${dept}: ${deptRecords.length} employees - KSh ${deptTotal.toLocaleString()}`;
-}).join('\n')}
-
-EMPLOYEE DETAILS:
-${payrollRecords.map(record => {
-  const grossPay = record.basicSalary + record.allowances;
-  return `${record.name} (${record.employeeId}) - ${record.position}
-  Gross: KSh ${grossPay.toLocaleString()} | Net: KSh ${record.netSalary.toLocaleString()} | Status: ${record.status}`;
-}).join('\n')}
-
-STATUTORY REMITTANCES:
-Total NSSF: KSh ${payrollRecords.reduce((sum, r) => sum + r.nssf, 0).toLocaleString()}
-Total NHIF: KSh ${payrollRecords.reduce((sum, r) => sum + r.nhif, 0).toLocaleString()}
-Total PAYE: KSh ${payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleString()}
-    `;
-
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `payroll_summary_${selectedMonth.replace(' ', '_')}.txt`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Summary Report Generated",
-      description: "Payroll summary report has been downloaded.",
-    });
-  };
-
+  const totalPayroll = payrollRecords.reduce((sum, record) => sum + record.netSalary, 0);
   const totalGross = payrollRecords.reduce((sum, record) => sum + record.basicSalary + record.allowances, 0);
-  const totalNet = payrollRecords.reduce((sum, record) => sum + record.netSalary, 0);
-  const totalDeductions = totalGross - totalNet;
+  const totalDeductions = payrollRecords.reduce((sum, record) => sum + record.nssf + record.nhif + record.paye, 0);
+  const processedCount = payrollRecords.filter(r => r.status === 'processed').length;
 
   return (
     <div className="space-y-6">
@@ -278,60 +122,52 @@ Total PAYE: KSh ${payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleStr
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Salaries & Payroll Management
+            Payroll Management
           </CardTitle>
           <CardDescription>
-            Real-time payroll processing with email integration for all staff members
+            Generate and manage employee payroll with automated email distribution
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">KSh {totalGross.toLocaleString()}</div>
-              <div className="text-sm text-green-800">Total Gross Pay</div>
-            </div>
             <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">KSh {totalNet.toLocaleString()}</div>
-              <div className="text-sm text-blue-800">Total Net Pay</div>
+              <div className="text-2xl font-bold text-blue-600">KSh {totalPayroll.toLocaleString()}</div>
+              <div className="text-sm text-blue-800">Total Net Payroll</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{payrollRecords.length}</div>
+              <div className="text-sm text-green-800">Employees</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">{processedCount}</div>
+              <div className="text-sm text-purple-800">Processed</div>
             </div>
             <div className="bg-orange-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-orange-600">KSh {totalDeductions.toLocaleString()}</div>
               <div className="text-sm text-orange-800">Total Deductions</div>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{payrollRecords.length}</div>
-              <div className="text-sm text-purple-800">Active Employees</div>
-            </div>
           </div>
 
           <Tabs defaultValue="payroll" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="payroll">Monthly Payroll</TabsTrigger>
-              <TabsTrigger value="email">Email Management</TabsTrigger>
-              <TabsTrigger value="deductions">Statutory Deductions</TabsTrigger>
-              <TabsTrigger value="reports">Payroll Reports</TabsTrigger>
+              <TabsTrigger value="payroll">Payroll Records</TabsTrigger>
+              <TabsTrigger value="email">Email Template</TabsTrigger>
+              <TabsTrigger value="summary">Summary Report</TabsTrigger>
             </TabsList>
 
             <TabsContent value="payroll" className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="December 2024">December 2024</SelectItem>
-                    <SelectItem value="November 2024">November 2024</SelectItem>
-                    <SelectItem value="October 2024">October 2024</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={processAllPayroll}>Process All Payroll</Button>
-                <Button variant="outline" onClick={sendAllPayslips}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email All Payslips
-                </Button>
-                <Button variant="outline" onClick={generateSummaryReport}>
+              <div className="flex space-x-4 mb-4">
+                <Button onClick={handleGeneratePayroll}>
                   <FileText className="w-4 h-4 mr-2" />
-                  Summary Report
+                  Generate Payroll
+                </Button>
+                <Button onClick={handleBulkProcess} disabled={payrollRecords.length === 0}>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Process All
+                </Button>
+                <Button onClick={handleSendEmails} disabled={payrollRecords.length === 0}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Payslips
                 </Button>
               </div>
 
@@ -340,30 +176,32 @@ Total PAYE: KSh ${payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleStr
                   <TableRow>
                     <TableHead>Employee</TableHead>
                     <TableHead>Position</TableHead>
-                    <TableHead>Department</TableHead>
                     <TableHead>Basic Salary</TableHead>
+                    <TableHead>Allowances</TableHead>
                     <TableHead>Gross Pay</TableHead>
+                    <TableHead>Deductions</TableHead>
                     <TableHead>Net Pay</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payrollRecords.filter(record => record.month === selectedMonth).map((record) => {
+                  {payrollRecords.map((record) => {
                     const grossPay = record.basicSalary + record.allowances;
+                    const totalRecordDeductions = record.nssf + record.nhif + record.paye;
                     return (
                       <TableRow key={record.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">{record.name}</div>
                             <div className="text-sm text-gray-500">{record.employeeId}</div>
-                            <div className="text-sm text-gray-500">{record.email}</div>
                           </div>
                         </TableCell>
                         <TableCell>{record.position}</TableCell>
-                        <TableCell>{record.department}</TableCell>
                         <TableCell>KSh {record.basicSalary.toLocaleString()}</TableCell>
+                        <TableCell>KSh {record.allowances.toLocaleString()}</TableCell>
                         <TableCell>KSh {grossPay.toLocaleString()}</TableCell>
+                        <TableCell>KSh {totalRecordDeductions.toLocaleString()}</TableCell>
                         <TableCell className="font-medium">KSh {record.netSalary.toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant={record.status === 'processed' ? 'default' : 'secondary'}>
@@ -371,72 +209,11 @@ Total PAYE: KSh ${payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleStr
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            {record.status === 'pending' && (
-                              <Button size="sm" onClick={() => processPayroll(record.id)}>
-                                Process
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" onClick={() => generatePayslip(record)}>
-                              Download
+                          {record.status === 'pending' && (
+                            <Button size="sm" onClick={() => handleProcessPayroll(record.id)}>
+                              Process
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => sendPayslipEmail(record)}>
-                              <Mail className="w-4 h-4" />
-                            </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="outline" onClick={() => setEditingEmployee(record)}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit Employee Payroll</DialogTitle>
-                                </DialogHeader>
-                                {editingEmployee && (
-                                  <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                        <Label>Basic Salary (KSh)</Label>
-                                        <Input
-                                          type="number"
-                                          value={editingEmployee.basicSalary}
-                                          onChange={(e) => setEditingEmployee(prev => ({...prev, basicSalary: parseInt(e.target.value) || 0}))}
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label>Allowances (KSh)</Label>
-                                        <Input
-                                          type="number"
-                                          value={editingEmployee.allowances}
-                                          onChange={(e) => setEditingEmployee(prev => ({...prev, allowances: parseInt(e.target.value) || 0}))}
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                        <Label>Bank Account</Label>
-                                        <Input
-                                          value={editingEmployee.bankAccount}
-                                          onChange={(e) => setEditingEmployee(prev => ({...prev, bankAccount: e.target.value}))}
-                                          placeholder="Bank account number"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label>Tax PIN</Label>
-                                        <Input
-                                          value={editingEmployee.taxPin}
-                                          onChange={(e) => setEditingEmployee(prev => ({...prev, taxPin: e.target.value}))}
-                                          placeholder="KRA PIN"
-                                        />
-                                      </div>
-                                    </div>
-                                    <Button onClick={updateEmployeeDetails} className="w-full">Update Employee</Button>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                          </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -446,160 +223,95 @@ Total PAYE: KSh ${payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleStr
             </TabsContent>
 
             <TabsContent value="email" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Email Template Configuration</CardTitle>
-                  <CardDescription>
-                    Customize the email template for payslip distribution
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="emailSubject">Subject Line</Label>
-                    <Input
-                      id="emailSubject"
-                      value={emailTemplate.subject}
-                      onChange={(e) => setEmailTemplate(prev => ({...prev, subject: e.target.value}))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emailBody">Email Body</Label>
-                    <Textarea
-                      id="emailBody"
-                      rows={10}
-                      value={emailTemplate.body}
-                      onChange={(e) => setEmailTemplate(prev => ({...prev, body: e.target.value}))}
-                    />
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Available variables: {'{employeeName}'}, {'{month}'}, {'{basicSalary}'}, {'{allowances}'}, {'{grossPay}'}, {'{totalDeductions}'}, {'{netSalary}'}, {'{bankAccount}'}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={sendAllPayslips}>
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send All Payslips
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      toast({
-                        title: "Template Saved",
-                        description: "Email template has been saved successfully.",
-                      });
-                    }}>
-                      Save Template
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="deductions" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>NSSF Contributions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Employee Rate:</span>
-                        <span>6%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Employer Rate:</span>
-                        <span>6%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Maximum:</span>
-                        <span>KSh 2,160</span>
-                      </div>
-                      <div className="flex justify-between font-bold">
-                        <span>Total Monthly:</span>
-                        <span>KSh {payrollRecords.reduce((sum, r) => sum + r.nssf, 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>NHIF Contributions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Based on Salary:</span>
-                        <span>Graduated Scale</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Minimum:</span>
-                        <span>KSh 150</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Maximum:</span>
-                        <span>KSh 1,700</span>
-                      </div>
-                      <div className="flex justify-between font-bold">
-                        <span>Total Monthly:</span>
-                        <span>KSh {payrollRecords.reduce((sum, r) => sum + r.nhif, 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>PAYE Tax</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Tax Bands:</span>
-                        <span>Progressive</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Relief:</span>
-                        <span>KSh 2,400</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Insurance Relief:</span>
-                        <span>Up to KSh 5,000</span>
-                      </div>
-                      <div className="flex justify-between font-bold">
-                        <span>Total Monthly:</span>
-                        <span>KSh {payrollRecords.reduce((sum, r) => sum + r.paye, 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email Subject</label>
+                  <Input
+                    value={emailTemplate.subject}
+                    onChange={(e) => setEmailTemplate(prev => ({...prev, subject: e.target.value}))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email Body</label>
+                  <Textarea
+                    value={emailTemplate.body}
+                    onChange={(e) => setEmailTemplate(prev => ({...prev, body: e.target.value}))}
+                    rows={15}
+                  />
+                </div>
+                <div className="text-sm text-gray-600">
+                  <p className="font-medium mb-2">Available placeholders:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>{"{employeeName}"} - Employee's full name</li>
+                    <li>{"{month}"} - Current month and year</li>
+                    <li>{"{basicSalary}"} - Basic salary amount</li>
+                    <li>{"{allowances}"} - Allowances amount</li>
+                    <li>{"{grossPay}"} - Gross pay amount</li>
+                    <li>{"{totalDeductions}"} - Total deductions</li>
+                    <li>{"{netSalary}"} - Net salary amount</li>
+                    <li>{"{bankAccount}"} - Bank account number</li>
+                  </ul>
+                </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="reports" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20" onClick={generateSummaryReport}>
-                  <div className="text-center">
-                    <FileText className="w-6 h-6 mx-auto mb-2" />
-                    <div>Monthly Payroll Report</div>
-                  </div>
-                </Button>
-                <Button variant="outline" className="h-20">
-                  <div className="text-center">
-                    <DollarSign className="w-6 h-6 mx-auto mb-2" />
-                    <div>Statutory Remittances</div>
-                  </div>
-                </Button>
-                <Button variant="outline" className="h-20">
-                  <div className="text-center">
-                    <Calendar className="w-6 h-6 mx-auto mb-2" />
-                    <div>Annual Tax Returns</div>
-                  </div>
-                </Button>
-                <Button variant="outline" className="h-20">
-                  <div className="text-center">
-                    <Users className="w-6 h-6 mx-auto mb-2" />
-                    <div>Employee Benefits Summary</div>
-                  </div>
-                </Button>
+            <TabsContent value="summary" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payroll Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Total Employees:</span>
+                        <span className="font-medium">{payrollRecords.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total Basic Salaries:</span>
+                        <span className="font-medium">KSh {payrollRecords.reduce((sum, r) => sum + r.basicSalary, 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total Allowances:</span>
+                        <span className="font-medium">KSh {payrollRecords.reduce((sum, r) => sum + r.allowances, 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t pt-2">
+                        <span>Total Gross Pay:</span>
+                        <span>KSh {totalGross.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total Deductions:</span>
+                        <span className="font-medium text-red-600">KSh {totalDeductions.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg border-t pt-2">
+                        <span>Total Net Payroll:</span>
+                        <span className="text-green-600">KSh {totalPayroll.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Processing Status</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Pending Processing:</span>
+                        <span className="font-medium text-orange-600">{payrollRecords.filter(r => r.status === 'pending').length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Processed:</span>
+                        <span className="font-medium text-green-600">{processedCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Processing Rate:</span>
+                        <span className="font-medium">{payrollRecords.length > 0 ? Math.round((processedCount / payrollRecords.length) * 100) : 0}%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </Tabs>

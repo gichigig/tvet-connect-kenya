@@ -230,7 +230,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     return employees.map(emp => ({
       id: emp.id,
-      employeeId: emp.employeeId || `EMP${emp.id.slice(-3)}`,
+      employeeId: (emp as any).employeeId || `EMP${emp.id.slice(-3)}`,
       name: `${emp.firstName} ${emp.lastName}`,
       email: emp.email,
       position: emp.role === 'lecturer' ? 'Lecturer' : 
