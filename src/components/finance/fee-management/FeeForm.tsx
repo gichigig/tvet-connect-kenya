@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,11 +31,23 @@ export const FeeForm = ({ onClose }: FeeFormProps) => {
 
   const students = getAllUsers().filter(user => user.role === 'student' && user.approved);
 
+  // -- Handle creating the fee --
   const handleCreateFee = () => {
+    // Extra validation for these types
+    const needsUnit = ["supplementary_exam", "special_exam", "unit_retake"].includes(newFee.feeType);
+
     if (!newFee.studentId || !newFee.feeType || !newFee.amount || !newFee.dueDate) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (needsUnit && (!newFee.unitCode.trim() || !newFee.unitName.trim())) {
+      toast({
+        title: "Unit Details Required",
+        description: "Unit Code and Unit Name are required for Supplementary, Special, or Retake fees.",
         variant: "destructive",
       });
       return;
@@ -76,6 +87,7 @@ export const FeeForm = ({ onClose }: FeeFormProps) => {
     });
   };
 
+  // -- Handle fee type change and prefill amount and description --
   const handleFeeTypeChange = (feeType: string) => {
     setSelectedFeeType(feeType);
     setNewFee(prev => ({
@@ -88,6 +100,11 @@ export const FeeForm = ({ onClose }: FeeFormProps) => {
 
   return (
     <div className="space-y-4">
+      <div className="mb-2">
+        <p className="text-xs text-gray-500">
+          Use this form to add supplementary, special exam, or unit retake fees <span className="font-semibold">(manual entry for specific students)</span>. These will reflect on the student's dashboard immediately.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="student">Student</Label>
@@ -111,13 +128,29 @@ export const FeeForm = ({ onClose }: FeeFormProps) => {
               <SelectValue placeholder="Select fee type" />
             </SelectTrigger>
             <SelectContent>
-              {feeTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              {/* Only show these special/manual options at the top */}
+              <SelectItem value="supplementary_exam">Supplementary Exam</SelectItem>
+              <SelectItem value="special_exam">Special Exam</SelectItem>
+              <SelectItem value="unit_retake">Unit Retake</SelectItem>
+              {/* Divider */}
+              <div className="border-t my-1" />
+              {/* Other fee types from config */}
+              {feeTypeOptions
+                .filter(opt => !["supplementary_exam", "special_exam", "unit_retake"].includes(opt.value))
+                .map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
+          {(selectedFeeType === "supplementary_exam" ||
+            selectedFeeType === "special_exam" ||
+            selectedFeeType === "unit_retake") && (
+            <div className="text-xs mt-1 text-blue-600">
+              Please specify unit code and unit name below.
+            </div>
+          )}
         </div>
       </div>
 
@@ -167,21 +200,23 @@ export const FeeForm = ({ onClose }: FeeFormProps) => {
       {(selectedFeeType === "supplementary_exam" || selectedFeeType === "special_exam" || selectedFeeType === "unit_retake") && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="unit-code">Unit Code</Label>
+            <Label htmlFor="unit-code">Unit Code <span className="text-red-500">*</span></Label>
             <Input
               id="unit-code"
               value={newFee.unitCode}
               onChange={(e) => setNewFee(prev => ({ ...prev, unitCode: e.target.value }))}
               placeholder="e.g., CS101"
+              required
             />
           </div>
           <div>
-            <Label htmlFor="unit-name">Unit Name</Label>
+            <Label htmlFor="unit-name">Unit Name <span className="text-red-500">*</span></Label>
             <Input
               id="unit-name"
               value={newFee.unitName}
               onChange={(e) => setNewFee(prev => ({ ...prev, unitName: e.target.value }))}
               placeholder="e.g., Introduction to Computer Science"
+              required
             />
           </div>
         </div>
