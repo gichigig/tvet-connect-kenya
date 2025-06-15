@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, PendingUnitRegistration, ExamResult } from '../auth/types';
 import { 
@@ -97,7 +96,10 @@ const mapSupaUserToUser = (supa: SupaUser): User => ({
   email: supa.email,
   firstName: supa.first_name,
   lastName: supa.last_name,
-  role: supa.role,
+  // Safely cast role
+  role: (["admin", "student", "lecturer", "registrar", "hod", "finance"].includes(supa.role)
+    ? supa.role
+    : "student") as User["role"],
   approved: supa.approved,
   course: supa.course || undefined,
   department: supa.department || undefined,
@@ -107,7 +109,12 @@ const mapSupaUserToUser = (supa: SupaUser): User => ({
   intake: supa.intake || undefined,
   phone: supa.phone || undefined,
   admissionNumber: supa.admission_number || undefined,
-  financialStatus: supa.financial_status || undefined,
+  // Safely cast financialStatus
+  financialStatus: (
+    ["cleared", "defaulter", "partial"].includes(supa.financial_status || "")
+      ? supa.financial_status
+      : undefined
+  ) as User["financialStatus"],
   totalFeesOwed: supa.total_fees_owed ?? undefined,
   blocked: supa.blocked ?? false,
 });
@@ -123,7 +130,10 @@ const mapSupaPendingUnitRegToPendingUnitReg = (reg: SupaPendingUnitRegistration)
   course: reg.course,
   year: reg.year,
   semester: reg.semester,
-  status: reg.status as 'pending' | 'approved' | 'rejected',
+  // Safely cast status
+  status: (["pending", "approved", "rejected"].includes(reg.status)
+    ? reg.status
+    : "pending") as "pending" | "approved" | "rejected",
   submittedDate: reg.submitted_date,
 });
 
@@ -141,7 +151,10 @@ const mapSupaExamResultToExamResult = (res: SupaExamResult): ExamResult => ({
   year: res.year,
   examDate: res.exam_date,
   lecturerName: res.lecturer_name,
-  status: res.status,
+  // Only allow "pass" or "fail"
+  status: (["pass", "fail"].includes(res.status)
+    ? res.status
+    : "pass") as "pass" | "fail",
 });
 
 const UsersContext = createContext<UsersContextType | null>(null);
@@ -229,9 +242,17 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addPendingUnitRegistration = async (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
     const newRegistration = {
-      ...registration,
+      student_id: registration.studentId,
+      student_name: registration.studentName,
+      student_email: registration.studentEmail,
+      unit_id: registration.unitId,
+      unit_code: registration.unitCode,
+      unit_name: registration.unitName,
+      course: registration.course,
+      year: registration.year,
+      semester: registration.semester,
       submitted_date: new Date().toISOString().split('T')[0],
-      status: 'pending',
+      status: "pending",
     };
     const { data } = await supabase.from(UNIT_REG_TABLE).insert([newRegistration]).select();
     if (data && data.length > 0) {
@@ -253,7 +274,22 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addExamResult = async (result: Omit<ExamResult, 'id'>) => {
-    const { data } = await supabase.from(EXAM_RESULTS_TABLE).insert([result]).select();
+    const newResult = {
+      student_id: result.studentId,
+      student_name: result.studentName,
+      unit_code: result.unitCode,
+      unit_name: result.unitName,
+      exam_type: result.examType,
+      score: result.score,
+      max_score: result.maxScore,
+      grade: result.grade,
+      semester: result.semester,
+      year: result.year,
+      exam_date: result.examDate,
+      lecturer_name: result.lecturerName,
+      status: result.status,
+    };
+    const { data } = await supabase.from(EXAM_RESULTS_TABLE).insert([newResult]).select();
     if (data && data.length > 0) {
       setExamResults(prev => [...prev, mapSupaExamResultToExamResult(data[0] as SupaExamResult)]);
     }
