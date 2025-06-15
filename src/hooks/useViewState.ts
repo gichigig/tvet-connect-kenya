@@ -35,8 +35,8 @@ export const useViewState = () => {
     } else if (user?.role === "student") {
       console.log("Setting view to student");
       setCurrentView("student");
-    } else {
-      console.log("Setting view to catalog");
+    } else if (user) {
+      console.log("Setting view to catalog for authenticated user");
       setCurrentView("catalog");
     }
   }, [isAdmin, user]);
