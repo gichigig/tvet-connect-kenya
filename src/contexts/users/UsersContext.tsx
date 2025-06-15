@@ -2,11 +2,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, PendingUnitRegistration, ExamResult } from '../auth/types';
 import { 
-  mockUsers, 
-  mockPendingUnitRegistrations, 
-  mockExamResults 
-} from '../auth/mockData';
-import { 
   createNewUser, 
   findUserByEmail, 
   updateUserInList, 
@@ -14,6 +9,7 @@ import {
   getPendingUsers 
 } from '../auth/authUtils';
 import { sendResultsNotification as sendNotifications } from '../auth/notificationUtils';
+import { supabase } from "@/integrations/supabase/client";
 
 interface UsersContextType {
   users: User[];
@@ -37,62 +33,83 @@ interface UsersContextType {
   updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void;
 }
 
+// Define Supabase table names
+const USERS_TABLE = 'users';
+const UNIT_REG_TABLE = 'pending_unit_registrations';
+const EXAM_RESULTS_TABLE = 'exam_results';
+
 const UsersContext = createContext<UsersContextType | null>(null);
 
 export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
-  const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
+  const [users, setUsers] = useState<User[]>([]);
+  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>([]);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
 
+  // Fetch from Supabase on mount
   useEffect(() => {
     const fetchUsers = async () => {
-      const storedUsers = localStorage.getItem('users');
-      if (storedUsers) {
-        setUsers(JSON.parse(storedUsers));
-      }
+      const { data, error } = await supabase.from(USERS_TABLE).select('*');
+      if (!error && data) setUsers(data as User[]);
     };
     fetchUsers();
   }, []);
 
-  const updateUserApproval = (userId: string, approved: boolean) => {
-    setUsers(prevUsers => updateUserInList(prevUsers, userId, { approved }));
+  useEffect(() => {
+    const fetchPending = async () => {
+      const { data, error } = await supabase.from(UNIT_REG_TABLE).select('*');
+      if (!error && data) setPendingUnitRegistrations(data as PendingUnitRegistration[]);
+    };
+    fetchPending();
+  }, []);
+
+  useEffect(() => {
+    const fetchExamResults = async () => {
+      const { data, error } = await supabase.from(EXAM_RESULTS_TABLE).select('*');
+      if (!error && data) setExamResults(data as ExamResult[]);
+    };
+    fetchExamResults();
+  }, []);
+
+  const updateUserApproval = async (userId: string, approved: boolean) => {
+    await supabase.from(USERS_TABLE).update({ approved }).eq('id', userId);
+    setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, approved } : u));
   };
 
-  const approveUser = (userId: string) => {
-    updateUserApproval(userId, true);
+  const approveUser = async (userId: string) => updateUserApproval(userId, true);
+
+  const approveStudent = async (userId: string) => updateUserApproval(userId, true);
+
+  const rejectUser = async (userId: string) => {
+    await supabase.from(USERS_TABLE).delete().eq('id', userId);
+    setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
   };
 
-  const approveStudent = (userId: string) => {
-    updateUserApproval(userId, true);
+  const blockUser = async (userId: string) => {
+    await supabase.from(USERS_TABLE).update({ blocked: true }).eq('id', userId);
+    setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, blocked: true } : u));
   };
 
-  const rejectUser = (userId: string) => {
-    setUsers(prevUsers => removeUserFromList(prevUsers, userId));
+  const unblockUser = async (userId: string) => {
+    await supabase.from(USERS_TABLE).update({ blocked: false }).eq('id', userId);
+    setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, blocked: false } : u));
   };
 
-  const blockUser = (userId: string) => {
-    setUsers(prevUsers => updateUserInList(prevUsers, userId, { blocked: true }));
-  };
+  const getAllUsers = () => users;
 
-  const unblockUser = (userId: string) => {
-    setUsers(prevUsers => updateUserInList(prevUsers, userId, { blocked: false }));
-  };
-
-  const getAllUsers = () => {
-    return users;
-  };
-
-  const addPendingUnitRegistration = (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
-    const newRegistration: PendingUnitRegistration = {
+  const addPendingUnitRegistration = async (registration: Omit<PendingUnitRegistration, 'id' | 'submittedDate' | 'status'>) => {
+    const newRegistration = {
       ...registration,
-      id: Date.now().toString(),
       submittedDate: new Date().toISOString().split('T')[0],
       status: 'pending'
     };
-    setPendingUnitRegistrations(prev => [...prev, newRegistration]);
+    const { data } = await supabase.from(UNIT_REG_TABLE).insert([newRegistration]).select();
+    if (data && data.length > 0) {
+      setPendingUnitRegistrations(prev => [...prev, data[0] as PendingUnitRegistration]);
+    }
   };
 
-  const updateUnitRegistrationStatus = (registrationId: string, status: 'approved' | 'rejected') => {
+  const updateUnitRegistrationStatus = async (registrationId: string, status: 'approved' | 'rejected') => {
+    await supabase.from(UNIT_REG_TABLE).update({ status }).eq('id', registrationId);
     setPendingUnitRegistrations(prev =>
       prev.map(reg =>
         reg.id === registrationId ? { ...reg, status } : reg
@@ -104,19 +121,19 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return pendingUnitRegistrations.filter(reg => reg.status === 'pending');
   };
 
-  const addExamResult = (result: Omit<ExamResult, 'id'>) => {
-    const newResult: ExamResult = {
-      ...result,
-      id: Date.now().toString()
-    };
-    setExamResults(prev => [...prev, newResult]);
+  const addExamResult = async (result: Omit<ExamResult, 'id'>) => {
+    const { data } = await supabase.from(EXAM_RESULTS_TABLE).insert([result]).select();
+    if (data && data.length > 0) {
+      setExamResults(prev => [...prev, data[0] as ExamResult]);
+    }
   };
 
   const sendResultsNotification = async (resultIds: string[], sendToGuardians: boolean) => {
     return sendNotifications(resultIds, sendToGuardians, examResults, users);
   };
 
-  const updateStudentFinancialStatus = (studentId: string, status: User['financialStatus'], totalOwed?: number) => {
+  const updateStudentFinancialStatus = async (studentId: string, status: User['financialStatus'], totalOwed?: number) => {
+    await supabase.from(USERS_TABLE).update({ financialStatus: status, totalFeesOwed: totalOwed }).eq('id', studentId);
     setUsers(prev => prev.map(user => 
       user.id === studentId 
         ? { ...user, financialStatus: status, totalFeesOwed: totalOwed }
