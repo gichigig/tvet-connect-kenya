@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("admin123");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
   const { toast } = useToast();
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -22,6 +22,26 @@ const Login = () => {
   useEffect(() => {
     const autoLogin = async () => {
       setIsLoading(true);
+      setDebugInfo(""); // reset
+      try {
+        // Try to fetch users from Supabase directly for debug output
+        const { data, error } = await import("@/integrations/supabase/client")
+          .then(mod => mod.supabase)
+          .then(supabase =>
+            supabase.from("users").select("*")
+          );
+
+        if (error) {
+          setDebugInfo(`Supabase fetch error: ${JSON.stringify(error)}`);
+        } else {
+          setDebugInfo(
+            "Supabase user data: " + JSON.stringify(data, null, 2)
+          );
+        }
+      } catch (e: any) {
+        setDebugInfo("Code error: " + e.message);
+      }
+
       try {
         await login("billyblun17@gmail.com", "admin123");
         toast({
@@ -135,6 +155,12 @@ const Login = () => {
               Sign up
             </Link>
           </div>
+          {debugInfo && (
+            <div className="mt-4 p-2 bg-gray-200 text-xs text-left rounded text-red-600 whitespace-pre-wrap">
+              <div className="font-bold">DEBUG:</div>
+              {debugInfo}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
