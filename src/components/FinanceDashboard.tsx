@@ -3,13 +3,18 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, FileText, UserCheck } from "lucide-react";
+import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, receipt, Settings, file, UserCheck, upload, ban, message-square, file-bar-chart } from "lucide-react";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
 import { FeeStructureManagement } from "@/components/finance/FeeStructureManagement";
 import { InvoiceManagement } from "@/components/finance/InvoiceManagement";
 import { ClearanceManagement } from "@/components/finance/ClearanceManagement";
+import { FeeStructureUpload } from "@/components/finance/FeeStructureUpload";
+import { ReceiptGeneration } from "@/components/finance/ReceiptGeneration";
+import { AccessControl } from "@/components/finance/AccessControl";
+import { NotificationSystem } from "@/components/finance/NotificationSystem";
+import { FinancialReports } from "@/components/finance/FinancialReports";
 
 export const FinanceDashboard = () => {
   const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
@@ -48,7 +53,7 @@ export const FinanceDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">KSh {stats.totalRevenue.toLocaleString()}</div>
@@ -126,30 +131,46 @@ export const FinanceDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Receipt className="w-4 h-4" />
-            Student Fees
+        <TabsList className="grid w-full grid-cols-10">
+          <TabsTrigger value="overview" className="flex items-center gap-1">
+            <receipt className="w-3 h-3" />
+            <span className="hidden sm:inline">Fees</span>
           </TabsTrigger>
-          <TabsTrigger value="structures" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Fee Structures
+          <TabsTrigger value="structures" className="flex items-center gap-1">
+            <Settings className="w-3 h-3" />
+            <span className="hidden sm:inline">Structures</span>
           </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Invoices
+          <TabsTrigger value="upload" className="flex items-center gap-1">
+            <upload className="w-3 h-3" />
+            <span className="hidden sm:inline">Upload</span>
           </TabsTrigger>
-          <TabsTrigger value="clearances" className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4" />
-            Clearances
+          <TabsTrigger value="receipts" className="flex items-center gap-1">
+            <receipt className="w-3 h-3" />
+            <span className="hidden sm:inline">Receipts</span>
           </TabsTrigger>
-          <TabsTrigger value="fee-management" className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            Add Fees
+          <TabsTrigger value="access" className="flex items-center gap-1">
+            <ban className="w-3 h-3" />
+            <span className="hidden sm:inline">Access</span>
           </TabsTrigger>
-          <TabsTrigger value="supplies" className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4" />
-            Supplies
+          <TabsTrigger value="notifications" className="flex items-center gap-1">
+            <message-square className="w-3 h-3" />
+            <span className="hidden sm:inline">Notify</span>
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-1">
+            <file-bar-chart className="w-3 h-3" />
+            <span className="hidden sm:inline">Reports</span>
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-1">
+            <file className="w-3 h-3" />
+            <span className="hidden sm:inline">Invoices</span>
+          </TabsTrigger>
+          <TabsTrigger value="clearances" className="flex items-center gap-1">
+            <UserCheck className="w-3 h-3" />
+            <span className="hidden sm:inline">Clearances</span>
+          </TabsTrigger>
+          <TabsTrigger value="supplies" className="flex items-center gap-1">
+            <FileCheck className="w-3 h-3" />
+            <span className="hidden sm:inline">Supplies</span>
           </TabsTrigger>
         </TabsList>
 
@@ -161,16 +182,35 @@ export const FinanceDashboard = () => {
           <FeeStructureManagement />
         </TabsContent>
 
+        <TabsContent value="upload" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <FeeStructureUpload />
+            <FeeManagement />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="receipts" className="space-y-4">
+          <ReceiptGeneration />
+        </TabsContent>
+
+        <TabsContent value="access" className="space-y-4">
+          <AccessControl />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <NotificationSystem />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          <FinancialReports />
+        </TabsContent>
+
         <TabsContent value="invoices" className="space-y-4">
           <InvoiceManagement />
         </TabsContent>
 
         <TabsContent value="clearances" className="space-y-4">
           <ClearanceManagement />
-        </TabsContent>
-
-        <TabsContent value="fee-management" className="space-y-4">
-          <FeeManagement />
         </TabsContent>
 
         <TabsContent value="supplies" className="space-y-4">
