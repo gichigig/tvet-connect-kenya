@@ -167,32 +167,23 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Fetch from Supabase on mount
   useEffect(() => {
     const fetchUsers = async () => {
+      console.log('Fetching users from Supabase...');
       const { data, error } = await supabase.from(USERS_TABLE).select('*');
-      if (!error && data) {
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('Raw user data from Supabase:', data);
         let mapped = (data as SupaUser[]).map(mapSupaUserToUser);
+        console.log('Mapped users:', mapped);
 
-        // Promote admin email to admin+approved if it exists (this runs only once)
-        let needsAdminPatch = false;
-        mapped = mapped.map((user) => {
-          if (user.email === ADMIN_EMAIL && (user.role !== 'admin' || !user.approved)) {
-            needsAdminPatch = true;
-            return { ...user, role: 'admin', approved: true };
-          }
-          return user;
-        });
+        // Check if admin exists
+        const adminUser = mapped.find(user => user.email === ADMIN_EMAIL);
+        console.log('Admin user found:', adminUser);
 
         setUsers(mapped);
-
-        // If needs promotion, patch it in Supabase
-        if (needsAdminPatch) {
-          const adminUser = data.find(u => u.email === ADMIN_EMAIL);
-          if (adminUser) {
-            await supabase
-              .from(USERS_TABLE)
-              .update({ role: 'admin', approved: true })
-              .eq('email', ADMIN_EMAIL);
-          }
-        }
       }
     };
     fetchUsers();
