@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, DollarSign, Send, FileText, CheckCircle } from "lucide-react";
+import { Users, DollarSign, Send, FileText, CheckCircle, Pencil, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinance } from "@/contexts/finance/FinanceContext";
@@ -31,13 +30,24 @@ interface PayrollRecord {
   taxPin: string;
 }
 
+interface SalarySetting {
+  basicSalary: number;
+  allowances: number;
+}
+
 export const PayrollManagement = () => {
   const { toast } = useToast();
   const { getAllUsers } = useAuth();
   const { createPayrollForAllEmployees, sendPayrollEmails } = useFinance();
-  
+
   const users = getAllUsers();
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  // Salary settings per employeeId
+  const [salarySettings, setSalarySettings] = useState<Record<string, SalarySetting>>({});
+  // For editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editSalary, setEditSalary] = useState<SalarySetting>({ basicSalary: 0, allowances: 0 });
+
   const [emailTemplate, setEmailTemplate] = useState({
     subject: 'Payslip for {month} - {employeeName}',
     body: `Dear {employeeName},
@@ -63,21 +73,101 @@ Best regards,
 Finance Department`
   });
 
+  // Generate payroll using set salary settings where available.
   const handleGeneratePayroll = () => {
-    const newPayrollRecords = createPayrollForAllEmployees(users);
-    setPayrollRecords(newPayrollRecords);
-    
+    const employees = users.filter(u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved);
+    const defaultRecords = createPayrollForAllEmployees(employees);
+    // Apply current salary settings, fall back to default
+    const recordsWithOverrides = defaultRecords.map(record => {
+      const override = salarySettings[record.id];
+      if (override) {
+        // Re-calculate net after override
+        const { basicSalary, allowances } = override;
+        const grossPay = basicSalary + allowances;
+        const nssf = record.nssf;
+        const nhif = record.nhif;
+        const paye = record.paye;
+        const netSalary = grossPay - nssf - nhif - paye;
+        return {
+          ...record,
+          basicSalary,
+          allowances,
+          netSalary
+        };
+      }
+      return record;
+    });
+    setPayrollRecords(recordsWithOverrides);
+
     toast({
       title: "Payroll Generated",
-      description: `Generated payroll for ${newPayrollRecords.length} employees.`,
+      description: `Generated payroll for ${recordsWithOverrides.length} employees.`,
     });
+  };
+
+  // Inline salary edit: start editing
+  const handleStartEdit = (record: PayrollRecord) => {
+    setEditingId(record.id);
+    setEditSalary({
+      basicSalary: record.basicSalary,
+      allowances: record.allowances,
+    });
+  };
+
+  // Inline salary edit: save changes
+  const handleSaveEdit = (employeeId: string) => {
+    setSalarySettings(prev => ({
+      ...prev,
+      [employeeId]: { ...editSalary }
+    }));
+    // update the payroll record if present
+    setPayrollRecords(prev =>
+      prev.map(rec =>
+        rec.id === employeeId
+          ? {
+              ...rec,
+              basicSalary: editSalary.basicSalary,
+              allowances: editSalary.allowances,
+              netSalary:
+                editSalary.basicSalary +
+                editSalary.allowances -
+                rec.nssf -
+                rec.nhif -
+                rec.paye,
+            }
+          : rec,
+      )
+    );
+    setEditingId(null);
+    toast({
+      title: "Salary Updated",
+      description: "Salary values updated for this staff.",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
+
+  // Reset custom salary setting
+  const handleResetSalary = (employeeId: string) => {
+    setSalarySettings(prev => {
+      const copy = { ...prev };
+      delete copy[employeeId];
+      return copy;
+    });
+    toast({
+      title: "Reset",
+      description: "Salary reset to default for this staff.",
+    });
+    // Also update payroll record if exists
+    handleGeneratePayroll();
   };
 
   const handleProcessPayroll = (employeeId: string) => {
     setPayrollRecords(prev => prev.map(record => 
       record.id === employeeId ? { ...record, status: 'processed' as const } : record
     ));
-    
     toast({
       title: "Payroll Processed",
       description: "Employee payroll has been processed.",
@@ -86,7 +176,6 @@ Finance Department`
 
   const handleBulkProcess = () => {
     setPayrollRecords(prev => prev.map(record => ({ ...record, status: 'processed' as const })));
-    
     toast({
       title: "Bulk Processing Complete",
       description: "All payroll records have been processed.",
@@ -125,7 +214,7 @@ Finance Department`
             Payroll Management
           </CardTitle>
           <CardDescription>
-            Generate and manage employee payroll with automated email distribution
+            Generate and manage employee payroll with salary configuration and automated email distribution
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -171,6 +260,7 @@ Finance Department`
                 </Button>
               </div>
 
+              {/* Payroll Table */}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -189,6 +279,8 @@ Finance Department`
                   {payrollRecords.map((record) => {
                     const grossPay = record.basicSalary + record.allowances;
                     const totalRecordDeductions = record.nssf + record.nhif + record.paye;
+                    const isEditing = editingId === record.id;
+
                     return (
                       <TableRow key={record.id}>
                         <TableCell>
@@ -198,8 +290,36 @@ Finance Department`
                           </div>
                         </TableCell>
                         <TableCell>{record.position}</TableCell>
-                        <TableCell>KSh {record.basicSalary.toLocaleString()}</TableCell>
-                        <TableCell>KSh {record.allowances.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={editSalary.basicSalary}
+                              min={0}
+                              className="w-24"
+                              onChange={e =>
+                                setEditSalary(s => ({ ...s, basicSalary: Number(e.target.value) || 0 }))
+                              }
+                            />
+                          ) : (
+                            <>KSh {record.basicSalary.toLocaleString()}</>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={editSalary.allowances}
+                              min={0}
+                              className="w-20"
+                              onChange={e =>
+                                setEditSalary(s => ({ ...s, allowances: Number(e.target.value) || 0 }))
+                              }
+                            />
+                          ) : (
+                            <>KSh {record.allowances.toLocaleString()}</>
+                          )}
+                        </TableCell>
                         <TableCell>KSh {grossPay.toLocaleString()}</TableCell>
                         <TableCell>KSh {totalRecordDeductions.toLocaleString()}</TableCell>
                         <TableCell className="font-medium">KSh {record.netSalary.toLocaleString()}</TableCell>
@@ -209,10 +329,46 @@ Finance Department`
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {record.status === 'pending' && (
-                            <Button size="sm" onClick={() => handleProcessPayroll(record.id)}>
-                              Process
-                            </Button>
+                          {isEditing ? (
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                size="sm"
+                                className="mb-1"
+                                onClick={() => handleSaveEdit(record.id)}
+                              >
+                                <Save className="w-4 h-4 mr-1" /> Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={handleCancelEdit}
+                              >
+                                <X className="w-4 h-4 mr-1" /> Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              {record.status === "pending" && (
+                                <Button size="sm" className="mb-1" onClick={() => handleProcessPayroll(record.id)}>
+                                  Process
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mb-1"
+                                onClick={() => handleStartEdit(record)}
+                              >
+                                <Pencil className="w-3 h-3 mr-1" /> Edit Salary
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleResetSalary(record.id)}
+                              >
+                                Reset
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
