@@ -50,7 +50,8 @@ export const useAuthHelpers = () => {
     try {
       console.log("Logging out user...");
       setUser(null);
-      navigate('/login');
+      // Use replace to prevent going back to authenticated pages
+      navigate('/login', { replace: true });
     } catch (error: any) {
       console.error("Logout failed:", error.message);
     }
