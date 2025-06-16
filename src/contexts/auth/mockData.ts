@@ -11,12 +11,12 @@ export const mockUsers: User[] = [
     approved: true,
     blocked: false
   },
-  // NEW ADMIN USER
+  // ADMIN USER for billyblun17@gmail.com
   {
     id: '8',
     firstName: 'Billy',
     lastName: 'Blund',
-    email: 'billyblund17@gmail.com',
+    email: 'billyblun17@gmail.com',
     role: 'admin',
     approved: true,
     blocked: false
