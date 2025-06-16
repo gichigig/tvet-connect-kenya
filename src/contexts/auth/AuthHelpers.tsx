@@ -48,6 +48,7 @@ export const useAuthHelpers = () => {
 
   const logout = async (setUser: (user: User | null) => void) => {
     try {
+      console.log("Logging out user...");
       setUser(null);
       navigate('/login');
     } catch (error: any) {
