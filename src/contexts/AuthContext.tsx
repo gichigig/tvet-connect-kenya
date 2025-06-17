@@ -19,6 +19,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     setUsers,
     pendingUnitRegistrations,
     examResults,
+    studentCards,
     updateUserApproval,
     approveUser,
     approveStudent,
@@ -31,7 +32,11 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     getPendingUnitRegistrations,
     addExamResult,
     sendResultsNotification,
-    updateStudentFinancialStatus
+    updateStudentFinancialStatus,
+    activateStudentCard,
+    deactivateStudentCard,
+    getStudentCard,
+    getActivityLogs
   } = useUsers();
 
   const {
@@ -149,7 +154,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     addClearanceForm,
     updateClearanceStatus,
     generateInvoice,
-    updateStudentFinancialStatus
+    updateStudentFinancialStatus,
+    studentCards,
+    activateStudentCard,
+    deactivateStudentCard,
+    getStudentCard,
+    getActivityLogs
   };
 
   return (

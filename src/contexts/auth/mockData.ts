@@ -1,5 +1,5 @@
 
-import { User, PendingUnitRegistration, ExamResult } from './types';
+import { User, PendingUnitRegistration, ExamResult, StudentCard, ActivityLog } from './types';
 
 export const mockUsers: User[] = [
   {
@@ -119,5 +119,38 @@ export const mockExamResults: ExamResult[] = [
     examDate: '2024-01-20',
     lecturerName: 'David Brown',
     status: 'pass'
+  }
+];
+
+export const mockStudentCards: StudentCard[] = [
+  {
+    id: '1',
+    studentId: '6',
+    studentName: 'Alice Student',
+    admissionNumber: 'CS2023001',
+    course: 'Computer Science',
+    year: 2,
+    semester: 1,
+    academicYear: '2024/2025',
+    isActive: true,
+    activatedBy: '2',
+    activatedDate: '2024-01-10',
+    status: 'active',
+    createdDate: '2024-01-10'
+  }
+];
+
+export const mockActivityLogs: ActivityLog[] = [
+  {
+    id: '1',
+    userId: '2',
+    userName: 'Sarah Johnson',
+    userRole: 'finance',
+    action: 'Activate Student Card',
+    details: 'Activated student card for Alice Student',
+    targetStudentId: '6',
+    targetStudentName: 'Alice Student',
+    timestamp: '2024-01-10T10:30:00Z',
+    department: 'finance'
   }
 ];

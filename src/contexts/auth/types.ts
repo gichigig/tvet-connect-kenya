@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -186,6 +187,38 @@ export interface ClearanceForm {
   remarks?: string;
 }
 
+export interface StudentCard {
+  id: string;
+  studentId: string;
+  studentName: string;
+  admissionNumber: string;
+  course: string;
+  year: number;
+  semester: number;
+  academicYear: string;
+  isActive: boolean;
+  activatedBy?: string;
+  activatedDate?: string;
+  deactivatedBy?: string;
+  deactivatedDate?: string;
+  status: 'active' | 'inactive';
+  createdDate: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  action: string;
+  details: string;
+  targetStudentId?: string;
+  targetStudentName?: string;
+  timestamp: string;
+  ipAddress?: string;
+  department: 'finance' | 'admin' | 'registrar' | 'hod' | 'lecturer';
+}
+
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role?: string) => Promise<void>;
@@ -234,36 +267,9 @@ export interface AuthContextType {
   updateClearanceStatus: (clearanceId: string, status: ClearanceForm['status'], clearedBy?: string, remarks?: string) => void;
   generateInvoice: (studentId: string, academicYear: string, semester: number) => void;
   updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void;
-}
-
-export interface StudentCard {
-  id: string;
-  studentId: string;
-  studentName: string;
-  admissionNumber: string;
-  course: string;
-  year: number;
-  semester: number;
-  academicYear: string;
-  isActive: boolean;
-  activatedBy?: string;
-  activatedDate?: string;
-  deactivatedBy?: string;
-  deactivatedDate?: string;
-  status: 'active' | 'inactive';
-  createdDate: string;
-}
-
-export interface ActivityLog {
-  id: string;
-  userId: string;
-  userName: string;
-  userRole: string;
-  action: string;
-  details: string;
-  targetStudentId?: string;
-  targetStudentName?: string;
-  timestamp: string;
-  ipAddress?: string;
-  department: 'finance' | 'admin' | 'registrar' | 'hod' | 'lecturer';
+  studentCards: StudentCard[];
+  activateStudentCard: (studentId: string, activatedBy: string) => void;
+  deactivateStudentCard: (studentId: string, deactivatedBy: string) => void;
+  getStudentCard: (studentId: string) => StudentCard | undefined;
+  getActivityLogs: (department?: string) => ActivityLog[];
 }
