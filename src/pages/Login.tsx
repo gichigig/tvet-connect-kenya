@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,32 +17,6 @@ const Login = () => {
   const { toast } = useToast();
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // Auto-login as admin when component mounts
-  useEffect(() => {
-    const autoLogin = async () => {
-      setIsLoading(true);
-      try {
-        await login("billyblun17@gmail.com", "admin123");
-        toast({
-          title: "Auto-Login Successful",
-          description: "Welcome back, Admin!",
-        });
-        navigate("/");
-      } catch (error) {
-        console.log("Auto-login failed, showing manual login form");
-        toast({
-          title: "Auto-Login Failed",
-          description: "Please log in manually.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    autoLogin();
-  }, [login, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +49,7 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
           <CardDescription>
-            {isLoading ? "Auto-logging in as Admin..." : "Sign in to your TVET Kenya account"}
+            Sign in to your TVET Kenya account
           </CardDescription>
         </CardHeader>
         <CardContent>
