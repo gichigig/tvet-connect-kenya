@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Upload, Ban, MessageSquare, FileBarChart, PiggyBank, Users, ShoppingCart, Gift } from "lucide-react";
+import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Users, FileBarChart, PiggyBank, ShoppingCart, Gift, Ban, MessageSquare } from "lucide-react";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
@@ -134,65 +135,87 @@ export const FinanceDashboard = () => {
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
+      {/* Main Content Tabs - Reorganized for better organization */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-13">
-          <TabsTrigger value="overview" className="flex items-center gap-1">
-            <Receipt className="w-3 h-3" />
-            <span className="hidden sm:inline">Fees</span>
+        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
+          {/* Core Finance Operations */}
+          <TabsTrigger value="overview" className="flex flex-col items-center gap-1 text-xs">
+            <Receipt className="w-4 h-4" />
+            <span>Fees</span>
           </TabsTrigger>
-          <TabsTrigger value="budgeting" className="flex items-center gap-1">
-            <PiggyBank className="w-3 h-3" />
-            <span className="hidden sm:inline">Budget</span>
+          <TabsTrigger value="invoices" className="flex flex-col items-center gap-1 text-xs">
+            <File className="w-4 h-4" />
+            <span>Invoices</span>
           </TabsTrigger>
-          <TabsTrigger value="payroll" className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            <span className="hidden sm:inline">Payroll</span>
+          <TabsTrigger value="clearances" className="flex flex-col items-center gap-1 text-xs">
+            <UserCheck className="w-4 h-4" />
+            <span>Clearances</span>
           </TabsTrigger>
-          <TabsTrigger value="procurement" className="flex items-center gap-1">
-            <ShoppingCart className="w-3 h-3" />
-            <span className="hidden sm:inline">Procurement</span>
+          <TabsTrigger value="cards" className="flex flex-col items-center gap-1 text-xs">
+            <CreditCard className="w-4 h-4" />
+            <span>Cards</span>
           </TabsTrigger>
-          <TabsTrigger value="reporting" className="flex items-center gap-1">
-            <FileBarChart className="w-3 h-3" />
-            <span className="hidden sm:inline">Reporting</span>
+          <TabsTrigger value="supplies" className="flex flex-col items-center gap-1 text-xs">
+            <Package className="w-4 h-4" />
+            <span>Supplies</span>
           </TabsTrigger>
-          <TabsTrigger value="grants" className="flex items-center gap-1">
-            <Gift className="w-3 h-3" />
-            <span className="hidden sm:inline">Grants</span>
+          <TabsTrigger value="access" className="flex flex-col items-center gap-1 text-xs">
+            <Ban className="w-4 h-4" />
+            <span>Access</span>
           </TabsTrigger>
-          <TabsTrigger value="structures" className="flex items-center gap-1">
-            <Settings className="w-3 h-3" />
-            <span className="hidden sm:inline">Structures</span>
+          
+          {/* Planning & Management */}
+          <TabsTrigger value="budgeting" className="flex flex-col items-center gap-1 text-xs">
+            <PiggyBank className="w-4 h-4" />
+            <span>Budget</span>
           </TabsTrigger>
-          <TabsTrigger value="access" className="flex items-center gap-1">
-            <Ban className="w-3 h-3" />
-            <span className="hidden sm:inline">Access</span>
+          <TabsTrigger value="payroll" className="flex flex-col items-center gap-1 text-xs">
+            <Users className="w-4 h-4" />
+            <span>Payroll</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-1">
-            <MessageSquare className="w-3 h-3" />
-            <span className="hidden sm:inline">Notify</span>
+          <TabsTrigger value="procurement" className="flex flex-col items-center gap-1 text-xs">
+            <ShoppingCart className="w-4 h-4" />
+            <span>Procurement</span>
           </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-1">
-            <File className="w-3 h-3" />
-            <span className="hidden sm:inline">Invoices</span>
+          <TabsTrigger value="grants" className="flex flex-col items-center gap-1 text-xs">
+            <Gift className="w-4 h-4" />
+            <span>Grants</span>
           </TabsTrigger>
-          <TabsTrigger value="clearances" className="flex items-center gap-1">
-            <UserCheck className="w-3 h-3" />
-            <span className="hidden sm:inline">Clearances</span>
+          
+          {/* Configuration & Reports */}
+          <TabsTrigger value="structures" className="flex flex-col items-center gap-1 text-xs">
+            <Settings className="w-4 h-4" />
+            <span>Structures</span>
           </TabsTrigger>
-          <TabsTrigger value="supplies" className="flex items-center gap-1">
-            <FileCheck className="w-3 h-3" />
-            <span className="hidden sm:inline">Supplies</span>
-          </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center gap-1">
-            <CreditCard className="w-3 h-3" />
-            <span className="hidden sm:inline">Cards</span>
+          <TabsTrigger value="reporting" className="flex flex-col items-center gap-1 text-xs">
+            <FileBarChart className="w-4 h-4" />
+            <span>Reports</span>
           </TabsTrigger>
         </TabsList>
 
+        {/* Tab Contents */}
         <TabsContent value="overview" className="space-y-4">
           <StudentFeesOverview />
+        </TabsContent>
+
+        <TabsContent value="invoices" className="space-y-4">
+          <InvoiceManagement />
+        </TabsContent>
+
+        <TabsContent value="clearances" className="space-y-4">
+          <ClearanceManagement />
+        </TabsContent>
+
+        <TabsContent value="cards" className="space-y-4">
+          <StudentCardManagement />
+        </TabsContent>
+
+        <TabsContent value="supplies" className="space-y-4">
+          <SupplyVerification />
+        </TabsContent>
+
+        <TabsContent value="access" className="space-y-4">
+          <AccessControl />
         </TabsContent>
 
         <TabsContent value="budgeting" className="space-y-4">
@@ -207,10 +230,6 @@ export const FinanceDashboard = () => {
           <ProcurementOversight />
         </TabsContent>
 
-        <TabsContent value="reporting" className="space-y-4">
-          <FinancialReporting />
-        </TabsContent>
-
         <TabsContent value="grants" className="space-y-4">
           <GrantsManagement />
         </TabsContent>
@@ -219,28 +238,8 @@ export const FinanceDashboard = () => {
           <FeeStructureManagement />
         </TabsContent>
 
-        <TabsContent value="access" className="space-y-4">
-          <AccessControl />
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <NotificationSystem />
-        </TabsContent>
-
-        <TabsContent value="invoices" className="space-y-4">
-          <InvoiceManagement />
-        </TabsContent>
-
-        <TabsContent value="clearances" className="space-y-4">
-          <ClearanceManagement />
-        </TabsContent>
-
-        <TabsContent value="supplies" className="space-y-4">
-          <SupplyVerification />
-        </TabsContent>
-
-        <TabsContent value="cards" className="space-y-4">
-          <StudentCardManagement />
+        <TabsContent value="reporting" className="space-y-4">
+          <FinancialReporting />
         </TabsContent>
       </Tabs>
     </div>
