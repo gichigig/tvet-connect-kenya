@@ -49,9 +49,14 @@ export const useAuthHelpers = () => {
   const logout = async (setUser: (user: User | null) => void) => {
     try {
       console.log("Logging out user...");
+      // Clear user first
       setUser(null);
-      // Use replace to prevent going back to authenticated pages
-      navigate('/login', { replace: true });
+      
+      // Use setTimeout to ensure state update completes before navigation
+      setTimeout(() => {
+        console.log("Navigating to login page...");
+        navigate('/login', { replace: true });
+      }, 100);
     } catch (error: any) {
       console.error("Logout failed:", error.message);
     }
