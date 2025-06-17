@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,7 @@ import { PayrollManagement } from "@/components/finance/PayrollManagement";
 import { ProcurementOversight } from "@/components/finance/ProcurementOversight";
 import { FinancialReporting } from "@/components/finance/FinancialReporting";
 import { GrantsManagement } from "@/components/finance/GrantsManagement";
+import { StudentCardManagement } from "@/components/finance/StudentCardManagement";
 
 export const FinanceDashboard = () => {
   const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
@@ -136,7 +136,7 @@ export const FinanceDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className="grid w-full grid-cols-13">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <Receipt className="w-3 h-3" />
             <span className="hidden sm:inline">Fees</span>
@@ -184,6 +184,10 @@ export const FinanceDashboard = () => {
           <TabsTrigger value="supplies" className="flex items-center gap-1">
             <FileCheck className="w-3 h-3" />
             <span className="hidden sm:inline">Supplies</span>
+          </TabsTrigger>
+          <TabsTrigger value="cards" className="flex items-center gap-1">
+            <CreditCard className="w-3 h-3" />
+            <span className="hidden sm:inline">Cards</span>
           </TabsTrigger>
         </TabsList>
 
@@ -233,6 +237,10 @@ export const FinanceDashboard = () => {
 
         <TabsContent value="supplies" className="space-y-4">
           <SupplyVerification />
+        </TabsContent>
+
+        <TabsContent value="cards" className="space-y-4">
+          <StudentCardManagement />
         </TabsContent>
       </Tabs>
     </div>

@@ -27,7 +27,7 @@ import { StudentStatsGrid } from "@/components/student/StudentStatsGrid";
 import { ExamCardDownloadButton } from "@/components/student/ExamCardDownloadButton";
 
 export const StudentDashboard = () => {
-  const { user, pendingUnitRegistrations, studentFees } = useAuth();
+  const { user, pendingUnitRegistrations, studentFees, getStudentCard } = useAuth();
   const [activeTab, setActiveTab] = useState("units");
 
   // Get stats for current user
@@ -43,6 +43,7 @@ export const StudentDashboard = () => {
   const totalOwed = myFees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((sum, fee) => sum + fee.amount, 0);
 
   // --- Exam Card clearance check ---
+  const studentCard = getStudentCard(user?.id || '');
   const feesAreCleared =
     myFees.length > 0 &&
     myFees.every(f => f.status === 'paid') &&
@@ -125,6 +126,40 @@ export const StudentDashboard = () => {
         {/* Mobile Menu */}
         <StudentMobileMenu menuItems={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
+
+      {/* Student Card Status */}
+      {studentCard?.isActive && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <GraduationCap className="w-5 h-5" />
+              Student Card Available
+            </CardTitle>
+            <CardDescription className="text-green-700">
+              Your student card has been activated by the finance department
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-800">
+                  {feesAreCleared 
+                    ? "All fees cleared - You can download your student card" 
+                    : `Outstanding balance: KSh ${totalOwed.toLocaleString()} - Please clear your fees to download your card`
+                  }
+                </p>
+              </div>
+              <Button
+                disabled={!feesAreCleared}
+                className={feesAreCleared ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Student Card
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Download Exam Card option */}
       <ExamCardDownloadButton

@@ -1,6 +1,5 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { User, PendingUnitRegistration, ExamResult } from '../auth/types';
+import { User, PendingUnitRegistration, ExamResult, StudentCard, ActivityLog } from '../auth/types';
 import { 
   createNewUser, 
   findUserByEmail, 
@@ -9,7 +8,7 @@ import {
   getPendingUsers 
 } from '../auth/authUtils';
 import { sendResultsNotification as sendNotifications } from '../auth/notificationUtils';
-import { mockUsers, mockPendingUnitRegistrations, mockExamResults } from '../auth/mockData';
+import { mockUsers, mockPendingUnitRegistrations, mockExamResults, mockStudentCards, mockActivityLogs } from '../auth/mockData';
 
 interface UsersContextType {
   users: User[];
@@ -18,6 +17,10 @@ interface UsersContextType {
   setPendingUnitRegistrations: React.Dispatch<React.SetStateAction<PendingUnitRegistration[]>>;
   examResults: ExamResult[];
   setExamResults: React.Dispatch<React.SetStateAction<ExamResult[]>>;
+  studentCards: StudentCard[];
+  setStudentCards: React.Dispatch<React.SetStateAction<StudentCard[]>>;
+  activityLogs: ActivityLog[];
+  setActivityLogs: React.Dispatch<React.SetStateAction<ActivityLog[]>>;
   updateUserApproval: (userId: string, approved: boolean) => void;
   approveUser: (userId: string) => void;
   approveStudent: (userId: string) => void;
@@ -31,6 +34,11 @@ interface UsersContextType {
   addExamResult: (result: Omit<ExamResult, 'id'>) => void;
   sendResultsNotification: (resultIds: string[], sendToGuardians: boolean) => Promise<void>;
   updateStudentFinancialStatus: (studentId: string, status: User['financialStatus'], totalOwed?: number) => void;
+  activateStudentCard: (studentId: string, activatedBy: string) => void;
+  deactivateStudentCard: (studentId: string, deactivatedBy: string) => void;
+  logActivity: (userId: string, userName: string, userRole: string, action: string, details: string, department: ActivityLog['department'], targetStudentId?: string, targetStudentName?: string) => void;
+  getStudentCard: (studentId: string) => StudentCard | undefined;
+  getActivityLogs: (department?: string) => ActivityLog[];
 }
 
 const UsersContext = createContext<UsersContextType | null>(null);
@@ -39,6 +47,8 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
   const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
+  const [studentCards, setStudentCards] = useState<StudentCard[]>(mockStudentCards);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
 
   const updateUserApproval = (userId: string, approved: boolean) => {
     setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, approved } : u));
@@ -104,6 +114,120 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ));
   };
 
+  const activateStudentCard = (studentId: string, activatedBy: string) => {
+    const student = users.find(u => u.id === studentId);
+    if (!student || student.role !== 'student') return;
+
+    const existingCard = studentCards.find(c => c.studentId === studentId);
+    
+    if (existingCard) {
+      setStudentCards(prev => prev.map(card => 
+        card.studentId === studentId 
+          ? { 
+              ...card, 
+              isActive: true, 
+              status: 'active',
+              activatedBy,
+              activatedDate: new Date().toISOString().split('T')[0]
+            }
+          : card
+      ));
+    } else {
+      const newCard: StudentCard = {
+        id: Date.now().toString(),
+        studentId,
+        studentName: `${student.firstName} ${student.lastName}`,
+        admissionNumber: student.admissionNumber || '',
+        course: student.course || '',
+        year: student.year || 1,
+        semester: student.semester || 1,
+        academicYear: '2024/2025',
+        isActive: true,
+        activatedBy,
+        activatedDate: new Date().toISOString().split('T')[0],
+        status: 'active',
+        createdDate: new Date().toISOString().split('T')[0]
+      };
+      setStudentCards(prev => [...prev, newCard]);
+    }
+
+    logActivity(
+      activatedBy,
+      'Finance Staff',
+      'finance',
+      'Activate Student Card',
+      `Activated student card for ${student.firstName} ${student.lastName}`,
+      'finance',
+      studentId,
+      `${student.firstName} ${student.lastName}`
+    );
+  };
+
+  const deactivateStudentCard = (studentId: string, deactivatedBy: string) => {
+    const student = users.find(u => u.id === studentId);
+    
+    setStudentCards(prev => prev.map(card => 
+      card.studentId === studentId 
+        ? { 
+            ...card, 
+            isActive: false, 
+            status: 'inactive',
+            deactivatedBy,
+            deactivatedDate: new Date().toISOString().split('T')[0]
+          }
+        : card
+    ));
+
+    if (student) {
+      logActivity(
+        deactivatedBy,
+        'Finance Staff',
+        'finance',
+        'Deactivate Student Card',
+        `Deactivated student card for ${student.firstName} ${student.lastName}`,
+        'finance',
+        studentId,
+        `${student.firstName} ${student.lastName}`
+      );
+    }
+  };
+
+  const logActivity = (
+    userId: string, 
+    userName: string, 
+    userRole: string, 
+    action: string, 
+    details: string, 
+    department: ActivityLog['department'],
+    targetStudentId?: string,
+    targetStudentName?: string
+  ) => {
+    const newLog: ActivityLog = {
+      id: Date.now().toString(),
+      userId,
+      userName,
+      userRole,
+      action,
+      details,
+      targetStudentId,
+      targetStudentName,
+      timestamp: new Date().toISOString(),
+      department
+    };
+    setActivityLogs(prev => [newLog, ...prev]);
+  };
+
+  const getStudentCard = (studentId: string) => {
+    return studentCards.find(card => card.studentId === studentId);
+  };
+
+  const getActivityLogs = (department?: string) => {
+    if (department) {
+      return activityLogs.filter(log => log.department === department);
+    }
+    return activityLogs;
+  };
+
   const value = {
     users,
     setUsers,
@@ -111,6 +235,10 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPendingUnitRegistrations,
     examResults,
     setExamResults,
+    studentCards,
+    setStudentCards,
+    activityLogs,
+    setActivityLogs,
     updateUserApproval,
     approveUser,
     approveStudent,
@@ -123,7 +251,12 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getPendingUnitRegistrations,
     addExamResult,
     sendResultsNotification,
-    updateStudentFinancialStatus
+    updateStudentFinancialStatus,
+    activateStudentCard,
+    deactivateStudentCard,
+    logActivity,
+    getStudentCard,
+    getActivityLogs
   };
 
   return (
