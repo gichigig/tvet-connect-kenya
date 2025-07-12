@@ -11,6 +11,8 @@ import { StudentDashboard } from "@/components/StudentDashboard";
 import { FinanceDashboard } from "@/components/FinanceDashboard";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
+import { getDatabase, ref, onValue } from "firebase/database";
+import { firebaseApp } from "@/integrations/firebase/config";
 
 type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod" | "student" | "finance";
 

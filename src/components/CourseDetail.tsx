@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,8 @@ import {
 } from "lucide-react";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
+import { getDatabase, ref, onValue } from "firebase/database";
+import { firebaseApp } from "@/integrations/firebase/config";
 
 interface CourseDetailProps {
   course: Course;

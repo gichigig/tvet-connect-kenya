@@ -1,11 +1,12 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppViewRenderer } from "@/components/AppViewRenderer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useViewState } from "@/hooks/useViewState";
 import { useCourseProgress } from "@/hooks/useCourseProgress";
 import { useCourseActions } from "@/hooks/useCourseActions";
 import { useCourseFiltering } from "@/hooks/useCourseFiltering";
+import { getDatabase, ref, onValue } from "firebase/database";
+import { firebaseApp } from "@/integrations/firebase/config";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -40,6 +41,25 @@ const Index = () => {
     userProgress,
     updateProgress
   });
+
+  // Firebase Realtime Database setup
+  const db = getDatabase(firebaseApp);
+
+  useEffect(() => {
+    const coursesRef = ref(db, 'courses/');
+    onValue(coursesRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("Live course data: ", data);
+      // Handle live data updates here
+    });
+
+    const progressRef = ref(db, 'userProgress/');
+    onValue(progressRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("Live progress data: ", data);
+      // Handle live data updates here
+    });
+  }, [db]);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,6 +1,7 @@
-
 import { CourseCard } from "@/components/CourseCard";
 import { Course } from "@/data/coursesData";
+import { getDatabase, ref, onValue } from "firebase/database";
+import { firebaseApp } from "@/integrations/firebase/config";
 
 interface CourseViewProps {
   coursesByCategory: Record<string, Course[]>;
