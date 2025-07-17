@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_sessions: {
+        Row: {
+          allowed_radius: number | null
+          attendance_code: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          lecturer_id: string
+          lecturer_name: string
+          location_required: boolean
+          longitude: number | null
+          session_date: string
+          session_type: string
+          start_time: string
+          unit_code: string
+          unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_radius?: number | null
+          attendance_code?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          lecturer_id: string
+          lecturer_name: string
+          location_required?: boolean
+          longitude?: number | null
+          session_date: string
+          session_type: string
+          start_time: string
+          unit_code: string
+          unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_radius?: number | null
+          attendance_code?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          lecturer_id?: string
+          lecturer_name?: string
+          location_required?: boolean
+          longitude?: number | null
+          session_date?: string
+          session_type?: string
+          start_time?: string
+          unit_code?: string
+          unit_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       elearning: {
         Row: {
           created_at: string
@@ -124,6 +187,123 @@ export type Database = {
           year?: number
         }
         Relationships: []
+      }
+      quiz_attendance: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          id: string
+          is_active: boolean
+          lecturer_id: string
+          questions: Json
+          start_time: string | null
+          time_limit: number
+          title: string
+          unit_code: string
+          unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          lecturer_id: string
+          questions: Json
+          start_time?: string | null
+          time_limit?: number
+          title: string
+          unit_code: string
+          unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          lecturer_id?: string
+          questions?: Json
+          start_time?: string | null
+          time_limit?: number
+          title?: string
+          unit_code?: string
+          unit_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_attendance: {
+        Row: {
+          attendance_date: string
+          attendance_time: string
+          attendance_type: string
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          quiz_answers: Json | null
+          quiz_id: string | null
+          quiz_score: number | null
+          session_id: string | null
+          status: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_name: string
+        }
+        Insert: {
+          attendance_date: string
+          attendance_time?: string
+          attendance_type: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          quiz_answers?: Json | null
+          quiz_id?: string | null
+          quiz_score?: number | null
+          session_id?: string | null
+          status: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_name: string
+        }
+        Update: {
+          attendance_date?: string
+          attendance_time?: string
+          attendance_type?: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          quiz_answers?: Json | null
+          quiz_id?: string | null
+          quiz_score?: number | null
+          session_id?: string | null
+          status?: string
+          student_id?: string
+          student_name?: string
+          unit_code?: string
+          unit_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_attendance_session"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_quiz_attendance"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_attendance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
