@@ -143,6 +143,85 @@ export type Database = {
         }
         Relationships: []
       }
+      experiment_attempts: {
+        Row: {
+          completed_at: string | null
+          experiment_id: string | null
+          id: string
+          score: number | null
+          status: string | null
+          student_id: string | null
+          submission_data: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          experiment_id?: string | null
+          id?: string
+          score?: number | null
+          status?: string | null
+          student_id?: string | null
+          submission_data?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          experiment_id?: string | null
+          id?: string
+          score?: number | null
+          status?: string | null
+          student_id?: string | null
+          submission_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_attempts_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          lab_id: string | null
+          max_score: number | null
+          simulation_url: string | null
+          time_limit_minutes: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          lab_id?: string | null
+          max_score?: number | null
+          simulation_url?: string | null
+          time_limit_minutes?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          lab_id?: string | null
+          max_score?: number | null
+          simulation_url?: string | null
+          time_limit_minutes?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_labs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_unit_registrations: {
         Row: {
           course: string
@@ -365,6 +444,45 @@ export type Database = {
         }
         Relationships: []
       }
+      virtual_labs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          difficulty:
+            | Database["public"]["Enums"]["experiment_difficulty"]
+            | null
+          domain: Database["public"]["Enums"]["domain_type"]
+          id: string
+          is_active: boolean | null
+          learning_objectives: string[] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          difficulty?:
+            | Database["public"]["Enums"]["experiment_difficulty"]
+            | null
+          domain: Database["public"]["Enums"]["domain_type"]
+          id?: string
+          is_active?: boolean | null
+          learning_objectives?: string[] | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          difficulty?:
+            | Database["public"]["Enums"]["experiment_difficulty"]
+            | null
+          domain?: Database["public"]["Enums"]["domain_type"]
+          id?: string
+          is_active?: boolean | null
+          learning_objectives?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -373,7 +491,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      domain_type: "science" | "engineering" | "medical"
+      experiment_difficulty: "beginner" | "intermediate" | "advanced"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -500,6 +619,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      domain_type: ["science", "engineering", "medical"],
+      experiment_difficulty: ["beginner", "intermediate", "advanced"],
+    },
   },
 } as const
