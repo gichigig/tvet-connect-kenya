@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign, Download } from "lucide-react";
+import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign, Download, FlaskConical, Calendar } from "lucide-react";
 import { UnitRegistration } from "@/components/student/UnitRegistration";
 import { OnlineClasses } from "@/components/student/OnlineClasses";
 import { NotesAccess } from "@/components/student/NotesAccess";
@@ -13,6 +13,8 @@ import { MyUnits } from "@/components/student/MyUnits";
 import { DiscussionGroups } from "@/components/student/DiscussionGroups";
 import { StudentFees } from "@/components/student/StudentFees";
 import { AttendancePortal } from "@/components/student/AttendancePortal";
+import VirtualLabs from "@/components/student/VirtualLabs";
+import CalendarReminders from "@/components/student/CalendarReminders";
 import jsPDF from "jspdf";
 import {
   Sheet,
@@ -114,6 +116,8 @@ export const StudentDashboard = () => {
     { id: "units", label: "My Units", icon: BookOpen },
     { id: "register", label: "Unit Registration", icon: GraduationCap },
     { id: "fees", label: "My Fees", icon: DollarSign },
+    { id: "calendar", label: "Calendar", icon: Calendar },
+    { id: "labs", label: "Virtual Labs", icon: FlaskConical },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "classes", label: "Online Classes", icon: Video },
     { id: "notes", label: "Notes & Materials", icon: FileText },
@@ -176,7 +180,7 @@ export const StudentDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-8">
+        <TabsList className="hidden md:grid w-full grid-cols-10">
           {menuItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
               <item.icon className="w-4 h-4" />
@@ -195,6 +199,14 @@ export const StudentDashboard = () => {
 
         <TabsContent value="fees" className="space-y-4">
           <StudentFees />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <CalendarReminders />
+        </TabsContent>
+
+        <TabsContent value="labs" className="space-y-4">
+          <VirtualLabs />
         </TabsContent>
 
         <TabsContent value="attendance" className="space-y-4">

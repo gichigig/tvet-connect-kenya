@@ -175,6 +175,48 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          certificate_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          issue_date: string
+          metadata: Json | null
+          pdf_url: string | null
+          qr_code: string | null
+          student_id: string | null
+          title: string
+          verification_hash: string | null
+        }
+        Insert: {
+          certificate_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          issue_date: string
+          metadata?: Json | null
+          pdf_url?: string | null
+          qr_code?: string | null
+          student_id?: string | null
+          title: string
+          verification_hash?: string | null
+        }
+        Update: {
+          certificate_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          issue_date?: string
+          metadata?: Json | null
+          pdf_url?: string | null
+          qr_code?: string | null
+          student_id?: string | null
+          title?: string
+          verification_hash?: string | null
+        }
+        Relationships: []
+      }
       chatbot_conversations: {
         Row: {
           created_at: string | null
@@ -944,6 +986,92 @@ export type Database = {
         }
         Relationships: []
       }
+      transcript_grades: {
+        Row: {
+          credits: number
+          grade: string
+          id: string
+          lecturer_name: string | null
+          points: number | null
+          transcript_id: string | null
+          unit_code: string
+          unit_name: string
+        }
+        Insert: {
+          credits: number
+          grade: string
+          id?: string
+          lecturer_name?: string | null
+          points?: number | null
+          transcript_id?: string | null
+          unit_code: string
+          unit_name: string
+        }
+        Update: {
+          credits?: number
+          grade?: string
+          id?: string
+          lecturer_name?: string | null
+          points?: number | null
+          transcript_id?: string | null
+          unit_code?: string
+          unit_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_grades_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transcripts: {
+        Row: {
+          academic_year: string
+          created_at: string | null
+          generated_at: string | null
+          gpa: number | null
+          id: string
+          pdf_url: string | null
+          qr_code: string | null
+          semester: number
+          status: string | null
+          student_id: string | null
+          total_credits: number | null
+          verification_hash: string | null
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string | null
+          generated_at?: string | null
+          gpa?: number | null
+          id?: string
+          pdf_url?: string | null
+          qr_code?: string | null
+          semester: number
+          status?: string | null
+          student_id?: string | null
+          total_credits?: number | null
+          verification_hash?: string | null
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string | null
+          generated_at?: string | null
+          gpa?: number | null
+          id?: string
+          pdf_url?: string | null
+          qr_code?: string | null
+          semester?: number
+          status?: string | null
+          student_id?: string | null
+          total_credits?: number | null
+          verification_hash?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           admission_number: string | null
@@ -1048,7 +1176,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_verification_hash: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       domain_type: "science" | "engineering" | "medical"
