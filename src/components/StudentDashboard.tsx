@@ -12,6 +12,7 @@ import { ExamsQuizzes } from "@/components/student/ExamsQuizzes";
 import { MyUnits } from "@/components/student/MyUnits";
 import { DiscussionGroups } from "@/components/student/DiscussionGroups";
 import { StudentFees } from "@/components/student/StudentFees";
+import { AttendancePortal } from "@/components/student/AttendancePortal";
 import jsPDF from "jspdf";
 import {
   Sheet,
@@ -113,6 +114,7 @@ export const StudentDashboard = () => {
     { id: "units", label: "My Units", icon: BookOpen },
     { id: "register", label: "Unit Registration", icon: GraduationCap },
     { id: "fees", label: "My Fees", icon: DollarSign },
+    { id: "attendance", label: "Attendance", icon: Clock },
     { id: "classes", label: "Online Classes", icon: Video },
     { id: "notes", label: "Notes & Materials", icon: FileText },
     { id: "exams", label: "Exams & Quizzes", icon: PenTool },
@@ -174,7 +176,7 @@ export const StudentDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-7">
+        <TabsList className="hidden md:grid w-full grid-cols-8">
           {menuItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
               <item.icon className="w-4 h-4" />
@@ -193,6 +195,10 @@ export const StudentDashboard = () => {
 
         <TabsContent value="fees" className="space-y-4">
           <StudentFees />
+        </TabsContent>
+
+        <TabsContent value="attendance" className="space-y-4">
+          <AttendancePortal />
         </TabsContent>
 
         <TabsContent value="classes" className="space-y-4">
