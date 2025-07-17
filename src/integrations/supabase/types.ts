@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      anonymous_feedback: {
+        Row: {
+          academic_period: string | null
+          created_at: string | null
+          feedback_text: string
+          feedback_type: string
+          id: string
+          rating: number | null
+          sentiment: string | null
+          subject_id: string | null
+        }
+        Insert: {
+          academic_period?: string | null
+          created_at?: string | null
+          feedback_text: string
+          feedback_type: string
+          id?: string
+          rating?: number | null
+          sentiment?: string | null
+          subject_id?: string | null
+        }
+        Update: {
+          academic_period?: string | null
+          created_at?: string | null
+          feedback_text?: string
+          feedback_type?: string
+          id?: string
+          rating?: number | null
+          sentiment?: string | null
+          subject_id?: string | null
+        }
+        Relationships: []
+      }
       attendance_sessions: {
         Row: {
           allowed_radius: number | null
@@ -138,6 +171,65 @@ export type Database = {
             columns: ["parent_event_id"]
             isOneToOne: false
             referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          subject_area: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          subject_area?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subject_area?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      chatbot_messages: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          message: string
+          resources: Json | null
+          sender: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          resources?: Json | null
+          sender: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          resources?: Json | null
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_conversations"
             referencedColumns: ["id"]
           },
         ]
