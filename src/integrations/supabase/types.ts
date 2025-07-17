@@ -77,6 +77,71 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          is_recurring: boolean | null
+          location: string | null
+          parent_event_id: string | null
+          recurrence_pattern: string | null
+          related_resource_id: string | null
+          related_resource_type: string | null
+          related_unit_code: string | null
+          start_time: string
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          event_type: string
+          id?: string
+          is_recurring?: boolean | null
+          location?: string | null
+          parent_event_id?: string | null
+          recurrence_pattern?: string | null
+          related_resource_id?: string | null
+          related_resource_type?: string | null
+          related_unit_code?: string | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          is_recurring?: boolean | null
+          location?: string | null
+          parent_event_id?: string | null
+          recurrence_pattern?: string | null
+          related_resource_id?: string | null
+          related_resource_type?: string | null
+          related_unit_code?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_parent_event_id_fkey"
+            columns: ["parent_event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elearning: {
         Row: {
           created_at: string
@@ -311,6 +376,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reminders: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_sent: boolean | null
+          notification_type: string[] | null
+          reminder_time: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_sent?: boolean | null
+          notification_type?: string[] | null
+          reminder_time: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_sent?: boolean | null
+          notification_type?: string[] | null
+          reminder_time?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_attendance: {
         Row: {
