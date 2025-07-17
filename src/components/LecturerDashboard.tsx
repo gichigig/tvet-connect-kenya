@@ -9,6 +9,7 @@ import { QuizAttendance } from "@/components/lecturer/QuizAttendance";
 import { UnitManagement } from "@/components/lecturer/UnitManagement";
 import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardStats";
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
+import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
@@ -42,6 +43,7 @@ export const LecturerDashboard = () => {
     { value: "attendance", label: "Attendance" },
     { value: "quiz-attendance", label: "Quiz Attendance" },
     { value: "exams", label: `Exams & CATs (${exams.length})` },
+    { value: "location-restrictions", label: "Location Restrictions" },
   ];
 
   return (
@@ -64,7 +66,7 @@ export const LecturerDashboard = () => {
       </div>
       <div className="hidden md:block mb-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -95,6 +97,9 @@ export const LecturerDashboard = () => {
         </TabsContent>
         <TabsContent value="exams">
           <ExamManager />
+        </TabsContent>
+        <TabsContent value="location-restrictions">
+          <LocationRestrictionManager />
         </TabsContent>
       </Tabs>
     </div>
