@@ -234,6 +234,36 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          name: string
+          verified: boolean | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          name: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          name?: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       elearning: {
         Row: {
           created_at: string
@@ -461,6 +491,100 @@ export type Database = {
             columns: ["lab_id"]
             isOneToOne: false
             referencedRelation: "virtual_labs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_applications: {
+        Row: {
+          application_status: string | null
+          cover_letter: string | null
+          created_at: string | null
+          id: string
+          job_listing_id: string | null
+          resume_url: string | null
+          student_id: string | null
+        }
+        Insert: {
+          application_status?: string | null
+          cover_letter?: string | null
+          created_at?: string | null
+          id?: string
+          job_listing_id?: string | null
+          resume_url?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          application_status?: string | null
+          cover_letter?: string | null
+          created_at?: string | null
+          id?: string
+          job_listing_id?: string | null
+          resume_url?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_listing_id_fkey"
+            columns: ["job_listing_id"]
+            isOneToOne: false
+            referencedRelation: "job_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_listings: {
+        Row: {
+          application_deadline: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          location: string | null
+          minimum_gpa: number | null
+          required_skills: string[] | null
+          salary_range: unknown | null
+          status: Database["public"]["Enums"]["job_status"] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          application_deadline?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          location?: string | null
+          minimum_gpa?: number | null
+          required_skills?: string[] | null
+          salary_range?: unknown | null
+          status?: Database["public"]["Enums"]["job_status"] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          application_deadline?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          job_type?: Database["public"]["Enums"]["job_type"]
+          location?: string | null
+          minimum_gpa?: number | null
+          required_skills?: string[] | null
+          salary_range?: unknown | null
+          status?: Database["public"]["Enums"]["job_status"] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_listings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -796,6 +920,30 @@ export type Database = {
           },
         ]
       }
+      student_job_preferences: {
+        Row: {
+          desired_locations: string[] | null
+          minimum_salary: number | null
+          preferred_industries: string[] | null
+          preferred_job_types: Database["public"]["Enums"]["job_type"][] | null
+          student_id: string
+        }
+        Insert: {
+          desired_locations?: string[] | null
+          minimum_salary?: number | null
+          preferred_industries?: string[] | null
+          preferred_job_types?: Database["public"]["Enums"]["job_type"][] | null
+          student_id: string
+        }
+        Update: {
+          desired_locations?: string[] | null
+          minimum_salary?: number | null
+          preferred_industries?: string[] | null
+          preferred_job_types?: Database["public"]["Enums"]["job_type"][] | null
+          student_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           admission_number: string | null
@@ -906,6 +1054,8 @@ export type Database = {
       domain_type: "science" | "engineering" | "medical"
       exam_type: "quiz" | "midterm" | "final" | "practice"
       experiment_difficulty: "beginner" | "intermediate" | "advanced"
+      job_status: "open" | "closed" | "in_review"
+      job_type: "internship" | "full_time" | "part_time" | "contract"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1036,6 +1186,8 @@ export const Constants = {
       domain_type: ["science", "engineering", "medical"],
       exam_type: ["quiz", "midterm", "final", "practice"],
       experiment_difficulty: ["beginner", "intermediate", "advanced"],
+      job_status: ["open", "closed", "in_review"],
+      job_type: ["internship", "full_time", "part_time", "contract"],
     },
   },
 } as const
