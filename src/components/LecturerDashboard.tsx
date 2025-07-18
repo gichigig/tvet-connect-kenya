@@ -10,6 +10,10 @@ import { UnitManagement } from "@/components/lecturer/UnitManagement";
 import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardStats";
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
 import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
+<<<<<<< HEAD
+=======
+import { AIEssayDetector } from "@/components/lecturer/AIEssayDetector";
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
@@ -39,6 +43,7 @@ export const LecturerDashboard = () => {
     { value: "overview", label: "Overview" },
     { value: "units", label: `My Units (${assignedUnits.length})` },
     { value: "assignments", label: `Assignments (${assignments.length})` },
+    { value: "ai-detection", label: "AI Detection" },
     { value: "notes", label: `Notes (${notes.length})` },
     { value: "attendance", label: "Attendance" },
     { value: "quiz-attendance", label: "Quiz Attendance" },
@@ -60,13 +65,17 @@ export const LecturerDashboard = () => {
 
       <LecturerDashboardStats stats={stats} />
 
-      {/* Responsive hamburger for mobile; triggers on md+ */}
+       {/* Responsive hamburger for mobile; triggers on md+ */}
       <div className="mb-3">
         <ResponsiveTabsMenu tabs={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
       <div className="hidden md:block mb-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
+<<<<<<< HEAD
           <TabsList className="grid w-full grid-cols-8">
+=======
+          <TabsList className="grid w-full grid-cols-9">
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -83,12 +92,15 @@ export const LecturerDashboard = () => {
         <TabsContent value="units">
           <UnitManagement />
         </TabsContent>
-        <TabsContent value="assignments">
-          <AssignmentManager />
-        </TabsContent>
-        <TabsContent value="notes">
-          <NotesManager />
-        </TabsContent>
+              <TabsContent value="assignments">
+                <AssignmentManager />
+              </TabsContent>
+              <TabsContent value="ai-detection">
+                <AIEssayDetector />
+              </TabsContent>
+              <TabsContent value="notes">
+                <NotesManager />
+              </TabsContent>
         <TabsContent value="attendance">
           <AttendanceManager />
         </TabsContent>

@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 
 
 import NotFound from "./pages/NotFound";
+<<<<<<< HEAD
 import ForgotPassword from "./pages/ForgotPassword";
 
 
@@ -17,6 +18,12 @@ const queryClient = new QueryClient();
 
 
 
+=======
+import { firebaseApp } from "@/integrations/firebase/config";
+
+const queryClient = new QueryClient();
+
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

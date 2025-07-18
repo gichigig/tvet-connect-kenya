@@ -8,11 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, Calendar as CalendarIcon, Clock, MapPin, Plus, AlertCircle } from "lucide-react";
+<<<<<<< HEAD
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
 import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
 import { firebaseApp } from "@/integrations/firebase/config";
+=======
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 
 interface CalendarEvent {
   id: string;
@@ -55,6 +62,7 @@ const CalendarReminders = () => {
       fetchEvents();
       fetchReminders();
     }
+<<<<<<< HEAD
     // eslint-disable-next-line
   }, [user]);
 
@@ -85,6 +93,40 @@ const CalendarReminders = () => {
       console.error('Error fetching reminders:', error);
     });
     return unsubscribe;
+=======
+  }, [user]);
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to load calendar events');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReminders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      setReminders(data || []);
+    } catch (error) {
+      console.error('Error fetching reminders:', error);
+    }
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
   };
 
   const createEvent = async () => {
@@ -92,6 +134,7 @@ const CalendarReminders = () => {
       toast.error('Please fill in all required fields');
       return;
     }
+<<<<<<< HEAD
     try {
       const db = getFirestore(firebaseApp);
       const eventsRef = collection(db, 'calendar_events');
@@ -112,6 +155,34 @@ const CalendarReminders = () => {
         notification_type: ['app', 'email'],
         is_sent: false
       });
+=======
+
+    try {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .insert({
+          ...newEvent,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create default reminder 1 hour before
+      const reminderTime = new Date(newEvent.start_time);
+      reminderTime.setHours(reminderTime.getHours() - 1);
+
+      await supabase
+        .from('reminders')
+        .insert({
+          event_id: data.id,
+          user_id: user.id,
+          reminder_time: reminderTime.toISOString(),
+          notification_type: ['app', 'email']
+        });
+
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       toast.success('Event created successfully!');
       setShowAddEvent(false);
       setNewEvent({
@@ -123,7 +194,10 @@ const CalendarReminders = () => {
         location: '',
         related_unit_code: ''
       });
+<<<<<<< HEAD
       // Refetch events and reminders
+=======
+>>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       fetchEvents();
       fetchReminders();
     } catch (error) {
