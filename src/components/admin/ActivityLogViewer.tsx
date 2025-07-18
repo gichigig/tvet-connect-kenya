@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { allDepartments } from "@/data/zetechCourses";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { History, Search, User, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,16 +29,7 @@ export const ActivityLogViewer = () => {
   });
 
   const getDepartmentBadge = (department: string) => {
-    const colors = {
-      finance: 'bg-green-100 text-green-800',
-      admin: 'bg-blue-100 text-blue-800',
-      registrar: 'bg-purple-100 text-purple-800',
-      hod: 'bg-orange-100 text-orange-800',
-      lecturer: 'bg-yellow-100 text-yellow-800'
-    };
-    return <Badge className={colors[department as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-      {department.toUpperCase()}
-    </Badge>;
+    return <Badge className="bg-blue-100 text-blue-800">{department}</Badge>;
   };
 
   return (
@@ -64,17 +56,14 @@ export const ActivityLogViewer = () => {
               />
             </div>
             <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger className="w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by department" />
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="All Departments" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="registrar">Registrar</SelectItem>
-                <SelectItem value="hod">HOD</SelectItem>
-                <SelectItem value="lecturer">Lecturer</SelectItem>
+                {allDepartments.map(dep => (
+                  <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

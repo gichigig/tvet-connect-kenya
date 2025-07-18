@@ -18,6 +18,7 @@ export const OnlineClassForm = ({ onAddOnlineClass }: OnlineClassFormProps) => {
   const [description, setDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [duration, setDuration] = useState(60); // minutes
+  const [googleLink, setGoogleLink] = useState("");
   const [allowScreenShare, setAllowScreenShare] = useState(true);
   const [allowHandRaising, setAllowHandRaising] = useState(true);
   const [recordSession, setRecordSession] = useState(false);
@@ -29,6 +30,7 @@ export const OnlineClassForm = ({ onAddOnlineClass }: OnlineClassFormProps) => {
       description,
       scheduledDate,
       duration,
+      googleLink,
       features: {
         liveAudio: true,
         screenShare: allowScreenShare,
@@ -39,14 +41,13 @@ export const OnlineClassForm = ({ onAddOnlineClass }: OnlineClassFormProps) => {
       status: "scheduled",
       createdAt: new Date().toISOString()
     };
-    
     onAddOnlineClass(onlineClass);
-    
     // Reset form
     setTitle("");
     setDescription("");
     setScheduledDate("");
     setDuration(60);
+    setGoogleLink("");
     setAllowScreenShare(true);
     setAllowHandRaising(true);
     setRecordSession(false);
@@ -104,6 +105,15 @@ export const OnlineClassForm = ({ onAddOnlineClass }: OnlineClassFormProps) => {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What will be covered in this class?"
             rows={3}
+          />
+        </div>
+        <div>
+          <Label>Google Meet/Class Link</Label>
+          <Input
+            type="url"
+            value={googleLink}
+            onChange={e => setGoogleLink(e.target.value)}
+            placeholder="https://meet.google.com/xyz-abc-def"
           />
         </div>
 

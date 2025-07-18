@@ -13,6 +13,8 @@ import { Search, Plus, BookOpen, User, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Unit, CreateUnitData } from "@/types/unitManagement";
+import { allUndergraduateCourses, allDiplomaCourses, allCertificateCourses } from "@/data/zetechCourses";
+
 
 export const UnitManagement = () => {
   const { toast } = useToast();
@@ -21,11 +23,8 @@ export const UnitManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
-  // Get lecturers for assignment
-  const allUsers = getAllUsers();
-  const lecturers = allUsers.filter(user => user.role === 'lecturer' && user.approved);
 
+  // State for new unit creation
   const [newUnit, setNewUnit] = useState<CreateUnitData>({
     code: '',
     name: '',
@@ -42,12 +41,43 @@ export const UnitManagement = () => {
     hasDiscussionGroup: false
   });
 
-  const courses = [
-    'Software Engineering',
-    'Computer Science',
-    'Information Technology',
-    'Computer Engineering'
-  ];
+  // State for selected level and filtered courses
+  const [selectedLevel, setSelectedLevel] = useState<string>("");
+  let filteredCourses: string[] = [];
+  if (selectedLevel === 'Degree') filteredCourses = allUndergraduateCourses;
+  else if (selectedLevel === 'Diploma') filteredCourses = allDiplomaCourses;
+  else if (selectedLevel === 'Certificate') filteredCourses = allCertificateCourses;
+
+  // Get lecturers for assignment
+  const allUsers = getAllUsers();
+  // Only show lecturers who are approved
+  const lecturers = allUsers.filter(user => user.role === 'lecturer' && user.approved);
+                  <Select
+                    value={newUnit.lecturerId || ''}
+                    onValueChange={value => {
+                      const lecturer = lecturers.find(l => l.id === value);
+                      setNewUnit(prev => ({
+                        ...prev,
+                        lecturerId: value,
+                        lecturerName: lecturer ? `${lecturer.firstName} ${lecturer.lastName}` : '',
+                        lecturerEmail: lecturer ? lecturer.email : ''
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select lecturer (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lecturers
+                        // Remove or update this filter if 'assignedCourse' does not exist on User
+                        // .filter(lecturer => lecturer.assignedCourse === newUnit.course)
+                        .map(lecturer => (
+                          <SelectItem key={lecturer.id} value={lecturer.id}>
+                            {lecturer.firstName} {lecturer.lastName}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+  </Select>
 
   const departments = [
     'Computer Science',
@@ -137,7 +167,6 @@ export const UnitManagement = () => {
           <h2 className="text-2xl font-bold">Unit Management</h2>
           <p className="text-gray-600">Create and manage academic units</p>
         </div>
-        
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -152,7 +181,6 @@ export const UnitManagement = () => {
                 Add a new academic unit to the system
               </DialogDescription>
             </DialogHeader>
-            
             <ScrollArea className="h-[70vh] pr-4">
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
@@ -165,7 +193,6 @@ export const UnitManagement = () => {
                       placeholder="e.g., CS101"
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="name">Unit Name *</Label>
                     <Input
@@ -175,7 +202,6 @@ export const UnitManagement = () => {
                       placeholder="e.g., Introduction to Programming"
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="department">Department *</Label>
                     <Select value={newUnit.department} onValueChange={(value) => setNewUnit(prev => ({ ...prev, department: value }))}>
@@ -189,21 +215,35 @@ export const UnitManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-2">
-                    <Label htmlFor="course">Course *</Label>
-                    <Select value={newUnit.course} onValueChange={(value) => setNewUnit(prev => ({ ...prev, course: value }))}>
+                    <Label htmlFor="level">Level of Education *</Label>
+                    <Select value={selectedLevel} onValueChange={value => {
+                      setSelectedLevel(value);
+                      setNewUnit(prev => ({ ...prev, course: "" })); // Reset course when level changes
+                    }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select course" />
+                        <SelectValue placeholder="Select level" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map(course => (
+                        <SelectItem value="Degree">Degree</SelectItem>
+                        <SelectItem value="Diploma">Diploma</SelectItem>
+                        <SelectItem value="Certificate">Certificate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="course">Course *</Label>
+                    <Select value={newUnit.course} onValueChange={(value) => setNewUnit(prev => ({ ...prev, course: value }))} disabled={!selectedLevel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={selectedLevel ? "Select course" : "Select level first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredCourses.map(course => (
                           <SelectItem key={course} value={course}>{course}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="year">Year</Label>
                     <Select value={newUnit.year.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, year: parseInt(value) }))}>
@@ -218,7 +258,6 @@ export const UnitManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="semester">Semester</Label>
                     <Select value={newUnit.semester.toString()} onValueChange={(value) => setNewUnit(prev => ({ ...prev, semester: parseInt(value) }))}>
@@ -231,7 +270,6 @@ export const UnitManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="credits">Credits</Label>
                     <Input
@@ -243,7 +281,6 @@ export const UnitManagement = () => {
                       max="6"
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="capacity">Capacity</Label>
                     <Input
@@ -255,7 +292,6 @@ export const UnitManagement = () => {
                     />
                   </div>
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
@@ -265,7 +301,6 @@ export const UnitManagement = () => {
                     placeholder="Brief description of the unit..."
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="schedule">Schedule (Optional)</Label>
                   <Input
@@ -277,7 +312,6 @@ export const UnitManagement = () => {
                 </div>
               </div>
             </ScrollArea>
-            
             <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
@@ -289,7 +323,6 @@ export const UnitManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -303,7 +336,6 @@ export const UnitManagement = () => {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -317,7 +349,6 @@ export const UnitManagement = () => {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -332,7 +363,6 @@ export const UnitManagement = () => {
           </CardContent>
         </Card>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Units</CardTitle>
@@ -348,7 +378,6 @@ export const UnitManagement = () => {
               className="pl-10"
             />
           </div>
-
           <Table>
             <TableHeader>
               <TableRow>
@@ -384,18 +413,19 @@ export const UnitManagement = () => {
                         <div className="text-sm text-gray-500">{unit.lecturerEmail}</div>
                       </div>
                     ) : (
-                      <Select onValueChange={(value) => handleAssignLecturer(unit.id, value)}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Assign lecturer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {lecturers.map(lecturer => (
+                    <Select onValueChange={(value) => handleAssignLecturer(unit.id, value)}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Assign lecturer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lecturers
+                          .map(lecturer => (
                             <SelectItem key={lecturer.id} value={lecturer.id}>
                               {lecturer.firstName} {lecturer.lastName}
                             </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                      </SelectContent>
+                    </Select>
                     )}
                   </TableCell>
                   <TableCell>
@@ -408,14 +438,7 @@ export const UnitManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => handleDeleteUnit(unit.id)}
-                      >
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteUnit(unit.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -424,7 +447,6 @@ export const UnitManagement = () => {
               ))}
             </TableBody>
           </Table>
-
           {filteredUnits.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               {createdUnits.length === 0 ? "No units created yet" : "No units found matching your search"}

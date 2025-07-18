@@ -1,13 +1,19 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { Unit } from '@/types/unitManagement';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeesSummaryCards } from "./student-fees-overview/FeesSummaryCards";
 import { FeesFilters } from "./student-fees-overview/FeesFilters";
 import { FeesTable } from "./student-fees-overview/FeesTable";
 
-export const StudentFeesOverview = () => {
+interface StudentFeesOverviewProps {
+  units?: Unit[];
+}
+
+export const StudentFeesOverview = ({ units }: StudentFeesOverviewProps) => {
   const { toast } = useToast();
   const { studentFees, updateFeeStatus } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,5 +1,6 @@
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
+// Removed conflicting import of Tabs, TabsList, TabsTrigger, TabsContent
 
 import { cn } from "@/lib/utils"
 

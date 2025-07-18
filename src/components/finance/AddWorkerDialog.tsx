@@ -3,6 +3,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { allDepartments } from "@/data/zetechCourses";
 
 interface AddWorkerDialogProps {
   onAdd: (worker: {
@@ -30,7 +31,9 @@ export const AddWorkerDialog = ({ onAdd }: AddWorkerDialogProps) => {
     taxPin: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm(f => ({
       ...f,
       [e.target.name]: e.target.value,
@@ -75,7 +78,19 @@ export const AddWorkerDialog = ({ onAdd }: AddWorkerDialogProps) => {
           <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
           <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} type="email" />
           <Input name="position" placeholder="Position" value={form.position} onChange={handleChange} />
-          <Input name="department" placeholder="Department" value={form.department} onChange={handleChange} />
+          <label className="block text-sm font-medium mb-1">Department</label>
+          <select
+            name="department"
+            className="border p-2 rounded w-full"
+            value={form.department}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Department</option>
+            {allDepartments.map(dep => (
+              <option key={dep} value={dep}>{dep}</option>
+            ))}
+          </select>
           <Input name="basicSalary" placeholder="Basic Salary" value={form.basicSalary} onChange={handleChange} type="number" min="0" />
           <Input name="allowances" placeholder="Allowances" value={form.allowances} onChange={handleChange} type="number" min="0" />
           <Input name="bankAccount" placeholder="Bank Account (optional)" value={form.bankAccount} onChange={handleChange} />

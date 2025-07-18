@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { allCourses } from "@/data/zetechCourses";
 import { CheckCircle, XCircle, Search, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +20,8 @@ export const StudentApproval = () => {
 
   const pendingStudents = getPendingUsers().filter(u => u.role === 'student');
 
-  const courses = Array.from(new Set(pendingStudents.map(s => s.course).filter(Boolean)));
+  // Use allCourses from zetechCourses.ts for dropdown
+  const courses = allCourses;
   const levels = Array.from(new Set(pendingStudents.map(s => s.level).filter(Boolean)));
 
   const handleApproveStudent = (studentId: string, studentName: string) => {
@@ -81,13 +83,13 @@ export const StudentApproval = () => {
               />
             </div>
             <Select value={filterCourse} onValueChange={setFilterCourse}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-72">
                 <SelectValue placeholder="Filter by course" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Courses</SelectItem>
                 {courses.map(course => (
-                  <SelectItem key={course} value={course || ''}>{course}</SelectItem>
+                  <SelectItem key={course} value={course}>{course}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

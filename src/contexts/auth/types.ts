@@ -7,7 +7,10 @@ export interface User {
   role: 'admin' | 'student' | 'lecturer' | 'registrar' | 'hod' | 'finance';
   approved: boolean;
   blocked?: boolean;
+  password?: string;
+  /** Department (see allDepartments in zetechCourses.ts) */
   department?: string;
+  /** Course (see allCourses in zetechCourses.ts) */
   course?: string;
   year?: number;
   semester?: number;
@@ -18,6 +21,7 @@ export interface User {
   guardians?: Guardian[];
   financialStatus?: 'cleared' | 'defaulter' | 'partial';
   totalFeesOwed?: number;
+  profilePicture?: string;
 }
 
 export interface Guardian {
@@ -225,6 +229,7 @@ export interface AuthContextType {
   signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   isAuthenticated: boolean;
   isAdmin: boolean;
   updateUserApproval: (userId: string, approved: boolean) => void;

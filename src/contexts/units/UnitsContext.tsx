@@ -1,6 +1,7 @@
 
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Unit } from '@/types/unitManagement';
+import { saveUnitToFirebase, fetchUnitsFromFirebase, updateUnitInFirebase, deleteUnitFromFirebase } from '@/integrations/firebase/units';
 import { CreatedContent } from '../auth/types';
 
 interface UnitsContextType {
@@ -22,20 +23,41 @@ const UnitsContext = createContext<UnitsContextType | null>(null);
 export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
   const [createdContent, setCreatedContent] = useState<CreatedContent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addCreatedUnit = (unit: Unit) => {
-    setCreatedUnits(prev => [...prev, unit]);
+  const addCreatedUnit = async (unit: Unit) => {
+    const saved = await saveUnitToFirebase(unit);
+    setCreatedUnits(prev => [...prev, saved]);
   };
 
-  const updateCreatedUnit = (unitId: string, updates: Partial<Unit>) => {
+  const updateCreatedUnit = async (unitId: string, updates: Partial<Unit>) => {
+    await updateUnitInFirebase(unitId, updates);
     setCreatedUnits(prev => prev.map(unit => 
       unit.id === unitId ? { ...unit, ...updates } : unit
     ));
   };
 
-  const deleteCreatedUnit = (unitId: string) => {
+  const deleteCreatedUnit = async (unitId: string) => {
+    await deleteUnitFromFirebase(unitId);
     setCreatedUnits(prev => prev.filter(unit => unit.id !== unitId));
   };
+
+  // Fetch all units from Firebase on mount
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const units = await fetchUnitsFromFirebase();
+        setCreatedUnits(units);
+      } catch (err: any) {
+        setError(err?.message || 'Failed to load units from database.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const getAvailableUnits = (course?: string, year?: number) => {
     if (!course || !year) return [];
@@ -69,7 +91,9 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getAvailableUnits,
     addCreatedContent,
     updateCreatedContent,
-    deleteCreatedContent
+    deleteCreatedContent,
+    loading,
+    error
   };
 
   return (

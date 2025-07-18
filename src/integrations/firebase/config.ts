@@ -1,14 +1,17 @@
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD6d_3qxprt3b8GIsinOouvLHfOnsd0nsk",
-  authDomain: "registrar-729a7.firebaseapp.com",
-  databaseURL: "https://registrar-729a7-default-rtdb.firebaseio.com",
-  projectId: "registrar-729a7",
-  storageBucket: "registrar-729a7.firebasestorage.app",
-  messagingSenderId: "773636745556",
-  appId: "1:773636745556:web:294a1e16fe165b224ec0c1",
-  measurementId: "G-2HNNL4JZJC"
+  apiKey: "AIzaSyDeitRT7787Mp_HqKwZ7rI-6D3TG_eLLvU",
+  authDomain: "newy-35816.firebaseapp.com",
+  databaseURL: "https://newy-35816-default-rtdb.firebaseio.com",
+  projectId: "newy-35816",
+  storageBucket: "newy-35816.firebasestorage.app",
+  messagingSenderId: "641795975385",
+  appId: "1:641795975385:web:c684df13fa77e76796f6c8",
+  measurementId: "G-CYZ73802JW"
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
+export const db = getFirestore(firebaseApp);
+

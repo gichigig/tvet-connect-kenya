@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { allDepartments } from "@/data/zetechCourses";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export const BudgetingPlanning = () => {
   
   const users = getAllUsers();
   const students = users.filter(u => u.role === 'student' && u.approved);
-  const departments = Array.from(new Set(users.map(u => u.department).filter(Boolean)));
+  const departments = allDepartments;
   
   const [budgets, setBudgets] = useState(() => {
     return departments.map(dept => ({
@@ -132,17 +133,17 @@ export const BudgetingPlanning = () => {
                       <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Allocated amount"
-                  type="number"
-                  value={newBudget.allocatedAmount}
-                  onChange={(e) => setNewBudget(prev => ({...prev, allocatedAmount: e.target.value}))}
-                />
-                <Select value={newBudget.year} onValueChange={(value) => setNewBudget(prev => ({...prev, year: value}))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+    <select
+      className="border p-2 rounded w-full"
+      value={newBudget.department}
+      onChange={e => setNewBudget(prev => ({ ...prev, department: e.target.value }))}
+      required
+    >
+      <option value="">Select Department</option>
+      {departments.map(dep => (
+        <option key={dep} value={dep}>{dep}</option>
+      ))}
+    </select>
                   <SelectContent>
                     <SelectItem value="2024/2025">2024/2025</SelectItem>
                     <SelectItem value="2025/2026">2025/2026</SelectItem>

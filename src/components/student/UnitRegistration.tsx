@@ -5,14 +5,14 @@ import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PendingRegistrations } from "./registration/PendingRegistrations";
-import { CourseYearSelector } from "./registration/CourseYearSelector";
+import { SyncUnitsButton } from "./registration/SyncUnitsButton";
 import { UnitCard } from "./registration/UnitCard";
 import { PendingRegistration, AvailableUnit } from "./registration/types";
 
 export const UnitRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
+  // Remove manual course/year selection; use user context
+  const [unitsSynced, setUnitsSynced] = useState(false);
   const { toast } = useToast();
   const { user, addPendingUnitRegistration, pendingUnitRegistrations, getAvailableUnits } = useAuth();
 
@@ -27,9 +27,9 @@ export const UnitRegistration = () => {
       submittedDate: reg.submittedDate
     }));
 
-  // Get available units from the context based on selected course and year
-  const rawUnits = selectedCourse && selectedYear 
-    ? getAvailableUnits(selectedCourse, parseInt(selectedYear))
+  // Get available units for user's course/year/semester after sync
+  const rawUnits = unitsSynced && user?.course && user?.year && user?.semester
+    ? getAvailableUnits(user.course, user.year, user.semester)
     : [];
 
   // Convert units to AvailableUnit type with lecturer property
@@ -72,8 +72,8 @@ export const UnitRegistration = () => {
         unitId: unit.id,
         unitCode: unit.code,
         unitName: unit.name,
-        course: user.course || selectedCourse,
-        year: parseInt(selectedYear),
+        course: user.course,
+        year: user.year,
         semester: unit.semester
       });
       
@@ -103,14 +103,10 @@ export const UnitRegistration = () => {
 
       <PendingRegistrations registrations={userPendingRegistrations} />
 
-      <CourseYearSelector
-        selectedCourse={selectedCourse}
-        selectedYear={selectedYear}
-        onCourseChange={setSelectedCourse}
-        onYearChange={setSelectedYear}
-      />
 
-      {selectedCourse && selectedYear && (
+      <SyncUnitsButton onSync={() => setUnitsSynced(true)} />
+
+      {unitsSynced && rawUnits.length > 0 && (
         <div className="space-y-2">
           <Label htmlFor="search">Search Available Units</Label>
           <div className="relative">
@@ -126,7 +122,7 @@ export const UnitRegistration = () => {
         </div>
       )}
 
-      {selectedCourse && selectedYear && (
+      {unitsSynced && rawUnits.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredUnits.map((unit) => (
             <UnitCard
@@ -141,10 +137,10 @@ export const UnitRegistration = () => {
         </div>
       )}
 
-      {selectedCourse && selectedYear && filteredUnits.length === 0 && !searchTerm && (
+      {unitsSynced && rawUnits.length === 0 && !searchTerm && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No units have been created yet for {selectedCourse} Year {selectedYear}.
+            No units have been created yet for your course/year/semester.
           </p>
           <p className="text-gray-400 text-sm mt-2">
             Please contact the registrar to set up units for your course.
@@ -152,7 +148,7 @@ export const UnitRegistration = () => {
         </div>
       )}
 
-      {selectedCourse && selectedYear && filteredUnits.length === 0 && searchTerm && (
+      {unitsSynced && rawUnits.length === 0 && searchTerm && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
             No units found matching your search.
@@ -160,10 +156,10 @@ export const UnitRegistration = () => {
         </div>
       )}
 
-      {!selectedCourse || !selectedYear ? (
+      {!unitsSynced ? (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            Please select your course and year to view available units.
+            Press the sync button to load units for your course, year, and semester.
           </p>
         </div>
       ) : null}

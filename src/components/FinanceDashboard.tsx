@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnits } from "@/contexts/units/UnitsContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Users, FileBarChart, PiggyBank, ShoppingCart, Gift, Ban, MessageSquare } from "lucide-react";
@@ -24,6 +25,7 @@ import { StudentCardManagement } from "@/components/finance/StudentCardManagemen
 
 export const FinanceDashboard = () => {
   const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
+  const { createdUnits } = useUnits();
   const [activeTab, setActiveTab] = useState("overview");
 
   const pendingSupplies = supplyRequests.filter(r => r.status === 'pending');
@@ -195,7 +197,7 @@ export const FinanceDashboard = () => {
 
         {/* Tab Contents */}
         <TabsContent value="overview" className="space-y-4">
-          <StudentFeesOverview />
+          <StudentFeesOverview units={createdUnits} />
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4">

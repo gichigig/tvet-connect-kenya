@@ -97,16 +97,13 @@ const Login = () => {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
+            <Button type="button" className="w-full mt-2" variant="outline" onClick={() => toast({ title: 'Signed in as Guest', description: 'You are now signed in as a guest.' })}>
+              Sign in as Guest
+            </Button>
           </form>
           <div className="mt-6 text-center text-sm">
             <Link to="/forgot-password" className="text-blue-600 hover:underline">
               Forgot your password?
-            </Link>
-          </div>
-          <div className="mt-4 text-center text-sm">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-blue-600 hover:underline">
-              Sign up
             </Link>
           </div>
         </CardContent>

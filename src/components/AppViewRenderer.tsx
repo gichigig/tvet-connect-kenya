@@ -1,9 +1,9 @@
-import { Header } from "@/components/Header";
+import Header from "@/components/Header";
 import { CourseView } from "@/components/CourseView";
 import { CourseDetail } from "@/components/CourseDetail";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { VirtualClassroom } from "@/components/VirtualClassroom";
-import { AdminDashboard } from "@/components/AdminDashboard";
+import AdminDashboard from "@/components/AdminDashboard";
 import { LecturerDashboard } from "@/components/LecturerDashboard";
 import { RegistrarDashboard } from "@/components/RegistrarDashboard";
 import { HodDashboard } from "@/components/HodDashboard";
@@ -11,6 +11,7 @@ import { StudentDashboard } from "@/components/StudentDashboard";
 import { FinanceDashboard } from "@/components/FinanceDashboard";
 import { Course, Lesson } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { firebaseApp } from "@/integrations/firebase/config";
 
@@ -49,13 +50,27 @@ export const AppViewRenderer = ({
   onCompleteLesson,
   onJoinClassroom
 }: AppViewRendererProps) => {
-  const { isAdmin, user } = useAuth();
+  const { user } = useAuth();
 
-  if (currentView === "admin" && isAdmin) {
+  // Firebase: Listen for courses data from Realtime Database
+  const [firebaseCourses, setFirebaseCourses] = useState<Record<string, Course>>({});
+
+  useEffect(() => {
+    const db = getDatabase(firebaseApp);
+    const coursesRef = ref(db, "courses/");
+    const unsubscribe = onValue(coursesRef, (snapshot) => {
+      const data = snapshot.val();
+      setFirebaseCourses(data || {});
+    });
+    // Cleanup listener on unmount
+    return () => unsubscribe();
+  }, []);
+
+  if (currentView === "admin" && user?.role === "admin") {
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <AdminDashboard />
         </main>
       </>
@@ -66,7 +81,7 @@ export const AppViewRenderer = ({
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <FinanceDashboard />
         </main>
       </>
@@ -77,7 +92,7 @@ export const AppViewRenderer = ({
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <HodDashboard />
         </main>
       </>
@@ -88,7 +103,7 @@ export const AppViewRenderer = ({
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <LecturerDashboard />
         </main>
       </>
@@ -99,7 +114,7 @@ export const AppViewRenderer = ({
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <RegistrarDashboard />
         </main>
       </>
@@ -110,7 +125,7 @@ export const AppViewRenderer = ({
     return (
       <>
         <Header onSearch={onSearch} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 mx-auto">
           <StudentDashboard />
         </main>
       </>
@@ -123,7 +138,9 @@ export const AppViewRenderer = ({
         <Header onSearch={onSearch} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <CourseView 
-            coursesByCategory={coursesByCategory}
+            coursesByCategory={Object.fromEntries(
+              Object.entries(firebaseCourses).map(([key, course]) => [key, [course]])
+            )}
             userProgress={userProgress}
             onEnrollCourse={onEnrollCourse}
           />

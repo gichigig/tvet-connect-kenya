@@ -3,6 +3,16 @@ import { User, PendingUnitRegistration, ExamResult, StudentCard, ActivityLog } f
 
 export const mockUsers: User[] = [
   {
+    id: '0',
+    firstName: 'Bildad',
+    lastName: 'Nganga',
+    email: 'ngangabildad@gmail.com',
+    role: 'admin',
+    approved: true,
+    blocked: false,
+    password: 'bildad'
+  },
+  {
     id: '1',
     firstName: 'John',
     lastName: 'Admin',
@@ -38,7 +48,7 @@ export const mockUsers: User[] = [
     role: 'hod',
     approved: true,
     blocked: false,
-    department: 'Computer Science'
+    department: 'School of ICT, Media & Engineering'
   },
   {
     id: '4',
@@ -67,7 +77,7 @@ export const mockUsers: User[] = [
     role: 'student',
     approved: true,
     blocked: false,
-    course: 'Computer Science',
+    course: 'Bachelor of Science in Computer Science (BCS)',
     level: 'diploma',
     year: 2,
     semester: 1,
@@ -151,6 +161,7 @@ export const mockActivityLogs: ActivityLog[] = [
     targetStudentId: '6',
     targetStudentName: 'Alice Student',
     timestamp: '2024-01-10T10:30:00Z',
+    // For real data, use a value from allDepartments in zetechCourses.ts
     department: 'finance'
   }
 ];

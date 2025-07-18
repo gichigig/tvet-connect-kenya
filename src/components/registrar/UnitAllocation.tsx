@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useUnits } from "@/contexts/units/UnitsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,19 +13,10 @@ import { Search, Plus, BookOpen, Users, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Unit {
-  id: string;
-  code: string;
-  name: string;
-  credits: number;
-  department: string;
-  year: number;
-  semester: number;
-  capacity: number;
-  enrolled: number;
-}
 
-export const UnitAllocation = () => {
+
+const UnitAllocation = () => {
+  const { createdUnits } = useUnits();
   const { toast } = useToast();
   const { getAllUsers, getPendingUnitRegistrations } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,43 +42,6 @@ export const UnitAllocation = () => {
   const courses = [...new Set(approvedStudents.map(s => s.course).filter(Boolean))];
   const years = [...new Set(approvedStudents.map(s => s.year?.toString()).filter(Boolean))];
   const semesters = [...new Set(approvedStudents.map(s => s.semester?.toString()).filter(Boolean))];
-
-  // Mock units data - this should come from the registrar's created units
-  const [units] = useState<Unit[]>([
-    {
-      id: "1",
-      code: "CS101",
-      name: "Introduction to Computer Science",
-      credits: 3,
-      department: "Computer Science",
-      year: 1,
-      semester: 1,
-      capacity: 50,
-      enrolled: 35
-    },
-    {
-      id: "2",
-      code: "MATH101",
-      name: "Calculus I",
-      credits: 4,
-      department: "Mathematics",
-      year: 1,
-      semester: 1,
-      capacity: 60,
-      enrolled: 45
-    },
-    {
-      id: "3",
-      code: "ENG101",
-      name: "English Composition",
-      credits: 3,
-      department: "English",
-      year: 1,
-      semester: 1,
-      capacity: 40,
-      enrolled: 32
-    }
-  ]);
 
   const handleAllocateUnits = () => {
     if (selectedStudents.length === 0 || selectedUnits.length === 0) {
@@ -145,7 +100,7 @@ export const UnitAllocation = () => {
     return matchesSearch && matchesDepartment && matchesCourse && matchesYear && matchesSemester;
   });
 
-  const filteredUnits = units.filter(unit =>
+  const filteredUnits = createdUnits.filter(unit =>
     unit.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     unit.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -487,3 +442,5 @@ export const UnitAllocation = () => {
     </div>
   );
 };
+
+export { UnitAllocation };

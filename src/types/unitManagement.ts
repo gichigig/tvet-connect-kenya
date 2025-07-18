@@ -37,4 +37,8 @@ export interface CreateUnitData {
   schedule?: string;
   whatsappLink?: string;
   hasDiscussionGroup: boolean;
+  lecturerId?: string;
+  lecturerName?: string;
+  lecturerEmail?: string;
+  
 }

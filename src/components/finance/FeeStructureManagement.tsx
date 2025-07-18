@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { allCourses } from "@/data/zetechCourses";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ export const FeeStructureManagement = () => {
     isActive: true
   });
 
-  const courses = ["Computer Science", "Information Technology", "Business Administration", "Engineering"];
+  const courses = allCourses;
 
   const handleCreateStructure = () => {
     if (!newStructure.course || newStructure.tuitionFee <= 0) {

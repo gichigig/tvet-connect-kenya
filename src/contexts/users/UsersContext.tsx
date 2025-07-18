@@ -9,6 +9,7 @@ import {
 } from '../auth/authUtils';
 import { sendResultsNotification as sendNotifications } from '../auth/notificationUtils';
 import { mockUsers, mockPendingUnitRegistrations, mockExamResults, mockStudentCards, mockActivityLogs } from '../auth/mockData';
+import { fetchAllUsersFromFirebase } from '@/integrations/firebase/fetchAllUsers';
 
 interface UsersContextType {
   users: User[];
@@ -45,6 +46,19 @@ const UsersContext = createContext<UsersContextType | null>(null);
 
 export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(mockUsers);
+
+  // On mount, fetch admins from Firebase and merge into users state
+  useEffect(() => {
+    fetchAllUsersFromFirebase().then(fetchedUsers => {
+      setUsers(fetchedUsers.map((u: any) => ({
+        ...u,
+        id: u.uid || u.id || (Date.now().toString() + Math.random()),
+        role: u.role || 'admin', // fallback to admin if missing, but prefer actual role
+        approved: u.approved !== undefined ? u.approved : true,
+        blocked: u.blocked !== undefined ? u.blocked : false
+      })));
+    });
+  }, []);
   const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
   const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
   const [studentCards, setStudentCards] = useState<StudentCard[]>(mockStudentCards);
