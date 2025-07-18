@@ -47,6 +47,72 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_submissions: {
+        Row: {
+          ai_confidence_score: number | null
+          ai_detection_details: Json | null
+          ai_detection_status: string
+          assignment_id: string
+          created_at: string
+          feedback: string | null
+          file_url: string | null
+          final_status: string
+          grade: number | null
+          human_review_notes: string | null
+          human_review_status: string | null
+          human_reviewed_at: string | null
+          human_reviewer_id: string | null
+          id: string
+          student_id: string
+          student_name: string
+          submission_text: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          ai_detection_details?: Json | null
+          ai_detection_status?: string
+          assignment_id: string
+          created_at?: string
+          feedback?: string | null
+          file_url?: string | null
+          final_status?: string
+          grade?: number | null
+          human_review_notes?: string | null
+          human_review_status?: string | null
+          human_reviewed_at?: string | null
+          human_reviewer_id?: string | null
+          id?: string
+          student_id: string
+          student_name: string
+          submission_text: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          ai_detection_details?: Json | null
+          ai_detection_status?: string
+          assignment_id?: string
+          created_at?: string
+          feedback?: string | null
+          file_url?: string | null
+          final_status?: string
+          grade?: number | null
+          human_review_notes?: string | null
+          human_review_status?: string | null
+          human_reviewed_at?: string | null
+          human_reviewer_id?: string | null
+          id?: string
+          student_id?: string
+          student_name?: string
+          submission_text?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance_sessions: {
         Row: {
           allowed_radius: number | null
