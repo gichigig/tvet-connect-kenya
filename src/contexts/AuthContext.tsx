@@ -9,10 +9,11 @@ import { Unit } from '@/types/unitManagement';
 
 export interface AuthContextType {
   user: User | null;
-  supplyRequests: SupplyRequest[]; // <-- Add this line
+  supplyRequests: SupplyRequest[];
   studentFees: StudentFee[];
   updateFeeStatus: (feeId: string, status: StudentFee['status'], paidDate?: string, paidAmount?: number, paymentMethod?: string, receiptNumber?: string) => void;
   login: (email: string, password: string, role?: string) => Promise<void>;
+  signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   isAdmin: boolean;
   isAuthenticated: boolean;
@@ -23,28 +24,30 @@ export interface AuthContextType {
   addCreatedUnit: (unit: Unit) => void;
   updateCreatedUnit: (unitId: string, updates: Partial<Unit>) => void;
   deleteCreatedUnit: (unitId: string) => void;
-  addStudentFee: (fee: any) => void; // Replace 'any' with actual type
-  clearanceForms: ClearanceForm  []; // Placeholder for clearance forms, replace with actual type
+  addStudentFee: (fee: any) => void;
+  clearanceForms: ClearanceForm[];
   approveUser: (userId: string) => void;
   approveStudent: (userId: string) => void;
   rejectUser: (userId: string) => void;
   blockUser: (userId: string) => void;
   unblockUser: (userId: string) => void;
-  feeStructures:any[];
+  feeStructures: any[];
   addFeeStructure: (feeStructure: any) => void;
-  updateFeeStructure: (id: string, updates: any) => void; // Replace 'any' with actual type
+  updateFeeStructure: (id: string, updates: any) => void;
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   updateProfilePicture?: (file: File) => Promise<void>;
-  createdContent: any[]; // Placeholder for created content, replace 'any' with actual type when available
+  createdContent: any[];
+  addCreatedContent: (content: any) => void;
   profilePicture?: string;
   updateUserApproval: (userId: string, approved: boolean) => void;
   changePassword?: (userId: string, newPassword: string) => Promise<void>;
-  getPendingUnitRegistrations?: () => PendingUnitRegistration[]; // <-- Add this line if needed
+  getPendingUnitRegistrations?: () => PendingUnitRegistration[];
+  updateUnitRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected') => void;
   pendingUnitRegistrations: PendingUnitRegistration[];
   getStudentCard: (studentId: string) => StudentCard | undefined;
   getAvailableUnits: (course: string, year: number, semester: number) => Unit[];
-addPendingUnitRegistration: (registration: {
+  addPendingUnitRegistration: (registration: {
     studentId: string;
     studentName: string;
     studentEmail: string;
@@ -54,7 +57,21 @@ addPendingUnitRegistration: (registration: {
     course: string;
     year: number;
     semester: number;
-}) => void;
+  }) => void;
+  // Additional properties to fix errors
+  examResults: any[];
+  addExamResult: (result: any) => void;
+  sendResultsNotification: (resultIds: string[], sendToGuardians: boolean) => Promise<void>;
+  paymentRecords: any[];
+  addPaymentRecord: (payment: any) => void;
+  generateInvoice: (studentId: string, academicYear: string, semester: number) => void;
+  updateStudentFinancialStatus: (studentId: string, status: any, totalOwed?: number) => void;
+  studentCards: StudentCard[];
+  activateStudentCard: (studentId: string, activatedBy: string) => void;
+  deactivateStudentCard: (studentId: string, deactivatedBy: string) => void;
+  addClearanceForm: (clearance: any) => void;
+  updateClearanceStatus: (clearanceId: string, status: any, clearedBy?: string, remarks?: string) => void;
+  updateSupplyRequestStatus: (requestId: string, status: any, verificationNotes?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -89,6 +106,11 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
   const login = async (email: string, password: string, role?: string) => {
     return loginHelper(email, password, role, users, setUser);
   };
+  
+  const signup = async (userData: any) => {
+    return signupHelper(userData, setUsers, setUser);
+  };
+  
   const logout = async () => {
     return logoutHelper(setUser);
   };
@@ -146,6 +168,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
   const value: AuthContextType = {
     user,
     login,
+    signup,
     logout,
     users,
     setUsers,
@@ -174,8 +197,8 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     },
     updateProfilePicture,
     pendingUnitRegistrations,
-    supplyRequests: [], // Provide default empty array or fetch from context if available
-    studentFees: [], // Provide default empty array or fetch from context if available
+    supplyRequests: [],
+    studentFees: [],
     clearanceForms: [],
     isAdmin: !!user && user.role === 'admin',
     isAuthenticated: !!user,
@@ -186,7 +209,6 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     updateFeeStructure: (id: string, updates: any) => {
       // TODO: Implement updateFeeStructure logic
     },
-    // Provide mock units and content for lecturers for dashboard demo
     createdUnits,
     createdContent: user?.role === 'lecturer' ? [
       {
@@ -226,6 +248,45 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     ] : [],
     getStudentCard,
     getPendingUnitRegistrations,
+    updateUnitRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected') => {
+      // TODO: Implement updateUnitRegistrationStatus logic
+    },
+    examResults: [],
+    addExamResult: (result: any) => {
+      // TODO: Implement addExamResult logic
+    },
+    sendResultsNotification: async (resultIds: string[], sendToGuardians: boolean) => {
+      // TODO: Implement sendResultsNotification logic
+    },
+    paymentRecords: [],
+    addPaymentRecord: (payment: any) => {
+      // TODO: Implement addPaymentRecord logic
+    },
+    generateInvoice: (studentId: string, academicYear: string, semester: number) => {
+      // TODO: Implement generateInvoice logic
+    },
+    updateStudentFinancialStatus: (studentId: string, status: any, totalOwed?: number) => {
+      // TODO: Implement updateStudentFinancialStatus logic
+    },
+    studentCards: [],
+    activateStudentCard: (studentId: string, activatedBy: string) => {
+      // TODO: Implement activateStudentCard logic
+    },
+    deactivateStudentCard: (studentId: string, deactivatedBy: string) => {
+      // TODO: Implement deactivateStudentCard logic
+    },
+    addCreatedContent: (content: any) => {
+      // TODO: Implement addCreatedContent logic
+    },
+    addClearanceForm: (clearance: any) => {
+      // TODO: Implement addClearanceForm logic
+    },
+    updateClearanceStatus: (clearanceId: string, status: any, clearedBy?: string, remarks?: string) => {
+      // TODO: Implement updateClearanceStatus logic
+    },
+    updateSupplyRequestStatus: (requestId: string, status: any, verificationNotes?: string) => {
+      // TODO: Implement updateSupplyRequestStatus logic
+    },
   };
 
   return (
