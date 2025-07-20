@@ -8,18 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, Calendar as CalendarIcon, Clock, MapPin, Plus, AlertCircle } from "lucide-react";
-<<<<<<< HEAD
+// import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
 import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
 import { firebaseApp } from "@/integrations/firebase/config";
-=======
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 
 interface CalendarEvent {
   id: string;
@@ -62,38 +56,6 @@ const CalendarReminders = () => {
       fetchEvents();
       fetchReminders();
     }
-<<<<<<< HEAD
-    // eslint-disable-next-line
-  }, [user]);
-
-  const fetchEvents = () => {
-    const db = getFirestore(firebaseApp);
-    const eventsRef = collection(db, 'calendar_events');
-    const q = query(eventsRef, where('user_id', '==', user.id), orderBy('start_time', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CalendarEvent[];
-      setEvents(data);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching events:', error);
-      toast.error('Failed to load calendar events');
-      setLoading(false);
-    });
-    return unsubscribe;
-  };
-
-  const fetchReminders = () => {
-    const db = getFirestore(firebaseApp);
-    const remindersRef = collection(db, 'reminders');
-    const q = query(remindersRef, where('user_id', '==', user.id));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Reminder[];
-      setReminders(data);
-    }, (error) => {
-      console.error('Error fetching reminders:', error);
-    });
-    return unsubscribe;
-=======
   }, [user]);
 
   const fetchEvents = async () => {
@@ -126,7 +88,6 @@ const CalendarReminders = () => {
     } catch (error) {
       console.error('Error fetching reminders:', error);
     }
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
   };
 
   const createEvent = async () => {
@@ -134,28 +95,6 @@ const CalendarReminders = () => {
       toast.error('Please fill in all required fields');
       return;
     }
-<<<<<<< HEAD
-    try {
-      const db = getFirestore(firebaseApp);
-      const eventsRef = collection(db, 'calendar_events');
-      const eventDoc = await addDoc(eventsRef, {
-        ...newEvent,
-        user_id: user.id,
-        start_time: newEvent.start_time,
-        end_time: newEvent.end_time,
-      });
-      // Create default reminder 1 hour before
-      const reminderTime = new Date(newEvent.start_time);
-      reminderTime.setHours(reminderTime.getHours() - 1);
-      const remindersRef = collection(db, 'reminders');
-      await addDoc(remindersRef, {
-        event_id: eventDoc.id,
-        user_id: user.id,
-        reminder_time: Timestamp.fromDate(reminderTime),
-        notification_type: ['app', 'email'],
-        is_sent: false
-      });
-=======
 
     try {
       const { data, error } = await supabase
@@ -181,8 +120,6 @@ const CalendarReminders = () => {
           reminder_time: reminderTime.toISOString(),
           notification_type: ['app', 'email']
         });
-
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       toast.success('Event created successfully!');
       setShowAddEvent(false);
       setNewEvent({
@@ -194,10 +131,6 @@ const CalendarReminders = () => {
         location: '',
         related_unit_code: ''
       });
-<<<<<<< HEAD
-      // Refetch events and reminders
-=======
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       fetchEvents();
       fetchReminders();
     } catch (error) {

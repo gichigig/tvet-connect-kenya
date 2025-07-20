@@ -10,10 +10,7 @@ import { UnitManagement } from "@/components/lecturer/UnitManagement";
 import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardStats";
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
 import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
-<<<<<<< HEAD
-=======
 import { AIEssayDetector } from "@/components/lecturer/AIEssayDetector";
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 import { useAuth } from "@/contexts/AuthContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
@@ -71,11 +68,7 @@ export const LecturerDashboard = () => {
       </div>
       <div className="hidden md:block mb-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-<<<<<<< HEAD
-          <TabsList className="grid w-full grid-cols-8">
-=======
           <TabsList className="grid w-full grid-cols-9">
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}

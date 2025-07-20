@@ -1,6 +1,6 @@
 import React, { useState, useRef, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BookOpen, User, Search, LogOut, Shield, GraduationCap } from "lucide-react";
+import { BookOpen, User, Search, LogOut, Shield, GraduationCap, Bell } from "lucide-react";
 import Cropper from "react-easy-crop";
 import { MobileMenu } from "@/components/ui/MobileMenu";
 import { Button } from "@/components/ui/button";
@@ -161,6 +161,16 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
         <div className="hidden sm:flex items-center space-x-4">
           {isAuthenticated && user ? (
             <>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => handleNavigation('/notifications')}
+                className="relative"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Notifications
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </Button>
               {isAdmin && (
                 <div className="flex items-center space-x-2">
                   <Button 
@@ -235,6 +245,16 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
           <div className="flex flex-col p-4 gap-3">
             {isAuthenticated && user ? (
               <>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="justify-start relative"
+                  onClick={() => handleNavigation('/notifications')}
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  Notifications
+                  <span className="absolute top-1 left-6 w-2 h-2 bg-red-500 rounded-full"></span>
+                </Button>
                 {isAdmin && (
                   <>
                     <Button 
