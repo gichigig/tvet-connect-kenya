@@ -8,25 +8,28 @@ import { Unit } from "./units/types";
 
 export const MyUnits = () => {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-  const { user, pendingUnitRegistrations } = useAuth();
+  const { user, pendingUnitRegistrations, createdUnits } = useAuth();
   
   // Get approved units for the current user
   const approvedRegistrations = pendingUnitRegistrations.filter(
     reg => reg.studentId === user?.id && reg.status === 'approved'
   );
 
-  // Convert approved registrations to Unit format
-  const registeredUnits: Unit[] = approvedRegistrations.map(reg => ({
-    id: reg.id,
-    code: reg.unitCode,
-    name: reg.unitName,
-    lecturer: "TBD",
-    credits: 3,
-    progress: 0,
-    nextClass: "Check schedule",
-    status: 'active' as const,
-    semester: `Semester ${reg.semester}`
-  }));
+  // Convert approved registrations to Unit format and include lecturer details from created units
+  const registeredUnits: Unit[] = approvedRegistrations.map(reg => {
+    const unitDetails = createdUnits.find(unit => unit.id === reg.unitId);
+    return {
+      id: reg.id,
+      code: reg.unitCode,
+      name: reg.unitName,
+      lecturer: unitDetails?.lecturerName || "TBD",
+      credits: unitDetails?.credits || 3,
+      progress: 0,
+      nextClass: unitDetails?.schedule || "Check schedule",
+      status: 'active' as const,
+      semester: `Semester ${reg.semester}`
+    };
+  });
 
   const handleUnitClick = (unit: Unit) => {
     setSelectedUnit(unit);

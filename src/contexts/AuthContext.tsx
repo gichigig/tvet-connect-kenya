@@ -93,10 +93,23 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     pendingUnitRegistrations,
   } = useUsers();
 
-  // Stub for updateProfilePicture (implement as needed)
+  const [profilePicture, setProfilePicture] = useState<string | undefined>(user?.profilePicture);
+
   const updateProfilePicture = async (file: File) => {
-    // TODO: Implement backend upload logic
-    return Promise.resolve();
+    try {
+      // Create a temporary URL for the uploaded image
+      const imageUrl = URL.createObjectURL(file);
+      setProfilePicture(imageUrl);
+      
+      // Update user object if needed
+      if (user) {
+        setUser(prev => prev ? { ...prev, profilePicture: imageUrl } : null);
+      }
+      
+      return Promise.resolve();
+    } catch (error) {
+      throw new Error('Failed to upload profile picture');
+    }
   };
 
   const getPendingUnitRegistrations = () => {
@@ -196,6 +209,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
       return [];
     },
     updateProfilePicture,
+    profilePicture,
     pendingUnitRegistrations,
     supplyRequests: [],
     studentFees: [],

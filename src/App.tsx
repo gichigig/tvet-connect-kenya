@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import Notifications from "./pages/Notifications";
+import { Profile } from "./pages/Profile";
 import { firebaseApp } from "@/integrations/firebase/config";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,11 @@ const App = () => (
             <Route path="/notifications" element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="/" element={

@@ -17,8 +17,10 @@ export const UnitManagement = () => {
   const [newItem, setNewItem] = useState({ title: "", description: "", link: "" });
   const [activeTab, setActiveTab] = useState("assignments");
 
-  // Get units assigned to current lecturer
-  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+  // Get units assigned to current lecturer from the registrar
+  const assignedUnits = createdUnits.filter(unit => 
+    unit.lecturerId === user?.id && unit.status === 'active'
+  );
 
   const handleUpdateWhatsAppLink = () => {
     if (!selectedUnit) return;
