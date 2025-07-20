@@ -9,13 +9,15 @@ interface ApprovedStudentsFiltersProps {
   setSearchTerm: (term: string) => void;
   selectedCourse: string;
   setSelectedCourse: (course: string) => void;
+  courses: string[];
 }
 
 export const ApprovedStudentsFilters = ({
   searchTerm,
   setSearchTerm,
   selectedCourse,
-  setSelectedCourse
+  setSelectedCourse,
+  courses
 }: ApprovedStudentsFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4">

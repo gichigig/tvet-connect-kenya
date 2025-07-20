@@ -72,7 +72,7 @@ export const StudentCardManagement = () => {
     return studentCards.find(card => card.studentId === studentId);
   };
 
-  const financeActivityLogs = getActivityLogs('finance');
+  const financeActivityLogs = getActivityLogs();
 
   return (
     <div className="space-y-6">
