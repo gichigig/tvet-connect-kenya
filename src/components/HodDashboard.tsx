@@ -17,6 +17,8 @@ import { ResearchCoordination } from "@/components/hod/ResearchCoordination";
 import { IndustryLiaison } from "@/components/hod/IndustryLiaison";
 import { EmailManager } from "@/components/hod/EmailManager";
 import { StudentFeesOverview } from "@/components/hod/StudentFeesOverview";
+import { UnitAssignment } from "@/components/hod/UnitAssignment";
+import { TimetableManager } from "@/components/hod/TimetableManager";
 
 export const HodDashboard = () => {
   const { user, examResults, studentFees, getAllUsers } = useAuth();
@@ -126,7 +128,7 @@ export const HodDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11">
+        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-13">
           <TabsTrigger value="results" className="flex items-center gap-1 text-xs">
             <FileCheck className="w-3 h-3" />
             Results
@@ -150,6 +152,14 @@ export const HodDashboard = () => {
           <TabsTrigger value="staff" className="flex items-center gap-1 text-xs">
             <UserCheck className="w-3 h-3" />
             Staff
+          </TabsTrigger>
+          <TabsTrigger value="units" className="flex items-center gap-1 text-xs">
+            <BookOpen className="w-3 h-3" />
+            Units
+          </TabsTrigger>
+          <TabsTrigger value="timetables" className="flex items-center gap-1 text-xs">
+            <TrendingUp className="w-3 h-3" />
+            Timetables
           </TabsTrigger>
           <TabsTrigger value="budget" className="flex items-center gap-1 text-xs">
             <DollarSign className="w-3 h-3" />
@@ -195,6 +205,14 @@ export const HodDashboard = () => {
 
         <TabsContent value="staff" className="space-y-4">
           <StaffManagement />
+        </TabsContent>
+
+        <TabsContent value="units" className="space-y-4">
+          <UnitAssignment />
+        </TabsContent>
+
+        <TabsContent value="timetables" className="space-y-4">
+          <TimetableManager />
         </TabsContent>
 
         <TabsContent value="budget" className="space-y-4">

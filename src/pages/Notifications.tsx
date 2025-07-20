@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, CheckCircle, AlertCircle, Info, X, MailOpen } from 'lucide-react';
+import { Bell, CheckCircle, AlertCircle, Info, X, MailOpen, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +9,12 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: 'info' | 'success' | 'warning' | 'error' | 'timetable';
   timestamp: Date;
   read: boolean;
   actionUrl?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
 }
 
 const Notifications = () => {
@@ -63,6 +65,16 @@ const Notifications = () => {
       type: 'info',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
       read: true
+    },
+    {
+      id: '6',
+      title: 'New Timetable Available',
+      message: 'Your class timetable for Computer Science Year 1 Semester 1 has been updated.',
+      type: 'timetable',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      read: false,
+      attachmentUrl: '/timetables/cs-year1-sem1.pdf',
+      attachmentName: 'CS_Year1_Semester1_Timetable.pdf'
     }
   ]);
 
@@ -76,6 +88,8 @@ const Notifications = () => {
         return <AlertCircle className="w-5 h-5 text-yellow-600" />;
       case 'error':
         return <AlertCircle className="w-5 h-5 text-red-600" />;
+      case 'timetable':
+        return <Calendar className="w-5 h-5 text-purple-600" />;
       default:
         return <Info className="w-5 h-5 text-blue-600" />;
     }
@@ -89,6 +103,8 @@ const Notifications = () => {
         return 'border-l-yellow-500';
       case 'error':
         return 'border-l-red-500';
+      case 'timetable':
+        return 'border-l-purple-500';
       default:
         return 'border-l-blue-500';
     }
@@ -203,6 +219,23 @@ const Notifications = () => {
                           {notification.actionUrl && (
                             <Button variant="link" size="sm" className="h-auto p-0 text-xs">
                               View details
+                            </Button>
+                          )}
+                          {notification.attachmentUrl && (
+                            <Button 
+                              variant="link" 
+                              size="sm" 
+                              className="h-auto p-0 text-xs flex items-center gap-1"
+                              onClick={() => {
+                                // Create a mock download
+                                const link = document.createElement('a');
+                                link.href = notification.attachmentUrl!;
+                                link.download = notification.attachmentName || 'download';
+                                link.click();
+                              }}
+                            >
+                              <Download className="w-3 h-3" />
+                              Download {notification.attachmentName || 'file'}
                             </Button>
                           )}
                         </div>
