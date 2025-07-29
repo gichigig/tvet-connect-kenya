@@ -7,19 +7,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Calendar as CalendarIcon, Clock, MapPin, Plus, AlertCircle } from "lucide-react";
-<<<<<<< HEAD
+import { Bell, Calendar as CalendarIcon, Clock, MapPin, Plus, AlertCircle, Wifi, WifiOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
 import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
 import { firebaseApp } from "@/integrations/firebase/config";
-=======
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
+import { checkFirebaseConnectivity } from "@/lib/firebase";
 
 interface CalendarEvent {
   id: string;
@@ -46,6 +40,8 @@ const CalendarReminders = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [firebaseConnected, setFirebaseConnected] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -57,29 +53,111 @@ const CalendarReminders = () => {
     related_unit_code: ''
   });
 
+  // Monitor network connectivity
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      checkFirebaseConnectivity().then(setFirebaseConnected);
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      setFirebaseConnected(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial connectivity check
+    checkFirebaseConnectivity().then(setFirebaseConnected);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   useEffect(() => {
     if (user) {
-      fetchEvents();
-      fetchReminders();
+      if (firebaseConnected) {
+        fetchEvents();
+        fetchReminders();
+      } else {
+        // Use mock data when Firebase is not connected
+        loadMockData();
+      }
     }
-<<<<<<< HEAD
     // eslint-disable-next-line
-  }, [user]);
+  }, [user, firebaseConnected]);
+
+  const loadMockData = () => {
+    // Mock events for offline/connection issues
+    const mockEvents: CalendarEvent[] = [
+      {
+        id: 'mock-1',
+        title: 'Programming Assignment Due',
+        description: 'Submit your Java programming assignment',
+        start_time: new Date().toISOString(),
+        end_time: addDays(new Date(), 1).toISOString(),
+        event_type: 'assignment',
+        location: 'Online Submission',
+        related_unit_code: 'CS101'
+      },
+      {
+        id: 'mock-2',
+        title: 'Mathematics Quiz',
+        description: 'Calculus quiz in classroom',
+        start_time: addDays(new Date(), 2).toISOString(),
+        end_time: addDays(new Date(), 2).toISOString(),
+        event_type: 'exam',
+        location: 'Room 201',
+        related_unit_code: 'MA101'
+      }
+    ];
+    
+    setEvents(mockEvents);
+    setReminders([]);
+    setLoading(false);
+    toast.info('Showing offline data - some features may be limited');
+  };
 
   const fetchEvents = () => {
-    const db = getFirestore(firebaseApp);
-    const eventsRef = collection(db, 'calendar_events');
-    const q = query(eventsRef, where('user_id', '==', user.id), orderBy('start_time', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CalendarEvent[];
-      setEvents(data);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching events:', error);
-      toast.error('Failed to load calendar events');
-      setLoading(false);
-    });
-    return unsubscribe;
+    try {
+      const db = getFirestore(firebaseApp);
+      const eventsRef = collection(db, 'calendar_events');
+      // Remove orderBy to avoid needing composite index, sort on client side instead
+      const q = query(eventsRef, where('user_id', '==', user.id));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CalendarEvent[];
+        // Sort by start_time on the client side
+        const sortedData = data.sort((a, b) => {
+          const aTime = new Date(a.start_time);
+          const bTime = new Date(b.start_time);
+          return aTime.getTime() - bTime.getTime();
+        });
+        setEvents(sortedData);
+        setLoading(false);
+        setFirebaseConnected(true);
+      }, (error) => {
+        console.error('Error fetching events:', error);
+        
+        // Check if it's a network-related error
+        if (error.code === 'unavailable' || error.message.includes('Failed to get document')) {
+          setFirebaseConnected(false);
+          loadMockData();
+          toast.warning('Connection issues detected - showing offline data');
+        } else {
+          toast.error('Failed to load calendar events');
+          setLoading(false);
+        }
+      });
+      return unsubscribe;
+    } catch (error) {
+      console.error('Failed to initialize events query:', error);
+      setFirebaseConnected(false);
+      loadMockData();
+      return () => {};
+    }
   };
 
   const fetchReminders = () => {
@@ -93,40 +171,6 @@ const CalendarReminders = () => {
       console.error('Error fetching reminders:', error);
     });
     return unsubscribe;
-=======
-  }, [user]);
-
-  const fetchEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('start_time', { ascending: true });
-
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      toast.error('Failed to load calendar events');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchReminders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-      setReminders(data || []);
-    } catch (error) {
-      console.error('Error fetching reminders:', error);
-    }
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
   };
 
   const createEvent = async () => {
@@ -134,7 +178,6 @@ const CalendarReminders = () => {
       toast.error('Please fill in all required fields');
       return;
     }
-<<<<<<< HEAD
     try {
       const db = getFirestore(firebaseApp);
       const eventsRef = collection(db, 'calendar_events');
@@ -155,34 +198,6 @@ const CalendarReminders = () => {
         notification_type: ['app', 'email'],
         is_sent: false
       });
-=======
-
-    try {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .insert({
-          ...newEvent,
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Create default reminder 1 hour before
-      const reminderTime = new Date(newEvent.start_time);
-      reminderTime.setHours(reminderTime.getHours() - 1);
-
-      await supabase
-        .from('reminders')
-        .insert({
-          event_id: data.id,
-          user_id: user.id,
-          reminder_time: reminderTime.toISOString(),
-          notification_type: ['app', 'email']
-        });
-
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       toast.success('Event created successfully!');
       setShowAddEvent(false);
       setNewEvent({
@@ -194,10 +209,7 @@ const CalendarReminders = () => {
         location: '',
         related_unit_code: ''
       });
-<<<<<<< HEAD
       // Refetch events and reminders
-=======
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
       fetchEvents();
       fetchReminders();
     } catch (error) {
@@ -266,6 +278,29 @@ const CalendarReminders = () => {
           <p className="text-muted-foreground">
             Manage your academic schedule and never miss a deadline
           </p>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Connectivity indicator */}
+          <div className="flex items-center gap-2 text-sm">
+            {isOnline ? (
+              firebaseConnected ? (
+                <>
+                  <Wifi className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600">Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-4 w-4 text-orange-600" />
+                  <span className="text-orange-600">Limited</span>
+                </>
+              )
+            ) : (
+              <>
+                <WifiOff className="h-4 w-4 text-red-600" />
+                <span className="text-red-600">Offline</span>
+              </>
+            )}
+          </div>
         </div>
         
         <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>

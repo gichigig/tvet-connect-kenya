@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useUnits } from "@/contexts/units/UnitsContext";
+// import { useUnits } from "@/contexts/units/UnitsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 
 const UnitAllocation = () => {
-  const { createdUnits } = useUnits();
+  const { createdUnits } = useAuth();
   const { toast } = useToast();
   const { getAllUsers, getPendingUnitRegistrations } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");

@@ -6,14 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FlaskConical, Microscope, Cpu, Heart, Play, Clock, Star, Trophy, CheckCircle } from "lucide-react";
-<<<<<<< HEAD
-import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc } from "firebase/firestore";
-import { firebaseApp } from "@/integrations/firebase/config";
-=======
-import { supabase } from "@/integrations/supabase/client";
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { firebaseApp } from "@/lib/firebase";
 
 interface VirtualLab {
   id: string;
@@ -55,7 +51,6 @@ const VirtualLabs = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-<<<<<<< HEAD
     if (!user) return;
     const db = getFirestore(firebaseApp);
     // Listen for labs
@@ -96,59 +91,6 @@ const VirtualLabs = () => {
       toast.error('Failed to load experiments');
     });
     // Optionally return unsub for cleanup if needed
-=======
-    fetchLabs();
-    fetchAttempts();
-  }, []);
-
-  const fetchLabs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('virtual_labs')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setLabs(data || []);
-    } catch (error) {
-      console.error('Error fetching labs:', error);
-      toast.error('Failed to load virtual labs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchExperiments = async (labId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('experiments')
-        .select('*')
-        .eq('lab_id', labId);
-
-      if (error) throw error;
-      setExperiments(data || []);
-    } catch (error) {
-      console.error('Error fetching experiments:', error);
-      toast.error('Failed to load experiments');
-    }
-  };
-
-  const fetchAttempts = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('experiment_attempts')
-        .select('*')
-        .eq('student_id', user.id);
-
-      if (error) throw error;
-      setAttempts(data || []);
-    } catch (error) {
-      console.error('Error fetching attempts:', error);
-    }
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
   };
 
   const getDomainIcon = (domain: string) => {
@@ -191,7 +133,6 @@ const VirtualLabs = () => {
 
   const startExperiment = async (experiment: Experiment) => {
     if (!user) return;
-<<<<<<< HEAD
     try {
       const db = getFirestore(firebaseApp);
       await addDoc(collection(db, 'experiment_attempts'), {
@@ -205,30 +146,6 @@ const VirtualLabs = () => {
         window.open(experiment.simulation_url, '_blank');
       }
       toast.success('Experiment started successfully!');
-=======
-
-    try {
-      // Create attempt record
-      const { data, error } = await supabase
-        .from('experiment_attempts')
-        .insert({
-          experiment_id: experiment.id,
-          student_id: user.id,
-          status: 'in_progress'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Open simulation in new window/iframe
-      if (experiment.simulation_url) {
-        window.open(experiment.simulation_url, '_blank');
-      }
-      
-      toast.success('Experiment started successfully!');
-      fetchAttempts();
->>>>>>> e66a2fa82cbc8de9e4fb606695526082b6a3b0c0
     } catch (error) {
       console.error('Error starting experiment:', error);
       toast.error('Failed to start experiment');

@@ -1,7 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { allCourses } from "@/data/zetechCourses";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { Search } from "lucide-react";
 
 interface ApprovedStudentsFiltersProps {
@@ -17,6 +17,9 @@ export const ApprovedStudentsFilters = ({
   selectedCourse,
   setSelectedCourse
 }: ApprovedStudentsFiltersProps) => {
+  const { courses } = useCoursesContext();
+  const courseNames = courses.map(course => course.name);
+  
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="relative flex-1">
@@ -34,7 +37,7 @@ export const ApprovedStudentsFilters = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Courses</SelectItem>
-          {allCourses.map(course => (
+          {courseNames.map(course => (
             <SelectItem key={course} value={course}>{course}</SelectItem>
           ))}
         </SelectContent>

@@ -1,0 +1,431 @@
+# Code Citations
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.V
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain:
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messag
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.V
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.V
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_
+```
+
+
+## License: unknown
+https://github.com/myagoo/amstangram/blob/7003b42762d7c48eaec354720c641e8ce4fb4915/tools/export-polygon.js
+
+```
+apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
+```
+

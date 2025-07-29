@@ -1,11 +1,16 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, SupplyRequest, StudentFee, ClearanceForm, PendingUnitRegistration, ActivityLog, StudentCard, FeeStructure } from './auth/types';
 import { getPendingUsers } from './auth/authUtils';
 import { useAuthHelpers } from './auth/AuthHelpers';
 import { UsersProvider, useUsers } from './users/UsersContext';
 import { UnitsProvider, useUnits } from './units/UnitsContext';
 import { FinanceProvider, useFinance } from './finance/FinanceContext';
+import { CoursesProvider } from './courses/CoursesContext';
 import { Unit } from '@/types/unitManagement';
+import { saveUnitToFirebase, fetchUnitsFromFirebase, updateUnitInFirebase, deleteUnitFromFirebase } from '@/integrations/firebase/units';
+import { getFirestore, collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { firebaseApp } from '@/integrations/firebase/config';
 
 export interface AuthContextType {
   user: User | null;
@@ -20,7 +25,7 @@ export interface AuthContextType {
   getAllUsers: () => User[];
   getActivityLogs: () => ActivityLog[];
   createdUnits: Unit[];
-  addCreatedUnit: (unit: Unit) => void;
+  addCreatedUnit: (unit: Omit<Unit, 'id'>) => Promise<void>;
   updateCreatedUnit: (unitId: string, updates: Partial<Unit>) => void;
   deleteCreatedUnit: (unitId: string) => void;
   addStudentFee: (fee: any) => void; // Replace 'any' with actual type
@@ -35,14 +40,19 @@ export interface AuthContextType {
   updateFeeStructure: (id: string, updates: any) => void; // Replace 'any' with actual type
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  updateProfilePicture?: (file: File) => Promise<void>;
+  updateProfilePicture?: (file: File) => Promise<string>;
   createdContent: any[]; // Placeholder for created content, replace 'any' with actual type when available
   profilePicture?: string;
   updateUserApproval: (userId: string, approved: boolean) => void;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
+  createUserAccount: (userData: any) => Promise<void>;
   changePassword?: (userId: string, newPassword: string) => Promise<void>;
   getPendingUnitRegistrations?: () => PendingUnitRegistration[]; // <-- Add this line if needed
   pendingUnitRegistrations: PendingUnitRegistration[];
   getStudentCard: (studentId: string) => StudentCard | undefined;
+  studentCards: StudentCard[];
+  activateStudentCard: (studentId: string, activatedBy: string) => void;
+  deactivateStudentCard: (studentId: string, deactivatedBy: string) => void;
   getAvailableUnits: (course: string, year: number, semester: number) => Unit[];
 addPendingUnitRegistration: (registration: {
     studentId: string;
@@ -62,6 +72,99 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const { login: loginHelper, signup: signupHelper, logout: logoutHelper } = useAuthHelpers();
+  
+  // Listen for Firebase Auth state changes with automatic token refresh
+  useEffect(() => {
+    const auth = getAuth(firebaseApp);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Firebase Auth state changed:', firebaseUser?.uid);
+      
+      if (firebaseUser) {
+        // Check if token is valid and refresh if needed
+        try {
+          await firebaseUser.getIdToken(true); // Force refresh token
+          console.log('Token refreshed successfully');
+        } catch (tokenError) {
+          console.error('Token refresh failed:', tokenError);
+          // If token refresh fails, log out the user
+          setUser(null);
+          return;
+        }
+
+        // Firebase user is authenticated, try to get user profile from Firestore
+        try {
+          const db = getFirestore(firebaseApp);
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const userProfile: User = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              role: userData.role || 'student',
+              approved: userData.approved || false,
+              blocked: userData.blocked || false,
+              phone: userData.phone,
+              profilePicture: userData.profilePicture,
+              ...userData
+            };
+            setUser(userProfile);
+            console.log('User profile loaded from Firestore:', userProfile);
+          } else {
+            console.log('No user profile found in Firestore for:', firebaseUser.uid);
+            // Create a basic user profile from Firebase Auth data
+            const basicUser: User = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              firstName: '',
+              lastName: '',
+              role: 'student',
+              approved: false
+            };
+            setUser(basicUser);
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+          // Fall back to basic Firebase user data
+          const basicUser: User = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            firstName: '',
+            lastName: '',
+            role: 'student',
+            approved: false
+          };
+          setUser(basicUser);
+        }
+      } else {
+        // No Firebase user, clear the user state
+        console.log('No Firebase user, clearing user state');
+        setUser(null);
+      }
+    });
+
+    // Set up periodic token refresh (every 45 minutes)
+    const tokenRefreshInterval = setInterval(async () => {
+      const auth = getAuth(firebaseApp);
+      if (auth.currentUser) {
+        try {
+          await auth.currentUser.getIdToken(true);
+          console.log('Token refreshed automatically');
+        } catch (error) {
+          console.error('Automatic token refresh failed:', error);
+        }
+      }
+    }, 45 * 60 * 1000); // 45 minutes
+
+    return () => {
+      unsubscribe();
+      clearInterval(tokenRefreshInterval);
+    };
+  }, []);
+
   // Use the separated contexts
   const {
     users,
@@ -76,10 +179,24 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     pendingUnitRegistrations,
   } = useUsers();
 
-  // Stub for updateProfilePicture (implement as needed)
+  // Update profile picture with automatic deletion of old picture
   const updateProfilePicture = async (file: File) => {
-    // TODO: Implement backend upload logic
-    return Promise.resolve();
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    try {
+      const { updateUserProfilePicture } = await import('@/integrations/firebase/profile');
+      const newImageUrl = await updateUserProfilePicture(user.id, file);
+      
+      // Update the user state with new profile picture
+      setUser(prev => prev ? { ...prev, profilePicture: newImageUrl } : null);
+      
+      return newImageUrl;
+    } catch (error: any) {
+      console.error('Error updating profile picture:', error);
+      throw error;
+    }
   };
 
   const getPendingUnitRegistrations = () => {
@@ -93,13 +210,77 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     return logoutHelper(setUser);
   };
 
-  // Dummy studentCards array; replace with actual data source or context as needed
-  const [studentCards] = useState<StudentCard[]>([]);
+  // Student cards array with sample data - should be replaced with Firebase integration
+  const [studentCards, setStudentCards] = useState<StudentCard[]>([
+    {
+      id: 'card1',
+      studentId: 'STU001',
+      studentName: 'John Doe',
+      admissionNumber: 'ADM/2024/001',
+      course: 'Electrical Engineering',
+      year: 1,
+      semester: 1,
+      academicYear: '2024/2025',
+      isActive: true,
+      status: 'active',
+      createdDate: '2024-01-10T08:00:00Z',
+      activatedBy: 'finance_admin',
+      activatedDate: '2024-01-15T10:00:00Z'
+    },
+    {
+      id: 'card2',
+      studentId: 'STU002',
+      studentName: 'Jane Smith',
+      admissionNumber: 'ADM/2024/002',
+      course: 'Computer Science',
+      year: 2,
+      semester: 1,
+      academicYear: '2024/2025',
+      isActive: false,
+      status: 'inactive',
+      createdDate: '2024-01-11T08:00:00Z',
+      deactivatedBy: 'finance_admin',
+      deactivatedDate: '2024-02-01T14:30:00Z'
+    },
+    {
+      id: 'card3',
+      studentId: 'STU003',
+      studentName: 'Bob Johnson',
+      admissionNumber: 'ADM/2024/003',
+      course: 'Mechanical Engineering',
+      year: 1,
+      semester: 2,
+      academicYear: '2024/2025',
+      isActive: true,
+      status: 'active',
+      createdDate: '2024-01-12T08:00:00Z',
+      activatedBy: 'finance_admin',
+      activatedDate: '2024-01-20T09:15:00Z'
+    }
+  ]);
 
   // Dummy implementation for getStudentCard; replace with real logic as needed
   const getStudentCard = (studentId: string) => {
     // TODO: Implement actual logic to retrieve a student card
     return studentCards.find(card => card.studentId === studentId);
+  };
+
+  // Implementation for activateStudentCard
+  const activateStudentCard = (studentId: string, activatedBy: string) => {
+    setStudentCards(prev => prev.map(card => 
+      card.studentId === studentId 
+        ? { ...card, isActive: true, status: 'active' as const, activatedBy, activatedDate: new Date().toISOString() }
+        : card
+    ));
+  };
+
+  // Implementation for deactivateStudentCard
+  const deactivateStudentCard = (studentId: string, deactivatedBy: string) => {
+    setStudentCards(prev => prev.map(card => 
+      card.studentId === studentId 
+        ? { ...card, isActive: false, status: 'inactive' as const, deactivatedBy, deactivatedDate: new Date().toISOString() }
+        : card
+    ));
   };
 
   const [availableUnits, setAvailableUnits] = useState<Unit[]>([]);
@@ -129,17 +310,29 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
 
-  const addCreatedUnit = (unit: Unit) => {
-    setCreatedUnits(prev => [...prev, unit]);
+  // Real-time sync with Firestore
+  useEffect(() => {
+    const db = getFirestore();
+    const unsubscribe = onSnapshot(collection(db, 'units'), (snapshot) => {
+      setCreatedUnits(snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Unit) })));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addCreatedUnit = async (unit: Omit<Unit, 'id'>) => {
+    const saved = await saveUnitToFirebase(unit);
+    setCreatedUnits(prev => [...prev, saved]);
   };
 
-  const updateCreatedUnit = (unitId: string, updates: Partial<Unit>) => {
+  const updateCreatedUnit = async (unitId: string, updates: Partial<Unit>) => {
+    await updateUnitInFirebase(unitId, updates);
     setCreatedUnits(prev => prev.map(unit => 
       unit.id === unitId ? { ...unit, ...updates } : unit
     ));
   };
 
-  const deleteCreatedUnit = (unitId: string) => {
+  const deleteCreatedUnit = async (unitId: string) => {
+    await deleteUnitFromFirebase(unitId);
     setCreatedUnits(prev => prev.filter(unit => unit.id !== unitId));
   };
 
@@ -225,12 +418,87 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
       },
     ] : [],
     getStudentCard,
+    studentCards,
+    activateStudentCard,
+    deactivateStudentCard,
     getPendingUnitRegistrations,
+    updateUser: async (userId: string, updates: Partial<User>) => {
+      // Update in local state
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+      
+      // TODO: Update in Firebase/backend
+      try {
+        const { updateUser } = await import('@/integrations/firebase/users');
+        await updateUser(userId, updates);
+      } catch (error) {
+        console.error('Failed to update user:', error);
+      }
+    },
+    createUserAccount: async (userData: any) => {
+      try {
+        // First, create in Firestore (for courses and academic data)
+        const { createStudent } = await import('@/integrations/firebase/users');
+        await createStudent(userData);
+        
+        // Also save to Realtime Database for authentication and credentials
+        const { createUserInRealtimeDB } = await import('@/integrations/firebase/realtimeAuth');
+        const realtimeUserId = await createUserInRealtimeDB({
+          email: userData.email,
+          password: userData.password,
+          role: userData.role || 'student',
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          admissionNumber: userData.admissionNumber,
+          department: userData.department,
+          courseId: userData.courseId,
+          approved: userData.approved || true,
+          phone: userData.phone,
+          nationalId: userData.nationalId,
+          dateOfBirth: userData.dateOfBirth,
+          gender: userData.gender,
+          nationality: userData.nationality,
+          county: userData.county,
+          subcounty: userData.subcounty,
+          ward: userData.ward,
+          postalAddress: userData.postalAddress,
+          postalCode: userData.postalCode,
+          guardianName: userData.guardianName,
+          guardianPhone: userData.guardianPhone,
+          guardianEmail: userData.guardianEmail,
+          guardianRelationship: userData.guardianRelationship,
+          guardianAddress: userData.guardianAddress,
+          academicYear: userData.academicYear,
+          semester: userData.semester,
+          previousEducation: userData.previousEducation,
+          previousGrade: userData.previousGrade,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        
+        console.log('User created in both Firestore and Realtime DB:', realtimeUserId);
+        
+        // Add to local state
+        const newUser: User = {
+          id: realtimeUserId,
+          ...userData,
+          approved: true, // Ensure newly created users are marked as approved
+          courseName: userData.course, // Map course to courseName for ApprovedStudents component
+          createdAt: new Date().toISOString()
+        };
+        console.log('Adding user to local state:', newUser);
+        setUsers(prev => [...prev, newUser]);
+      } catch (error) {
+        console.error('Failed to create user account:', error);
+        throw error;
+      }
+    },
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      <CoursesProvider>
+        {children}
+      </CoursesProvider>
     </AuthContext.Provider>
   );
 };

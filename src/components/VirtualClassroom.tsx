@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { BigBlueButtonClassroom } from "./BigBlueButtonClassroom";
 import { 
   Mic, 
   MicOff, 
@@ -16,7 +17,9 @@ import {
   Users, 
   Volume2, 
   VolumeX,
-  ArrowLeft 
+  ArrowLeft,
+  ExternalLink,
+  Monitor
 } from "lucide-react";
 
 interface Participant {
@@ -40,6 +43,7 @@ export const VirtualClassroom = ({ courseId, courseTitle, onBack }: VirtualClass
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  const [classroomMode, setClassroomMode] = useState<'bbb' | 'basic'>('basic');
   const [isAudioOn, setIsAudioOn] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -166,6 +170,48 @@ export const VirtualClassroom = ({ courseId, courseTitle, onBack }: VirtualClass
   const raisedHands = participants.filter(p => p.handRaised && p.role === 'student');
 
   return (
+    <>
+      {classroomMode === 'bbb' ? (
+        <BigBlueButtonClassroom 
+          courseId={courseId} 
+          courseTitle={courseTitle} 
+          onBack={onBack} 
+        />
+      ) : (
+        <>
+          {/* Mode Selection */}
+          <div className="mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">Classroom Mode</h3>
+                    <p className="text-sm text-muted-foreground">Choose your preferred virtual classroom experience</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant={classroomMode === 'bbb' ? 'default' : 'outline'}
+                      onClick={() => setClassroomMode('bbb')}
+                      className="flex items-center space-x-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>BigBlueButton</span>
+                    </Button>
+                    <Button 
+                      variant={classroomMode === 'basic' ? 'default' : 'outline'}
+                      onClick={() => setClassroomMode('basic')}
+                      className="flex items-center space-x-2"
+                    >
+                      <Monitor className="h-4 w-4" />
+                      <span>Basic Mode</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Basic Virtual Classroom (Original Implementation) */}
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -343,5 +389,8 @@ export const VirtualClassroom = ({ courseId, courseTitle, onBack }: VirtualClass
         </div>
       </div>
     </div>
+        </>
+      )}
+    </>
   );
 };

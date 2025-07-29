@@ -7,6 +7,7 @@ import { useCourseActions } from "@/hooks/useCourseActions";
 import { useCourseFiltering } from "@/hooks/useCourseFiltering";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { firebaseApp } from "@/integrations/firebase/config";
+import { testFirebaseConnection } from "@/utils/firebaseTest";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -46,6 +47,16 @@ const Index = () => {
   const db = getDatabase(firebaseApp);
 
   useEffect(() => {
+    // Test Firebase connection on app start
+    testFirebaseConnection();
+    
+    // Test registrar login functionality
+    
+    // Debug user state
+    console.log('=== INDEX PAGE USER DEBUG ===');
+    console.log('isAdmin:', isAdmin);
+    console.log('Current view should be determined by useViewState hook');
+
     const coursesRef = ref(db, 'courses/');
     onValue(coursesRef, (snapshot) => {
       const data = snapshot.val();
@@ -59,7 +70,7 @@ const Index = () => {
       console.log("Live progress data: ", data);
       // Handle live data updates here
     });
-  }, [db]);
+  }, [db, isAdmin]);
 
   return (
     <div className="min-h-screen bg-gray-50">

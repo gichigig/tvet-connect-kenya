@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, CheckCircle, Eye, FileText, RefreshCw } from "lucide-react";
 
@@ -39,90 +38,32 @@ export const AIEssayDetector = () => {
     fetchSubmissions();
   }, []);
 
+  // TODO: Replace with Firebase logic
   const fetchSubmissions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('assignment_submissions')
-        .select('*')
-        .order('submitted_at', { ascending: false });
-
-      if (error) throw error;
-      setSubmissions(data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch submissions",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
+    setSubmissions([]);
   };
 
+  // TODO: Replace with Firebase logic
   const runAIDetection = async (submission: Submission) => {
     setAnalyzing(submission.id);
-    try {
-      const { data, error } = await supabase.functions.invoke('ai-essay-detector', {
-        body: {
-          submissionId: submission.id,
-          text: submission.submission_text
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "AI Detection Complete",
-          description: `Analysis completed with ${data.result.confidence}% confidence`,
-        });
-        fetchSubmissions();
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to run AI detection",
-        variant: "destructive",
-      });
-    } finally {
-      setAnalyzing(null);
-    }
+    toast({
+      title: "AI Detection Placeholder",
+      description: "AI detection logic not implemented.",
+    });
+    setAnalyzing(null);
   };
 
+  // TODO: Replace with Firebase logic
   const submitHumanReview = async (approved: boolean) => {
     if (!selectedSubmission) return;
-
-    try {
-      const { error } = await supabase
-        .from('assignment_submissions')
-        .update({
-          human_review_status: approved ? 'approved' : 'rejected',
-          human_reviewer_id: user?.id,
-          human_review_notes: reviewNotes,
-          human_reviewed_at: new Date().toISOString(),
-          final_status: approved ? 'ready_for_marking' : 'flagged_as_ai'
-        })
-        .eq('id', selectedSubmission.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Review Submitted",
-        description: `Submission ${approved ? 'approved' : 'flagged'} for further action`,
-      });
-
-      setSelectedSubmission(null);
-      setReviewNotes("");
-      fetchSubmissions();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit review",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Review Placeholder",
+      description: "Review submission logic not implemented.",
+    });
+    setSelectedSubmission(null);
+    setReviewNotes("");
+    fetchSubmissions();
   };
 
   const getStatusBadge = (submission: Submission) => {

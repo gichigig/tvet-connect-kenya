@@ -1,17 +1,21 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
+// Note: Using AWS Lambda instead of Firebase Functions for backend operations
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDeitRT7787Mp_HqKwZ7rI-6D3TG_eLLvU",
-  authDomain: "newy-35816.firebaseapp.com",
-  databaseURL: "https://newy-35816-default-rtdb.firebaseio.com",
-  projectId: "newy-35816",
-  storageBucket: "newy-35816.firebasestorage.app",
-  messagingSenderId: "641795975385",
-  appId: "1:641795975385:web:c684df13fa77e76796f6c8",
-  measurementId: "G-CYZ73802JW"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 export const firebaseApp = initializeApp(firebaseConfig);
 export const db = getFirestore(firebaseApp);
+export const realtimeDb = getDatabase(firebaseApp);
+// Note: functions export removed - using AWS Lambda instead
 

@@ -4,19 +4,34 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
-export function SyncUnitsButton({ onSync }: { onSync: () => void }) {
+interface SemesterReport {
+  studentId: string;
+  course: string;
+  year: number;
+  semester: string;
+  reportedAt: Date;
+  status: 'active' | 'completed';
+}
+
+export function SyncUnitsButton({ 
+  onSync, 
+  semesterReport 
+}: { 
+  onSync: () => void;
+  semesterReport: SemesterReport;
+}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [synced, setSynced] = useState(false);
 
-  // Auto-sync on mount if user info is present
+  // Auto-sync on mount if semester report is present
   useEffect(() => {
-    if (user?.course && user?.year && user?.semester && !synced) {
+    if (semesterReport && !synced) {
       handleSync();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.course, user?.year, user?.semester]);
+  }, [semesterReport]);
 
   const handleSync = () => {
     setLoading(true);
@@ -26,7 +41,7 @@ export function SyncUnitsButton({ onSync }: { onSync: () => void }) {
       setSynced(true);
       toast({
         title: "Units Synced",
-        description: "Units for your course, year, and semester have been loaded.",
+        description: `Units for ${semesterReport.course} Year ${semesterReport.year} Semester ${semesterReport.semester} have been loaded.`,
         variant: "default",
       });
     }, 800); // Simulate async
@@ -37,17 +52,17 @@ export function SyncUnitsButton({ onSync }: { onSync: () => void }) {
       variant={synced ? "default" : "outline"}
       className="flex items-center gap-2"
       onClick={() => {
-        if (!user?.course || !user?.year || !user?.semester) {
+        if (!semesterReport) {
           toast({
-            title: "Missing Info",
-            description: "Your course, year, or semester info is missing. Please contact the registrar.",
+            title: "Missing Semester Report",
+            description: "Please report your semester first before syncing units.",
             variant: "destructive",
           });
           return;
         }
         handleSync();
       }}
-      title="Sync units for your course/year/semester"
+      title={`Sync units for ${semesterReport.course} Year ${semesterReport.year} Semester ${semesterReport.semester}`}
       disabled={loading || synced}
     >
       {synced ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <RefreshCw className={loading ? "w-4 h-4 animate-spin" : "w-4 h-4"} />}

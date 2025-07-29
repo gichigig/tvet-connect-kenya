@@ -3,19 +3,26 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Unit } from '@/types/unitManagement';
 import { saveUnitToFirebase, fetchUnitsFromFirebase, updateUnitInFirebase, deleteUnitFromFirebase } from '@/integrations/firebase/units';
 import { CreatedContent } from '../auth/types';
+import { debugFirestoreAccess } from '@/utils/authDebug';
 
 interface UnitsContextType {
   createdUnits: Unit[];
   setCreatedUnits: React.Dispatch<React.SetStateAction<Unit[]>>;
   createdContent: CreatedContent[];
   setCreatedContent: React.Dispatch<React.SetStateAction<CreatedContent[]>>;
-  addCreatedUnit: (unit: Unit) => void;
+  addCreatedUnit: (unit: Omit<Unit, 'id'>) => void;
   updateCreatedUnit: (unitId: string, updates: Partial<Unit>) => void;
   deleteCreatedUnit: (unitId: string) => void;
   getAvailableUnits: (course?: string, year?: number) => Unit[];
+  getLecturerUnits: (lecturerId: string) => Unit[];
+  getUnassignedUnits: () => Unit[];
+  getUnitsForStudent: (studentCourse: string, studentYear: number, semester?: number) => Unit[];
+  getAllActiveUnits: () => Unit[];
   addCreatedContent: (content: CreatedContent) => void;
   updateCreatedContent: (contentId: string, updates: Partial<CreatedContent>) => void;
   deleteCreatedContent: (contentId: string) => void;
+  loading: boolean;
+  error: string | null;
 }
 
 const UnitsContext = createContext<UnitsContextType | null>(null);
@@ -26,7 +33,7 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const addCreatedUnit = async (unit: Unit) => {
+  const addCreatedUnit = async (unit: Omit<Unit, 'id'>) => {
     const saved = await saveUnitToFirebase(unit);
     setCreatedUnits(prev => [...prev, saved]);
   };
@@ -49,9 +56,13 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setLoading(true);
       setError(null);
       try {
+        console.log('UnitsContext: Starting to fetch units from Firebase');
+        debugFirestoreAccess();
         const units = await fetchUnitsFromFirebase();
+        console.log('UnitsContext: Successfully fetched units:', units.length);
         setCreatedUnits(units);
       } catch (err: any) {
+        console.error('UnitsContext: Error fetching units:', err);
         setError(err?.message || 'Failed to load units from database.');
       } finally {
         setLoading(false);
@@ -64,6 +75,70 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return createdUnits.filter(unit => 
       unit.course === course && unit.year === year && unit.status === 'active'
     );
+  };
+
+  // Get units assigned to a specific lecturer
+  const getLecturerUnits = (lecturerId: string) => {
+    return createdUnits.filter(unit => 
+      unit.lecturerId === lecturerId && unit.status === 'active'
+    );
+  };
+
+  // Get all units that need lecturer assignment (for registrar)
+  const getUnassignedUnits = () => {
+    return createdUnits.filter(unit => 
+      !unit.lecturerId && unit.status === 'active'
+    );
+  };
+
+  // Helper function to normalize course names for comparison
+  const normalizeCourse = (courseName: string) => {
+    return courseName.toLowerCase().trim().replace(/\s+/g, ' ');
+  };
+
+  // Get units for a specific course and year (for students)
+  const getUnitsForStudent = (studentCourse: string, studentYear: number, semester?: number | string) => {
+    const semesterAsNumber = typeof semester === 'string' ? parseInt(semester, 10) : semester;
+    const normalizedStudentCourse = normalizeCourse(studentCourse);
+    
+    console.log('🔍 DEBUG getUnitsForStudent called with:', {
+      studentCourse,
+      normalizedStudentCourse,
+      studentYear,
+      semester: semesterAsNumber,
+      totalUnits: createdUnits.length
+    });
+    
+    const matchingUnits = createdUnits.filter(unit => {
+      const normalizedUnitCourse = normalizeCourse(unit.course);
+      const courseMatch = normalizedUnitCourse === normalizedStudentCourse;
+      const yearMatch = unit.year === studentYear;
+      const statusMatch = unit.status === 'active';
+      const semesterMatch = semesterAsNumber ? unit.semester === semesterAsNumber : true;
+      
+      console.log(`📋 Unit ${unit.code}:`, {
+        unitCourse: unit.course,
+        normalizedUnitCourse,
+        unitYear: unit.year,
+        unitSemester: unit.semester,
+        unitStatus: unit.status,
+        courseMatch,
+        yearMatch,
+        statusMatch,
+        semesterMatch,
+        overallMatch: courseMatch && yearMatch && statusMatch && semesterMatch
+      });
+      
+      return courseMatch && yearMatch && statusMatch && semesterMatch;
+    });
+    
+    console.log('✅ Found matching units:', matchingUnits.length, matchingUnits.map(u => u.code));
+    return matchingUnits;
+  };
+
+  // Get all active units (for general display)
+  const getAllActiveUnits = () => {
+    return createdUnits.filter(unit => unit.status === 'active');
   };
 
   const addCreatedContent = (content: CreatedContent) => {
@@ -89,6 +164,10 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     updateCreatedUnit,
     deleteCreatedUnit,
     getAvailableUnits,
+    getLecturerUnits,
+    getUnassignedUnits,
+    getUnitsForStudent,
+    getAllActiveUnits,
     addCreatedContent,
     updateCreatedContent,
     deleteCreatedContent,

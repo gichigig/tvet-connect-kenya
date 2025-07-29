@@ -1,87 +1,115 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useGmailAuth } from "@/contexts/GmailAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Paperclip, Briefcase, Calendar, Eye, Download, Archive } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Mail, Paperclip, Briefcase, Calendar, Eye, Download, Archive, Inbox, RefreshCw, Trash2, Reply, Forward, Send, Plus, LogIn, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { GmailMessage } from "@/integrations/gmail/gmailService";
 
-interface Email {
+interface InboxEmail {
   id: string;
   from: string;
+  to: string;
   subject: string;
   body: string;
   receivedDate: string;
-  type: "attachment" | "internship";
-  status: "unread" | "read" | "archived";
+  status: "unread" | "read" | "archived" | "deleted";
+  hasAttachments: boolean;
   priority: "high" | "medium" | "low";
-  attachments?: {
-    name: string;
-    size: string;
-    type: string;
-  }[];
+  labels?: string[];
 }
 
 export const EmailManager = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("all");
+  const { user } = useAuth();
+  const { 
+    isAuthenticated, 
+    isLoading, 
+    userProfile, 
+    emails, 
+    authenticate, 
+    logout, 
+    refreshEmails, 
+    sendEmail, 
+    markAsRead, 
+    archiveEmail, 
+    deleteEmail 
+  } = useGmailAuth();
+  
+  const [activeTab, setActiveTab] = useState("inbox");
+  const [selectedEmail, setSelectedEmail] = useState<InboxEmail | GmailMessage | null>(null);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isComposeDialogOpen, setIsComposeDialogOpen] = useState(false);
+  const [composeForm, setComposeForm] = useState({
+    to: "",
+    subject: "",
+    body: ""
+  });
 
-  const [emails, setEmails] = useState<Email[]>([
-    {
-      id: "1",
-      from: "student@university.edu",
-      subject: "Internship Application - Summer 2024",
-      body: "Dear HOD, I am writing to apply for an internship position in your department...",
-      receivedDate: "2024-06-14T10:30:00",
-      type: "internship",
-      status: "unread",
-      priority: "high",
-      attachments: [
-        { name: "CV.pdf", size: "2.5MB", type: "pdf" },
-        { name: "CoverLetter.docx", size: "1.2MB", type: "docx" }
-      ]
-    },
-    {
-      id: "2",
-      from: "jane.doe@company.com",
-      subject: "Project Documentation Submission",
-      body: "Please find attached the project documentation for review...",
-      receivedDate: "2024-06-14T09:15:00",
-      type: "attachment",
-      status: "read",
-      priority: "medium",
-      attachments: [
-        { name: "ProjectReport.pdf", size: "5.8MB", type: "pdf" },
-        { name: "DataAnalysis.xlsx", size: "3.2MB", type: "xlsx" }
-      ]
-    },
-    {
-      id: "3",
-      from: "hr@techcorp.com",
-      subject: "Internship Partnership Proposal",
-      body: "We would like to discuss a potential internship partnership...",
-      receivedDate: "2024-06-13T16:45:00",
-      type: "internship",
-      status: "unread",
-      priority: "high"
-    },
-    {
-      id: "4",
-      from: "faculty@university.edu",
-      subject: "Research Paper Attachments",
-      body: "Attached are the research papers for department review...",
-      receivedDate: "2024-06-13T14:20:00",
-      type: "attachment",
-      status: "read",
-      priority: "low",
-      attachments: [
-        { name: "ResearchPaper1.pdf", size: "4.1MB", type: "pdf" },
-        { name: "ResearchPaper2.pdf", size: "3.8MB", type: "pdf" }
-      ]
+  // Mock inbox emails for fallback when not connected to Gmail
+  const [mockEmails, setMockEmails] = useState<InboxEmail[]>([]);
+
+  // Generate mock inbox emails as fallback
+  useEffect(() => {
+    if (user?.email && !isAuthenticated) {
+      const mockInboxEmails: InboxEmail[] = [
+        {
+          id: "mock-1",
+          from: "dean@tvetconnect.edu",
+          to: user.email,
+          subject: "Department Budget Review - Q3 2025",
+          body: "Dear HOD,\n\nPlease review the attached department budget for Q3 2025. Your approval is needed by the end of this week.\n\nKey points:\n- Equipment procurement budget increased by 15%\n- Research funding allocation for new projects\n- Staff development training budget\n\nPlease let me know if you have any questions.\n\nBest regards,\nDean of Academic Affairs",
+          receivedDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          status: "unread",
+          hasAttachments: true,
+          priority: "high",
+          labels: ["official", "budget"]
+        },
+        {
+          id: "mock-2",
+          from: "registrar@tvetconnect.edu",
+          to: user.email,
+          subject: "Student Enrollment Numbers - July 2025",
+          body: "Hello,\n\nAttached are the student enrollment numbers for July 2025. Please review the data for your department and confirm the accuracy.\n\nNew enrollments: 47 students\nTransfers: 8 students\nDropouts: 3 students\n\nThe data needs to be verified before the academic board meeting next Tuesday.\n\nThanks,\nRegistrar Office",
+          receivedDate: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+          status: "unread",
+          hasAttachments: true,
+          priority: "medium",
+          labels: ["academic", "enrollment"]
+        }
+      ];
+      setMockEmails(mockInboxEmails);
     }
-  ]);
+  }, [user?.email, isAuthenticated]);
+
+  // Convert Gmail messages to our interface format
+  const convertGmailMessage = (gmailMsg: GmailMessage): InboxEmail => ({
+    id: gmailMsg.id,
+    from: gmailMsg.from,
+    to: gmailMsg.to,
+    subject: gmailMsg.subject,
+    body: gmailMsg.body,
+    receivedDate: gmailMsg.date,
+    status: gmailMsg.isRead ? "read" : "unread",
+    hasAttachments: gmailMsg.hasAttachments,
+    priority: "medium", // Default priority since Gmail doesn't provide this
+    labels: gmailMsg.labels
+  });
+
+  // Get current emails list (Gmail or mock)
+  const getCurrentEmails = (): InboxEmail[] => {
+    if (isAuthenticated && emails.length > 0) {
+      return emails.map(convertGmailMessage);
+    }
+    return mockEmails;
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -91,6 +119,8 @@ export const EmailManager = () => {
         return <Badge className="bg-blue-100 text-blue-800">Read</Badge>;
       case 'archived':
         return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>;
+      case 'deleted':
+        return <Badge className="bg-gray-100 text-gray-600">Deleted</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -109,77 +139,240 @@ export const EmailManager = () => {
     }
   };
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'attachment':
-        return <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
-          <Paperclip className="w-3 h-3" />
-          Attachment
-        </Badge>;
-      case 'internship':
-        return <Badge className="bg-indigo-100 text-indigo-800 flex items-center gap-1">
-          <Briefcase className="w-3 h-3" />
-          Internship
-        </Badge>;
-      default:
-        return <Badge>{type}</Badge>;
+  const handleRefreshInbox = async () => {
+    if (isAuthenticated) {
+      try {
+        await refreshEmails();
+        toast({
+          title: "Gmail Inbox Refreshed",
+          description: "Your Gmail inbox has been updated with the latest emails.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to refresh Gmail inbox. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Mock Inbox Refreshed",
+        description: "Connect to Gmail for real email functionality.",
+      });
     }
   };
 
-  const markAsRead = (emailId: string) => {
-    setEmails(prevEmails =>
-      prevEmails.map(email =>
-        email.id === emailId ? { ...email, status: 'read' as const } : email
-      )
-    );
-    toast({
-      title: "Email marked as read",
-      description: "The email has been marked as read.",
-    });
+  const handleMarkAsRead = async (emailId: string) => {
+    if (isAuthenticated) {
+      try {
+        await markAsRead(emailId);
+        toast({
+          title: "Email Marked as Read",
+          description: "The email has been marked as read in Gmail.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to mark email as read.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Update mock emails
+      setMockEmails(prev => 
+        prev.map(email => 
+          email.id === emailId 
+            ? { ...email, status: "read" as const }
+            : email
+        )
+      );
+    }
   };
 
-  const archiveEmail = (emailId: string) => {
-    setEmails(prevEmails =>
-      prevEmails.map(email =>
-        email.id === emailId ? { ...email, status: 'archived' as const } : email
-      )
-    );
-    toast({
-      title: "Email archived",
-      description: "The email has been archived.",
-    });
+  const handleArchiveEmail = async (emailId: string) => {
+    if (isAuthenticated) {
+      try {
+        await archiveEmail(emailId);
+        toast({
+          title: "Email Archived",
+          description: "The email has been archived in Gmail.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to archive email.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Update mock emails
+      setMockEmails(prev => 
+        prev.map(email => 
+          email.id === emailId 
+            ? { ...email, status: "archived" as const }
+            : email
+        )
+      );
+    }
   };
 
-  const downloadAttachment = (attachmentName: string) => {
-    toast({
-      title: "Download started",
-      description: `Downloading ${attachmentName}...`,
-    });
+  const handleDeleteEmail = async (emailId: string) => {
+    if (isAuthenticated) {
+      try {
+        await deleteEmail(emailId);
+        toast({
+          title: "Email Deleted",
+          description: "The email has been moved to trash in Gmail.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete email.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Update mock emails
+      setMockEmails(prev => 
+        prev.map(email => 
+          email.id === emailId 
+            ? { ...email, status: "deleted" as const }
+            : email
+        )
+      );
+    }
   };
 
-  const filteredEmails = emails.filter(email => {
-    if (activeTab === "all") return true;
-    if (activeTab === "unread") return email.status === "unread";
-    if (activeTab === "attachments") return email.type === "attachment";
-    if (activeTab === "internships") return email.type === "internship";
-    return true;
-  });
+  const handleSendEmail = async () => {
+    if (!composeForm.to || !composeForm.subject || !composeForm.body) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all fields before sending.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const unreadCount = emails.filter(email => email.status === "unread").length;
-  const attachmentCount = emails.filter(email => email.type === "attachment").length;
-  const internshipCount = emails.filter(email => email.type === "internship").length;
+    if (isAuthenticated) {
+      try {
+        await sendEmail(composeForm.to, composeForm.subject, composeForm.body);
+        toast({
+          title: "Email Sent",
+          description: "Your email has been sent successfully via Gmail.",
+        });
+        setComposeForm({ to: "", subject: "", body: "" });
+        setIsComposeDialogOpen(false);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to send email. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Demo Mode",
+        description: "Connect to Gmail to send real emails. This is a demo.",
+      });
+      setComposeForm({ to: "", subject: "", body: "" });
+      setIsComposeDialogOpen(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  const getFilteredEmails = () => {
+    const currentEmails = getCurrentEmails();
+    switch (activeTab) {
+      case 'inbox':
+        return currentEmails.filter(email => email.status !== 'deleted' && email.status !== 'archived');
+      case 'unread':
+        return currentEmails.filter(email => email.status === 'unread');
+      case 'archived':
+        return currentEmails.filter(email => email.status === 'archived');
+      default:
+        return currentEmails.filter(email => email.status !== 'deleted');
+    }
+  };
+
+  const currentEmails = getCurrentEmails();
+  const unreadCount = currentEmails.filter(email => email.status === 'unread').length;
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Gmail Authentication Status */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Gmail Integration</CardTitle>
+              <CardDescription>
+                {isAuthenticated 
+                  ? `Connected to Gmail: ${userProfile?.emailAddress || 'Loading...'}`
+                  : "Connect your Gmail account to access real emails"
+                }
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              {isAuthenticated ? (
+                <Button 
+                  onClick={logout} 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Disconnect Gmail
+                </Button>
+              ) : (
+                <Button 
+                  onClick={authenticate} 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Connect Gmail
+                </Button>
+              )}
+              <Button 
+                onClick={() => setIsComposeDialogOpen(true)} 
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Compose
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Inbox Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Emails</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Inbox</CardTitle>
+            <Inbox className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{emails.length}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {currentEmails.filter(e => e.status !== 'deleted').length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isAuthenticated ? userProfile?.emailAddress : user?.email}
+            </p>
           </CardContent>
         </Card>
         
@@ -192,147 +385,226 @@ export const EmailManager = () => {
             <div className="text-2xl font-bold text-red-600">{unreadCount}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Attachments</CardTitle>
-            <Paperclip className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{attachmentCount}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Internship Emails</CardTitle>
+            <CardTitle className="text-sm font-medium">Status</CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-indigo-600">{internshipCount}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {isAuthenticated ? "Connected" : "Mock Mode"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">Now</div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            All ({emails.length})
-          </TabsTrigger>
-          <TabsTrigger value="unread" className="flex items-center gap-2">
-            Unread ({unreadCount})
-          </TabsTrigger>
-          <TabsTrigger value="attachments" className="flex items-center gap-2">
-            <Paperclip className="w-4 h-4" />
-            Attachments ({attachmentCount})
-          </TabsTrigger>
-          <TabsTrigger value="internships" className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
-            Internships ({internshipCount})
-          </TabsTrigger>
-        </TabsList>
+      {/* Email Management Tabs */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Email Management</CardTitle>
+            <Button 
+              onClick={handleRefreshInbox}
+              disabled={isLoading}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="inbox">
+                Inbox ({currentEmails.filter(e => e.status !== 'deleted' && e.status !== 'archived').length})
+              </TabsTrigger>
+              <TabsTrigger value="unread">
+                Unread ({unreadCount})
+              </TabsTrigger>
+              <TabsTrigger value="archived">
+                Archived ({currentEmails.filter(e => e.status === 'archived').length})
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value={activeTab} className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Department Emails</CardTitle>
-              <CardDescription>
-                Manage emails related to attachments and internships in your department
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <TabsContent value={activeTab} className="mt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>From</TableHead>
                     <TableHead>Subject</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Received</TableHead>
-                    <TableHead>Attachments</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEmails.map((email) => (
-                    <TableRow key={email.id} className={email.status === 'unread' ? 'bg-blue-50' : ''}>
-                      <TableCell>
-                        <div className="font-medium">{email.from}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs truncate font-medium">{email.subject}</div>
-                        <div className="text-sm text-gray-500 max-w-xs truncate">{email.body}</div>
-                      </TableCell>
-                      <TableCell>{getTypeBadge(email.type)}</TableCell>
-                      <TableCell>{getPriorityBadge(email.priority)}</TableCell>
-                      <TableCell>{getStatusBadge(email.status)}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {new Date(email.receivedDate).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(email.receivedDate).toLocaleTimeString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {email.attachments ? (
-                          <div className="space-y-1">
-                            {email.attachments.map((attachment, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <Paperclip className="w-3 h-3" />
-                                <span className="truncate max-w-24">{attachment.name}</span>
-                                <span className="text-xs text-gray-500">({attachment.size})</span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => downloadAttachment(attachment.name)}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Download className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">None</span>
-                        )}
-                      </TableCell>
+                  {getFilteredEmails().map((email) => (
+                    <TableRow key={email.id}>
+                      <TableCell className="font-medium">{email.from}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {email.status === 'unread' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => markAsRead(email.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              Read
-                            </Button>
-                          )}
-                          {email.status !== 'archived' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => archiveEmail(email.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <Archive className="w-3 h-3" />
-                              Archive
-                            </Button>
-                          )}
+                          {email.hasAttachments && <Paperclip className="h-4 w-4 text-gray-500" />}
+                          {email.subject}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(email.status)}</TableCell>
+                      <TableCell>{getPriorityBadge(email.priority)}</TableCell>
+                      <TableCell>{formatDate(email.receivedDate)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedEmail(email);
+                              setIsEmailDialogOpen(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleMarkAsRead(email.id)}
+                            disabled={email.status === 'read'}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleArchiveEmail(email.id)}
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteEmail(email.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              
+              {getFilteredEmails().length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No emails found in this category.
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Email Detail Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedEmail?.subject}</DialogTitle>
+            <DialogDescription>
+              From: {selectedEmail?.from} • To: {selectedEmail?.to} • {selectedEmail ? formatDate(selectedEmail && 'receivedDate' in selectedEmail ? selectedEmail.receivedDate : (selectedEmail as GmailMessage)?.date || '') : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              {selectedEmail && 'status' in selectedEmail && selectedEmail?.status && getStatusBadge(selectedEmail.status)}
+              {selectedEmail && 'priority' in selectedEmail && selectedEmail?.priority && getPriorityBadge(selectedEmail.priority)}
+              {selectedEmail?.hasAttachments && (
+                <Badge className="flex items-center gap-1">
+                  <Paperclip className="h-3 w-3" />
+                  Attachments
+                </Badge>
+              )}
+            </div>
+            <div className="border rounded-lg p-4 bg-gray-50 whitespace-pre-wrap">
+              {selectedEmail?.body}
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex items-center gap-2">
+                <Reply className="h-4 w-4" />
+                Reply
+              </Button>
+              <Button size="sm" variant="outline" className="flex items-center gap-2">
+                <Forward className="h-4 w-4" />
+                Forward
+              </Button>
+              {selectedEmail?.hasAttachments && (
+                <Button size="sm" variant="outline" className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Download Attachments
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Compose Email Dialog */}
+      <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Compose Email</DialogTitle>
+            <DialogDescription>
+              {isAuthenticated ? "Send an email via Gmail" : "Demo mode - Connect Gmail to send real emails"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">To:</label>
+              <Input
+                value={composeForm.to}
+                onChange={(e) => setComposeForm(prev => ({ ...prev, to: e.target.value }))}
+                placeholder="recipient@example.com"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Subject:</label>
+              <Input
+                value={composeForm.subject}
+                onChange={(e) => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
+                placeholder="Email subject"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Message:</label>
+              <Textarea
+                value={composeForm.body}
+                onChange={(e) => setComposeForm(prev => ({ ...prev, body: e.target.value }))}
+                placeholder="Type your message here..."
+                rows={8}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setIsComposeDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendEmail} className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                Send Email
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

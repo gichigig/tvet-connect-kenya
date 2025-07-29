@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,57 +10,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar, Clock, FileText, CheckCircle, XCircle } from "lucide-react";
+import {
+  Exam,
+  addExamToFirebase,
+  fetchExamsFromFirebase,
+  updateExamInFirebase,
+  subscribeToExams
+} from "@/integrations/firebase/exams";
 import { useToast } from "@/hooks/use-toast";
 
-interface Exam {
-  id: string;
-  title: string;
-  type: "supplementary" | "special";
-  unitCode: string;
-  unitName: string;
-  date: string;
-  time: string;
-  duration: number;
-  venue: string;
-  students: string[];
-  status: "scheduled" | "completed" | "cancelled";
-  reason?: string;
-}
+
 
 export const ExamManager = () => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [examType, setExamType] = useState<"supplementary" | "special">("supplementary");
 
-  const [exams, setExams] = useState<Exam[]>([
-    {
-      id: "1",
-      title: "Supplementary Exam - CS101",
-      type: "supplementary",
-      unitCode: "CS101",
-      unitName: "Introduction to Computer Science",
-      date: "2024-02-15",
-      time: "09:00",
-      duration: 120,
-      venue: "Computer Lab A",
-      students: ["STU2024001", "STU2024003"],
-      status: "scheduled"
-    },
-    {
-      id: "2",
-      title: "Special Exam - MATH101",
-      type: "special",
-      unitCode: "MATH101",
-      unitName: "Calculus I",
-      date: "2024-02-20",
-      time: "14:00",
-      duration: 180,
-      venue: "Exam Hall B",
-      students: ["STU2024002"],
-      status: "scheduled",
-      reason: "Medical emergency during main exam"
-    }
-  ]);
+  const [exams, setExams] = useState<Exam[]>([]);
+
+  // Real-time Firestore sync
+  useEffect(() => {
+    const unsubscribe = subscribeToExams((exams) => {
+      setExams(exams);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const [newExam, setNewExam] = useState({
     title: "",
@@ -73,7 +47,7 @@ export const ExamManager = () => {
     reason: ""
   });
 
-  const handleCreateExam = () => {
+  const handleCreateExam = async () => {
     if (!newExam.title || !newExam.unitCode || !newExam.date || !newExam.time || !newExam.venue) {
       toast({
         title: "Missing Information",
@@ -83,8 +57,7 @@ export const ExamManager = () => {
       return;
     }
 
-    const exam: Exam = {
-      id: Date.now().toString(),
+    const exam: Omit<Exam, 'id'> = {
       title: newExam.title,
       type: examType,
       unitCode: newExam.unitCode,
@@ -98,7 +71,7 @@ export const ExamManager = () => {
       reason: examType === "special" ? newExam.reason : undefined
     };
 
-    setExams(prev => [...prev, exam]);
+    await addExamToFirebase(exam);
     setNewExam({
       title: "",
       unitCode: "",
@@ -117,20 +90,16 @@ export const ExamManager = () => {
     });
   };
 
-  const handleCancelExam = (examId: string) => {
-    setExams(prev => prev.map(exam => 
-      exam.id === examId ? { ...exam, status: 'cancelled' as const } : exam
-    ));
+  const handleCancelExam = async (examId: string) => {
+    await updateExamInFirebase(examId, { status: 'cancelled' });
     toast({
       title: "Exam Cancelled",
       description: "The exam has been cancelled.",
     });
   };
 
-  const handleCompleteExam = (examId: string) => {
-    setExams(prev => prev.map(exam => 
-      exam.id === examId ? { ...exam, status: 'completed' as const } : exam
-    ));
+  const handleCompleteExam = async (examId: string) => {
+    await updateExamInFirebase(examId, { status: 'completed' });
     toast({
       title: "Exam Completed",
       description: "The exam has been marked as completed.",

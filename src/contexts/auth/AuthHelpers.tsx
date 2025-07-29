@@ -10,6 +10,29 @@ export const useAuthHelpers = () => {
 
   const login = async (email: string, password: string, role: string | undefined, users: User[], setUser: (user: User | null) => void) => {
     try {
+      // First, try to authenticate using realtime database
+      const { authenticateUser } = await import('@/integrations/firebase/realtimeAuth');
+      const realtimeUser = await authenticateUser(email, password);
+      
+      if (realtimeUser) {
+        // User found in realtime database with correct credentials
+        const user: User = {
+          id: realtimeUser.id || '',
+          email: realtimeUser.email,
+          firstName: realtimeUser.firstName,
+          lastName: realtimeUser.lastName,
+          role: realtimeUser.role as any,
+          approved: realtimeUser.approved,
+          admissionNumber: realtimeUser.admissionNumber,
+          department: realtimeUser.department,
+          courseId: realtimeUser.courseId,
+          phone: realtimeUser.phone,
+        };
+        setUser(user);
+        navigate('/');
+        return;
+      }
+
       // Try Firebase Auth for admin login
       if (role === 'admin' || email.endsWith('@admin.com')) {
         const auth = getAuth(firebaseApp);

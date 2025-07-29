@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { allDepartments } from "@/data/zetechCourses";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,16 +7,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PiggyBank, TrendingUp, Calculator, FileText } from "lucide-react";
+
+// Predefined departments for staff
+const departments = [
+  'Computer Science',
+  'Engineering', 
+  'Business Studies',
+  'Health Sciences',
+  'Agriculture',
+  'Hospitality',
+  'Automotive',
+  'Construction',
+  'Fashion & Design',
+  'Arts & Media'
+];
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudents } from "@/contexts/students/StudentsContext";
 
 export const BudgetingPlanning = () => {
   const { toast } = useToast();
   const { getAllUsers, studentFees } = useAuth();
+  const { students } = useStudents();
   
   const users = getAllUsers();
-  const students = users.filter(u => u.role === 'student' && u.approved);
-  const departments = allDepartments;
+  // Use the departments defined above
   
   const [budgets, setBudgets] = useState(() => {
     return departments.map(dept => ({

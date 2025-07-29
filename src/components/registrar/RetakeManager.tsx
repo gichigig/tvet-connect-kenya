@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,22 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, CheckCircle, XCircle, Eye, Clock, RefreshCw } from "lucide-react";
+import {
+  RetakeRequest,
+  subscribeToRetakeRequests,
+  updateRetakeRequestInFirebase
+} from "@/integrations/firebase/retakeRequests";
 import { useToast } from "@/hooks/use-toast";
 
-interface RetakeRequest {
-  id: string;
-  studentId: string;
-  studentName: string;
-  unitCode: string;
-  unitName: string;
-  previousGrade: string;
-  requestDate: string;
-  reason: string;
-  academicYear: string;
-  semester: number;
-  status: "pending" | "approved" | "rejected";
-  reviewNotes?: string;
-}
+
 
 export const RetakeManager = () => {
   const { toast } = useToast();
@@ -34,79 +26,34 @@ export const RetakeManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
 
-  const [retakeRequests, setRetakeRequests] = useState<RetakeRequest[]>([
-    {
-      id: "1",
-      studentId: "STU2024001",
-      studentName: "John Doe",
-      unitCode: "CS101",
-      unitName: "Introduction to Computer Science",
-      previousGrade: "F",
-      requestDate: "2024-01-15",
-      reason: "Failed due to illness during exam period. Have medical certificate as proof.",
-      academicYear: "2023/2024",
-      semester: 1,
-      status: "pending"
-    },
-    {
-      id: "2",
-      studentId: "STU2024002",
-      studentName: "Jane Smith",
-      unitCode: "MATH101",
-      unitName: "Calculus I",
-      previousGrade: "D",
-      requestDate: "2024-01-18",
-      reason: "Need to retake to improve GPA for scholarship requirements.",
-      academicYear: "2023/2024",
-      semester: 1,
-      status: "pending"
-    },
-    {
-      id: "3",
-      studentId: "STU2024003",
-      studentName: "Alice Johnson",
-      unitCode: "ENG101",
-      unitName: "English Composition",
-      previousGrade: "F",
-      requestDate: "2024-01-12",
-      reason: "Family emergency during exam period affected performance.",
-      academicYear: "2023/2024",
-      semester: 1,
-      status: "approved",
-      reviewNotes: "Valid reason with supporting documentation. Approved for next semester retake."
-    }
-  ]);
+  const [retakeRequests, setRetakeRequests] = useState<RetakeRequest[]>([]);
 
-  const handleApproveRequest = (requestId: string, studentName: string) => {
-    setRetakeRequests(prev => prev.map(request => 
-      request.id === requestId 
-        ? { ...request, status: 'approved' as const, reviewNotes }
-        : request
-    ));
-    
+  // Real-time Firestore sync
+  useEffect(() => {
+    const unsubscribe = subscribeToRetakeRequests((requests) => {
+      setRetakeRequests(requests);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleApproveRequest = async (requestId: string, studentName: string) => {
+    await updateRetakeRequestInFirebase(requestId, { status: 'approved', reviewNotes });
     toast({
       title: "Request Approved",
       description: `Retake request for ${studentName} has been approved.`,
     });
-    
     setIsDialogOpen(false);
     setReviewNotes("");
     setSelectedRequest(null);
   };
 
-  const handleRejectRequest = (requestId: string, studentName: string) => {
-    setRetakeRequests(prev => prev.map(request => 
-      request.id === requestId 
-        ? { ...request, status: 'rejected' as const, reviewNotes }
-        : request
-    ));
-    
+  const handleRejectRequest = async (requestId: string, studentName: string) => {
+    await updateRetakeRequestInFirebase(requestId, { status: 'rejected', reviewNotes });
     toast({
       title: "Request Rejected",
       description: `Retake request for ${studentName} has been rejected.`,
       variant: "destructive",
     });
-    
     setIsDialogOpen(false);
     setReviewNotes("");
     setSelectedRequest(null);

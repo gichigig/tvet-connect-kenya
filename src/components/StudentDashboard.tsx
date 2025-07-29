@@ -28,6 +28,7 @@ import { StudentDashboardTopbar } from "@/components/student/StudentDashboardTop
 import { StudentMobileMenu } from "@/components/student/StudentMobileMenu";
 import { StudentStatsGrid } from "@/components/student/StudentStatsGrid";
 import { ExamCardDownloadButton } from "@/components/student/ExamCardDownloadButton";
+import { EnhancedExamCard } from "@/components/student/EnhancedExamCard";
 
 export const StudentDashboard = () => {
   const { user, pendingUnitRegistrations, studentFees, getStudentCard } = useAuth();
@@ -168,12 +169,7 @@ export const StudentDashboard = () => {
       )}
 
       {/* Download Exam Card option */}
-      <ExamCardDownloadButton
-        user={user}
-        enrolledUnits={enrolledUnits}
-        myFees={myFees}
-        totalOwed={totalOwed}
-      />
+      <EnhancedExamCard />
 
       {/* Stats Cards */}
       <StudentStatsGrid stats={stats} />

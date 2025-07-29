@@ -4,13 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnits } from "@/contexts/units/UnitsContext";
 import { UnitManagementStats } from "./unit-management/UnitManagementStats";
 import { UnitCard } from "./unit-management/UnitCard";
 import { UnitDetailsDialog } from "./unit-management/UnitDetailsDialog";
 
 export const UnitManagement = () => {
   const { toast } = useToast();
-  const { user, createdUnits, updateCreatedUnit } = useAuth();
+  const { user } = useAuth();
+  const { getLecturerUnits, updateCreatedUnit } = useUnits();
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [whatsappLink, setWhatsappLink] = useState("");
@@ -18,7 +20,7 @@ export const UnitManagement = () => {
   const [activeTab, setActiveTab] = useState("assignments");
 
   // Get units assigned to current lecturer
-  const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
+  const assignedUnits = getLecturerUnits(user?.id || '');
 
   const handleUpdateWhatsAppLink = () => {
     if (!selectedUnit) return;

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { firebaseApp } from "@/integrations/firebase/config";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,18 +65,26 @@ const ForgotPassword = () => {
     e.preventDefault();
     if (!userFound || !foundEmail) return;
     setIsLoading(true);
-    // TODO: Send password reset email to foundEmail
-    setTimeout(() => {
+    try {
+      const auth = getAuth(firebaseApp);
+      await sendPasswordResetEmail(auth, foundEmail);
       toast({
         title: "Password Reset Email Sent",
         description: `If an account exists for ${foundEmail}, you will receive an email with instructions.`,
       });
-      setIsLoading(false);
       setUserFound(false);
       setFoundEmail("");
       setEmail("");
       setAdmission("");
-    }, 1000);
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to send reset email.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

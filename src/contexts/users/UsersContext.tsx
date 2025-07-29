@@ -8,7 +8,7 @@ import {
   getPendingUsers 
 } from '../auth/authUtils';
 import { sendResultsNotification as sendNotifications } from '../auth/notificationUtils';
-import { mockUsers, mockPendingUnitRegistrations, mockExamResults, mockStudentCards, mockActivityLogs } from '../auth/mockData';
+import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
 import { fetchAllUsersFromFirebase } from '@/integrations/firebase/fetchAllUsers';
 
 interface UsersContextType {
@@ -45,7 +45,7 @@ interface UsersContextType {
 const UsersContext = createContext<UsersContextType | null>(null);
 
 export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
 
   // On mount, fetch admins from Firebase and merge into users state
   useEffect(() => {
@@ -59,13 +59,26 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })));
     });
   }, []);
-  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>(mockPendingUnitRegistrations);
-  const [examResults, setExamResults] = useState<ExamResult[]>(mockExamResults);
-  const [studentCards, setStudentCards] = useState<StudentCard[]>(mockStudentCards);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
+  const [pendingUnitRegistrations, setPendingUnitRegistrations] = useState<PendingUnitRegistration[]>([]);
+
+  // Real-time Firestore sync for pending unit registrations
+  useEffect(() => {
+    const db = getFirestore();
+    const unsubscribe = onSnapshot(collection(db, 'pendingUnitRegistrations'), (snapshot) => {
+      setPendingUnitRegistrations(snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as PendingUnitRegistration) })));
+    });
+    return () => unsubscribe();
+  }, []);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
+  const [studentCards, setStudentCards] = useState<StudentCard[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
   const updateUserApproval = (userId: string, approved: boolean) => {
-    setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, approved } : u));
+    setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { 
+      ...u, 
+      approved,
+      courseName: u.courseName || u.course // Ensure courseName is set for ApprovedStudents component
+    } : u));
   };
 
   const approveUser = (userId: string) => updateUserApproval(userId, true);
@@ -154,7 +167,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         admissionNumber: student.admissionNumber || '',
         course: student.course || '',
         year: student.year || 1,
-        semester: student.semester || 1,
+        semester: Number(student.semester) || 1,
         academicYear: '2024/2025',
         isActive: true,
         activatedBy,

@@ -13,7 +13,7 @@ export interface User {
   /** Course (see allCourses in zetechCourses.ts) */
   course?: string;
   year?: number;
-  semester?: number;
+  semester?: string;
   level?: string;
   intake?: string;
   phone?: string;
@@ -22,6 +22,28 @@ export interface User {
   financialStatus?: 'cleared' | 'defaulter' | 'partial';
   totalFeesOwed?: number;
   profilePicture?: string;
+  
+  // Extended student properties
+  nationalId?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  nationality?: string;
+  county?: string;
+  subcounty?: string;
+  ward?: string;
+  postalAddress?: string;
+  postalCode?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  guardianRelationship?: string;
+  guardianAddress?: string;
+  courseId?: string;
+  courseName?: string;
+  academicYear?: string;
+  previousEducation?: string;
+  previousGrade?: string;
+  createdAt?: string;
 }
 
 export interface Guardian {
@@ -61,6 +83,45 @@ export interface ExamResult {
   examDate: string;
   lecturerName: string;
   status: 'pass' | 'fail';
+}
+
+export interface StudentResult {
+  id: string;
+  studentId: string;
+  studentName: string;
+  admissionNumber: string;
+  unitCode: string;
+  unitName: string;
+  semester: number;
+  year: number;
+  lecturerId: string;
+  lecturerName: string;
+  
+  // Assessment scores
+  cat1Score: number | null;
+  cat1MaxScore: number;
+  cat2Score: number | null;
+  cat2MaxScore: number;
+  assignmentScore: number | null;
+  assignmentMaxScore: number;
+  examScore: number | null;
+  examMaxScore: number;
+  
+  // Calculated totals
+  totalScore: number;
+  totalMaxScore: number;
+  percentage: number;
+  grade: string;
+  
+  // Status tracking
+  submittedBy: string; // lecturer who submitted
+  submittedDate: string;
+  hodApproval: 'pending' | 'approved' | 'rejected';
+  hodApprovedBy?: string;
+  hodApprovedDate?: string;
+  hodComments?: string;
+  
+  status: 'pass' | 'fail' | 'incomplete';
 }
 
 export interface CreatedContent {

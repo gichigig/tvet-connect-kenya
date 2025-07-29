@@ -3,13 +3,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Users, Clock, Shield, Ban, Unlock } from "lucide-react";
+import { CheckCircle, XCircle, Users, Clock, Shield, Ban, Unlock, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { allDepartments, allCourses } from "@/data/zetechCourses";
+import { useCoursesContext, CoursesProvider } from "@/contexts/courses/CoursesContext";
+import NotificationManager from "@/components/admin/NotificationManager";
+
+// Predefined departments for staff
+const departments = [
+  'Computer Science',
+  'Engineering', 
+  'Business Studies',
+  'Health Sciences',
+  'Agriculture',
+  'Hospitality',
+  'Automotive',
+  'Construction',
+  'Fashion & Design',
+  'Arts & Media'
+];
 
 function AdminDashboard() {
+  const { courses } = useCoursesContext();
   // For undo/restore
   const lastDeletedUser = useRef<any>(null);
   // Backend helpers for user delete/restore
@@ -65,7 +81,7 @@ function AdminDashboard() {
   const [newPassword, setNewPassword] = useState("");
 
   const { getPendingUsers, getAllUsers, approveUser, rejectUser, blockUser, unblockUser, users, setUsers, user, logout, updateProfilePicture, changePassword } = useAuth();
-  const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'all' | 'notifications'>('pending');
   const { toast } = useToast();
 
   // State for create user form
@@ -86,39 +102,14 @@ function AdminDashboard() {
   // Course type filter for lecturer
   const [courseType, setCourseType] = useState<string>("");
 
-  // If allCourses is an array of objects: [{ name, department, type }]
-  // If not, generate objects by inferring type from course name (simple keyword match)
-  let allCoursesObj: { name: string; department: string; type: string }[] = [];
-  if (Array.isArray(allCourses) && typeof allCourses[0] === 'object') {
-    allCoursesObj = (allCourses as string[]).map((name: string) => {
-      let type = '';
-      let lower = name.toLowerCase();
-      if (lower.includes('bachelor')) type = 'bachelor';
-      else if (lower.includes('diploma')) type = 'diploma';
-      else if (lower.includes('certificate')) type = 'certificate';
-      // Try to infer department by matching department name in course name
-      let department = allDepartments.find(dep => name.toLowerCase().includes(dep.toLowerCase().split(' ')[0])) || '';
-      return { name, department, type };
-    });
-  } else {
-    // Try to infer type and department from course name (improve as needed)
-    allCoursesObj = allCourses.map((name: string) => {
-      let type = '';
-      let lower = name.toLowerCase();
-      if (lower.includes('bachelor')) type = 'bachelor';
-      else if (lower.includes('diploma')) type = 'diploma';
-      else if (lower.includes('certificate')) type = 'certificate';
-      // Try to infer department by matching department name in course name
-      let department = allDepartments.find(dep => name.toLowerCase().includes(dep.toLowerCase().split(' ')[0])) || '';
-      return { name, department, type };
-    });
-  }
-
+  // Get course names and organize by department
+  const courseNames = courses.map(course => course.name);
+  
   // Map department to courses (filtered by type if selected)
-  const departmentCourses = allDepartments.reduce((acc, dep) => {
-    acc[dep] = allCoursesObj.filter(
-      c => (!courseType || c.type === courseType) && (c.department === dep || c.department === '' || dep === '')
-    ).map(c => c.name);
+  const departmentCourses = departments.reduce((acc, dep) => {
+    acc[dep] = courses
+      .filter(c => c.department === dep && (!courseType || c.level === courseType))
+      .map(c => c.name);
     return acc;
   }, {} as Record<string, string[]>);
 
@@ -393,7 +384,7 @@ function AdminDashboard() {
                   required
                 >
                   <option value="">Select Department</option>
-                  {allDepartments.map(dep => (
+                  {departments.map(dep => (
                     <option key={dep} value={dep}>{dep}</option>
                   ))}
                 </select>
@@ -403,7 +394,7 @@ function AdminDashboard() {
                 <>
                   <label className="block text-xs font-medium mb-1">Departments (select one or more)</label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {allDepartments.map(dep => (
+                    {departments.map(dep => (
                       <label key={dep} className="flex items-center gap-1">
                         <input
                           type="checkbox"
@@ -548,17 +539,32 @@ function AdminDashboard() {
         >
           All Users ({allUsers.length})
         </Button>
+        <Button
+          variant={activeTab === 'notifications' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('notifications')}
+        >
+          <Bell className="w-4 h-4 mr-2" />
+          Send Notifications
+        </Button>
       </div>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {activeTab === 'pending' ? 'Pending User Approvals' : 'All Users'}
-          </CardTitle>
-          <CardDescription>
-            {activeTab === 'pending' 
-              ? 'Review and approve new user registrations'
+      {/* Content based on active tab */}
+      {activeTab === 'notifications' ? (
+        <div className="flex justify-center">
+          <NotificationManager users={allUsers} />
+        </div>
+      ) : (
+        <div>
+          {/* Users Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {activeTab === 'pending' ? 'Pending User Approvals' : 'All Users'}
+              </CardTitle>
+              <CardDescription>
+                {activeTab === 'pending' 
+                  ? 'Review and approve new user registrations'
               : 'View all registered users in the system and manage their access'
             }
           </CardDescription>
@@ -685,7 +691,17 @@ function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+        </div>
+      )}
     </div>
   );
 }
-export default AdminDashboard;
+
+// Wrap AdminDashboard with CoursesProvider
+const AdminDashboardWithProvider = () => (
+  <CoursesProvider>
+    <AdminDashboard />
+  </CoursesProvider>
+);
+
+export default AdminDashboardWithProvider;

@@ -12,17 +12,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, BookOpen, User, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnits } from "@/contexts/units/UnitsContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
+import { notifyStudentsOfNewUnits } from "@/utils/notificationUtils";
 import { Unit, CreateUnitData } from "@/types/unitManagement";
-import { allUndergraduateCourses, allDiplomaCourses, allCertificateCourses } from "@/data/zetechCourses";
 
 
 export const UnitManagement = () => {
   const { toast } = useToast();
-  const { getAllUsers, createdUnits, addCreatedUnit, updateCreatedUnit, deleteCreatedUnit } = useAuth();
+  const { getAllUsers } = useAuth();
+  const { createdUnits, addCreatedUnit, updateCreatedUnit, deleteCreatedUnit } = useUnits();
+  const { courses } = useCoursesContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Get course names from the dynamic course system
+  const availableCourses = courses.map(course => course.name);
+  const departments = Array.from(new Set(courses.map(course => course.department)));
 
   // State for new unit creation
   const [newUnit, setNewUnit] = useState<CreateUnitData>({
@@ -44,50 +52,23 @@ export const UnitManagement = () => {
   // State for selected level and filtered courses
   const [selectedLevel, setSelectedLevel] = useState<string>("");
   let filteredCourses: string[] = [];
-  if (selectedLevel === 'Degree') filteredCourses = allUndergraduateCourses;
-  else if (selectedLevel === 'Diploma') filteredCourses = allDiplomaCourses;
-  else if (selectedLevel === 'Certificate') filteredCourses = allCertificateCourses;
+  if (selectedLevel === 'certificate') {
+    filteredCourses = courses.filter(c => c.level === 'certificate').map(c => c.name);
+  } else if (selectedLevel === 'diploma') {
+    filteredCourses = courses.filter(c => ['diploma', 'higher_diploma'].includes(c.level)).map(c => c.name);
+  } else if (selectedLevel === 'degree') {
+    filteredCourses = courses.filter(c => c.level === 'degree').map(c => c.name);
+  } else {
+    filteredCourses = availableCourses;
+  }
 
   // Get lecturers for assignment
   const allUsers = getAllUsers();
   // Only show lecturers who are approved
   const lecturers = allUsers.filter(user => user.role === 'lecturer' && user.approved);
-                  <Select
-                    value={newUnit.lecturerId || ''}
-                    onValueChange={value => {
-                      const lecturer = lecturers.find(l => l.id === value);
-                      setNewUnit(prev => ({
-                        ...prev,
-                        lecturerId: value,
-                        lecturerName: lecturer ? `${lecturer.firstName} ${lecturer.lastName}` : '',
-                        lecturerEmail: lecturer ? lecturer.email : ''
-                      }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select lecturer (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lecturers
-                        // Remove or update this filter if 'assignedCourse' does not exist on User
-                        // .filter(lecturer => lecturer.assignedCourse === newUnit.course)
-                        .map(lecturer => (
-                          <SelectItem key={lecturer.id} value={lecturer.id}>
-                            {lecturer.firstName} {lecturer.lastName}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-  </Select>
 
-  const departments = [
-    'Computer Science',
-    'Mathematics',
-    'Engineering',
-    'Business Studies',
-    'Languages'
-  ];
 
-  const handleCreateUnit = () => {
+  const handleCreateUnit = async () => {
     if (!newUnit.code || !newUnit.name || !newUnit.department || !newUnit.course) {
       toast({
         title: "Missing Information",
@@ -97,37 +78,90 @@ export const UnitManagement = () => {
       return;
     }
 
-    const unit: Unit = {
-      ...newUnit,
-      id: Date.now().toString(),
-      enrolled: 0,
-      createdBy: 'registrar',
-      createdDate: new Date().toISOString().split('T')[0],
-      status: 'active'
-    };
+    try {
+      // Prepare unit data with all required fields, using default values where necessary
+      const unitData: Omit<Unit, 'id'> = {
+        code: newUnit.code.trim(),
+        name: newUnit.name.trim(),
+        description: newUnit.description?.trim() || '',
+        credits: newUnit.credits || 3,
+        department: newUnit.department.trim(),
+        course: newUnit.course.trim(),
+        year: newUnit.year || 1,
+        semester: newUnit.semester || 1,
+        prerequisites: newUnit.prerequisites || [],
+        capacity: newUnit.capacity || 50,
+        schedule: newUnit.schedule?.trim() || '',
+        whatsappLink: newUnit.whatsappLink?.trim() || '',
+        lecturerId: newUnit.lecturerId || '',
+        lecturerName: newUnit.lecturerName || '',
+        lecturerEmail: newUnit.lecturerEmail || '',
+        enrolled: 0,
+        hasDiscussionGroup: newUnit.hasDiscussionGroup || false,
+        createdBy: 'registrar',
+        createdDate: new Date().toISOString().split('T')[0],
+        status: 'active'
+      };
 
-    addCreatedUnit(unit);
-    setNewUnit({
-      code: '',
-      name: '',
-      description: '',
-      credits: 3,
-      department: '',
-      course: '',
-      year: 1,
-      semester: 1,
-      prerequisites: [],
-      capacity: 50,
-      schedule: '',
-      whatsappLink: '',
-      hasDiscussionGroup: false
-    });
-    setIsCreateDialogOpen(false);
+      // Clean the data by removing empty strings
+      const cleanUnit = Object.fromEntries(
+        Object.entries(unitData).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
+      ) as Omit<Unit, 'id'>;
 
-    toast({
-      title: "Unit Created",
-      description: `${unit.code} - ${unit.name} has been created successfully.`,
-    });
+      // Only include lecturer fields if they are present
+      if (newUnit.lecturerId) {
+        await addCreatedUnit(cleanUnit); // Firestore-backed, triggers real-time update
+      } else {
+        // Remove lecturer fields if no lecturer is assigned
+        const { lecturerId, lecturerName, lecturerEmail, ...unitWithoutLecturer } = cleanUnit;
+        await addCreatedUnit(unitWithoutLecturer);
+      }
+
+      // Reset form with all fields including lecturer-related ones
+      setNewUnit({
+        code: '',
+        name: '',
+        description: '',
+        credits: 3,
+        department: '',
+        course: '',
+        year: 1,
+        semester: 1,
+        prerequisites: [],
+        capacity: 50,
+        schedule: '',
+        whatsappLink: '',
+        hasDiscussionGroup: false,
+        lecturerId: '',
+        lecturerName: '',
+        lecturerEmail: ''
+      });
+      setIsCreateDialogOpen(false);
+
+      // Notify students about the new unit (simplified notification for now)
+      try {
+        // For now, we'll create a notification about 1 new unit for the course and year
+        // In a real implementation, you would fetch student IDs for the specific course/year
+        // and pass them to the notification function
+        console.log(`New unit created: ${cleanUnit.code} for ${cleanUnit.course} Year ${cleanUnit.year}`);
+        // TODO: Implement student fetching and notification
+        // await notifyStudentsOfNewUnits(studentIds, 1, cleanUnit.course, cleanUnit.year);
+      } catch (notificationError) {
+        console.error('Failed to notify students:', notificationError);
+        // Don't show error to user as unit was created successfully
+      }
+
+      toast({
+        title: "Unit Created",
+        description: `${cleanUnit.code} - ${cleanUnit.name} has been created successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Creating Unit",
+        description: "There was a problem creating the unit. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAssignLecturer = (unitId: string, lecturerId: string) => {
@@ -225,9 +259,9 @@ export const UnitManagement = () => {
                         <SelectValue placeholder="Select level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Degree">Degree</SelectItem>
-                        <SelectItem value="Diploma">Diploma</SelectItem>
-                        <SelectItem value="Certificate">Certificate</SelectItem>
+                        <SelectItem value="degree">Degree</SelectItem>
+                        <SelectItem value="diploma">Diploma</SelectItem>
+                        <SelectItem value="certificate">Certificate</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

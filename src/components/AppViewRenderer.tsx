@@ -51,6 +51,12 @@ export const AppViewRenderer = ({
   onJoinClassroom
 }: AppViewRendererProps) => {
   const { user } = useAuth();
+  
+  // Debug logging
+  console.log("=== APPVIEWRENDERER DEBUG ===");
+  console.log("AppViewRenderer - currentView:", currentView);
+  console.log("AppViewRenderer - user:", user);
+  console.log("AppViewRenderer - user role:", user?.role);
 
   // Firebase: Listen for courses data from Realtime Database
   const [firebaseCourses, setFirebaseCourses] = useState<Record<string, Course>>({});
@@ -111,6 +117,7 @@ export const AppViewRenderer = ({
   }
 
   if (currentView === "registrar" && user?.role === "registrar") {
+    console.log("✅ Rendering RegistrarDashboard - currentView: registrar, user.role: registrar");
     return (
       <>
         <Header onSearch={onSearch} />

@@ -3,7 +3,20 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { allDepartments } from "@/data/zetechCourses";
+
+// Predefined departments for staff
+const departments = [
+  'Computer Science',
+  'Engineering', 
+  'Business Studies',
+  'Health Sciences',
+  'Agriculture',
+  'Hospitality',
+  'Automotive',
+  'Construction',
+  'Fashion & Design',
+  'Arts & Media'
+];
 
 interface AddWorkerDialogProps {
   onAdd: (worker: {
@@ -87,7 +100,7 @@ export const AddWorkerDialog = ({ onAdd }: AddWorkerDialogProps) => {
             required
           >
             <option value="">Select Department</option>
-            {allDepartments.map(dep => (
+            {departments.map(dep => (
               <option key={dep} value={dep}>{dep}</option>
             ))}
           </select>

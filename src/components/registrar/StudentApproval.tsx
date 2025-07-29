@@ -1,27 +1,28 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { allCourses } from "@/data/zetechCourses";
 import { CheckCircle, XCircle, Search, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const StudentApproval = () => {
   const { toast } = useToast();
   const { getPendingUsers, approveStudent, rejectUser } = useAuth();
+  const { courses } = useCoursesContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCourse, setFilterCourse] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
 
   const pendingStudents = getPendingUsers().filter(u => u.role === 'student');
 
-  // Use allCourses from zetechCourses.ts for dropdown
-  const courses = allCourses;
+  // Use courses from the dynamic course system
+  const courseNames = courses.map(course => course.name);
   const levels = Array.from(new Set(pendingStudents.map(s => s.level).filter(Boolean)));
 
   const handleApproveStudent = (studentId: string, studentName: string) => {
@@ -45,7 +46,7 @@ export const StudentApproval = () => {
     const matchesSearch = student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = filterCourse === "all" || student.course === filterCourse;
+    const matchesCourse = filterCourse === "all" || student.courseName === filterCourse;
     const matchesLevel = filterLevel === "all" || student.level === filterLevel;
     
     return matchesSearch && matchesCourse && matchesLevel;
@@ -88,7 +89,7 @@ export const StudentApproval = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Courses</SelectItem>
-                {courses.map(course => (
+                {courseNames.map(course => (
                   <SelectItem key={course} value={course}>{course}</SelectItem>
                 ))}
               </SelectContent>

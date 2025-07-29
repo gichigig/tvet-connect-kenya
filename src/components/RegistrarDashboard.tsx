@@ -1,108 +1,79 @@
 import { useState } from "react";
-import { coursesData } from "@/data/coursesData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudents } from "@/contexts/students/StudentsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { saveAdminToFirebase } from "@/integrations/firebase/admin";
-import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings } from "lucide-react";
+import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings, Plus } from "lucide-react";
 import { StudentApproval } from "@/components/registrar/StudentApproval";
 import { UnitAllocation } from "@/components/registrar/UnitAllocation";
 import { ExamManager } from "@/components/registrar/ExamManager";
 import { RetakeManager } from "@/components/registrar/RetakeManager";
-import { ApprovedStudents } from "@/components/registrar/ApprovedStudents";
+import ApprovedStudents from "@/components/registrar/ApprovedStudents";
 import { PendingUnitRegistrations } from "@/components/registrar/PendingUnitRegistrations";
 import { UnitManagement } from "@/components/registrar/UnitManagement";
-import { allUndergraduateCourses, allDiplomaCourses, allCertificateCourses } from "@/data/zetechCourses";
+import AddStudentForm from "@/components/registrar/AddStudentFormMultiStep";
+import CreateStudentForm from "@/components/registrar/CreateStudentForm";
+import { CourseManagement } from "@/components/registrar/CourseManagement";
+import { CreateCourseForm } from "@/components/registrar/CreateCourseForm";
+import { CourseList } from "@/components/registrar/CourseList";
+import { CoursesProvider, useCoursesContext } from "@/contexts/courses/CoursesContext";
+import { Course } from "@/types/course";
+import { CourseContainer } from "@/components/registrar/CourseContainer";
 
-export const RegistrarDashboard = () => {
-  const { user, getPendingUsers, getAllUsers, getPendingUnitRegistrations, setUsers, users } = useAuth();
+// Internal component that uses the CoursesContext
+const RegistrarDashboardContent = () => {
+  const { user, getPendingUsers, getPendingUnitRegistrations } = useAuth();
+  const { students } = useStudents();
+  const { courses } = useCoursesContext();
   const [activeTab, setActiveTab] = useState("students");
+  const [courseView, setCourseView] = useState<'list' | 'create'>('list');
   const { toast } = useToast();
 
-  // Student creation form state
-  const [studentFirstName, setStudentFirstName] = useState("");
-  const [studentLastName, setStudentLastName] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
-  const [studentPassword, setStudentPassword] = useState("");
-  const [studentCourse, setStudentCourse] = useState("");
-  const [studentLevel, setStudentLevel] = useState("");
-  const [studentAdmission, setStudentAdmission] = useState("");
-  const [isCreatingStudent, setIsCreatingStudent] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<string>("");
-
   const pendingUsers = getPendingUsers();
-  const allUsers = getAllUsers();
   const pendingStudents = pendingUsers.filter(u => u.role === 'student');
-  const totalStudents = allUsers.filter(u => u.role === 'student' && u.approved);
+  const totalStudents = students; // All students are approved when using StudentsContext
   const pendingUnitRegistrations = getPendingUnitRegistrations();
 
-  // Filter courses by selected level
-  let filteredCourses: string[] = [];
-  if (selectedLevel === "Degree") filteredCourses = allUndergraduateCourses;
-  else if (selectedLevel === "Diploma") filteredCourses = allDiplomaCourses;
-  else if (selectedLevel === "Certificate") filteredCourses = allCertificateCourses;
-  else filteredCourses = [];
+  // Course statistics
+  const totalCourses = courses.length;
+  const activeCourses = courses.filter(c => c.status === 'active').length;
+  const pendingCourses = courses.filter(c => c.status === 'pending_approval').length;
+  const draftCourses = courses.filter(c => c.status === 'draft').length;
 
-  // Mock data for dashboard stats
-  const stats = {
-    pendingStudents: pendingStudents.length,
-    totalStudents: totalStudents.length,
-    pendingUnits: pendingUnitRegistrations.length,
-    retakeRequests: 12
+  // Real-time stats from data
+  const pendingStudentsCount = pendingStudents.length;
+  const totalStudentsCount = totalStudents.length;
+  const pendingUnitsCount = pendingUnitRegistrations.length;
+  // TODO: Replace with real-time retake requests count from Firestore
+  const [retakeRequestsCount, setRetakeRequestsCount] = useState(0);
+
+  const handleCreateCourse = () => {
+    setActiveTab("courses");
+    setCourseView('create');
   };
 
-  // Student creation handler
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsCreatingStudent(true);
-    if (users.some(u => u.email === studentEmail)) {
-      toast({ title: "Email Exists", description: "A user with this email already exists.", variant: "destructive" });
-      setIsCreatingStudent(false);
-      return;
-    }
-    try {
-      await saveAdminToFirebase({
-        email: studentEmail,
-        firstName: studentFirstName,
-        lastName: studentLastName,
-        password: studentPassword,
-        role: "student",
-        course: studentCourse,
-        level: studentLevel,
-        admissionNumber: studentAdmission
-      });
-      setUsers(prev => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          email: studentEmail,
-          firstName: studentFirstName,
-          lastName: studentLastName,
-          role: "student",
-          course: studentCourse,
-          level: studentLevel,
-          admissionNumber: studentAdmission,
-          approved: true,
-          blocked: false,
-          password: studentPassword
-        }
-      ]);
-      toast({ title: "Student Created", description: `Student ${studentEmail} created and saved to Firebase.` });
-      setStudentFirstName("");
-      setStudentLastName("");
-      setStudentEmail("");
-      setStudentPassword("");
-      setStudentCourse("");
-      setStudentLevel("");
-      setStudentAdmission("");
-      setActiveTab("students");
-    } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed to save student to Firebase.", variant: "destructive" });
-    }
-    setIsCreatingStudent(false);
+  const handleViewCourses = () => {
+    setActiveTab("courses");
+    setCourseView('list');
+  };
+
+  const handleViewCourse = (course: Course) => {
+    // TODO: Implement course detail view
+    toast({
+      title: "Course Details",
+      description: `Viewing details for ${course.name}`
+    });
+  };
+
+  const handleEditCourse = (course: Course) => {
+    // TODO: Implement course editing
+    toast({
+      title: "Edit Course",
+      description: `Editing ${course.name}`
+    });
   };
 
   return (
@@ -112,18 +83,24 @@ export const RegistrarDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Registrar Dashboard</h1>
           <p className="text-gray-600">Student registration and academic management</p>
         </div>
-        <GraduationCap className="w-8 h-8 text-blue-600" />
+        <div className="flex items-center gap-4">
+          <Button onClick={handleCreateCourse} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Create Course
+          </Button>
+          <GraduationCap className="w-8 h-8 text-blue-600" />
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Students</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingStudents}</div>
+            <div className="text-2xl font-bold text-orange-600">{pendingStudentsCount}</div>
             <p className="text-xs text-muted-foreground">
               Students awaiting approval
             </p>
@@ -136,9 +113,35 @@ export const RegistrarDashboard = () => {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.totalStudents}</div>
+            <div className="text-2xl font-bold text-blue-600">{totalStudentsCount}</div>
             <p className="text-xs text-muted-foreground">
               Active enrolled students
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{totalCourses}</div>
+            <p className="text-xs text-muted-foreground">
+              All courses in system
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{activeCourses}</div>
+            <p className="text-xs text-muted-foreground">
+              Currently running
             </p>
           </CardContent>
         </Card>
@@ -149,7 +152,7 @@ export const RegistrarDashboard = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingUnits}</div>
+            <div className="text-2xl font-bold text-orange-600">{pendingUnitsCount}</div>
             <p className="text-xs text-muted-foreground">
               Unit registrations awaiting approval
             </p>
@@ -162,13 +165,43 @@ export const RegistrarDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.retakeRequests}</div>
+            <div className="text-2xl font-bold text-red-600">{retakeRequestsCount}</div>
             <p className="text-xs text-muted-foreground">
               Unit retake applications
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Course Status Summary */}
+      {totalCourses > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Course Overview</CardTitle>
+            <CardDescription>Quick overview of course statuses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm">{activeCourses} Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span className="text-sm">{pendingCourses} Pending Approval</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm">{courses.filter(c => c.status === 'approved').length} Approved</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                <span className="text-sm">{draftCourses} Drafts</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Content Tabs */}
 
@@ -182,6 +215,7 @@ export const RegistrarDashboard = () => {
           <option value="students">Student Approval</option>
           <option value="approved">Approved Students</option>
           <option value="create-student">Create Student</option>
+          <option value="courses">Course Management</option>
           <option value="unit-management">Unit Management</option>
           <option value="units">Unit Allocation</option>
           <option value="exams">Exam Management</option>
@@ -191,7 +225,8 @@ export const RegistrarDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-8">
+        {/* Desktop tabs */}
+        <TabsList className="hidden md:grid w-full grid-cols-9">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
@@ -203,6 +238,15 @@ export const RegistrarDashboard = () => {
           <TabsTrigger value="create-student" className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4" />
             Create Student
+          </TabsTrigger>
+          <TabsTrigger value="courses" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Courses
+            {pendingCourses > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {pendingCourses}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="unit-management" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -223,6 +267,11 @@ export const RegistrarDashboard = () => {
           <TabsTrigger value="pending-units" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Pending Units
+            {pendingUnitsCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {pendingUnitsCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -235,92 +284,33 @@ export const RegistrarDashboard = () => {
         </TabsContent>
 
         <TabsContent value="create-student" className="space-y-4">
-          <Card className="max-w-lg mx-auto">
-            <CardHeader>
-              <CardTitle>Create New Student</CardTitle>
-              <CardDescription>Fill in details to create a new student. The password can be changed later by the student.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateStudent} className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    type="text"
-                    placeholder="First Name"
-                    value={studentFirstName}
-                    onChange={e => setStudentFirstName(e.target.value)}
-                    required
-                  />
-                  <input
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    type="text"
-                    placeholder="Last Name"
-                    value={studentLastName}
-                    onChange={e => setStudentLastName(e.target.value)}
-                    required
-                  />
-                </div>
-                <input
-                  className="border p-2 rounded w-full"
-                  type="email"
-                  placeholder="Email"
-                  value={studentEmail}
-                  onChange={e => setStudentEmail(e.target.value)}
-                  required
-                />
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    type="password"
-                    placeholder="Password"
-                    value={studentPassword}
-                    onChange={e => setStudentPassword(e.target.value)}
-                    required
-                  />
-                  <input
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    type="text"
-                    placeholder="Admission Number"
-                    value={studentAdmission}
-                    onChange={e => setStudentAdmission(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <select
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    value={studentLevel}
-                    onChange={e => {
-                      setStudentLevel(e.target.value);
-                      setSelectedLevel(e.target.value);
-                      setStudentCourse(""); // Reset course when level changes
-                    }}
-                    required
-                  >
-                    <option value="" disabled>Select Level</option>
-                    <option value="Degree">Degree</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="Certificate">Certificate</option>
-                  </select>
-                  <select
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    value={studentCourse}
-                    onChange={e => setStudentCourse(e.target.value)}
-                    required
-                    disabled={!studentLevel}
-                  >
-                    <option value="" disabled>{studentLevel ? "Select Course" : "Select Level First"}</option>
-                    {filteredCourses.map(course => (
-                      <option key={course} value={course}>{course}</option>
-                    ))}
-                  </select>
-                </div>
-                <Button type="submit" className="w-full" disabled={isCreatingStudent}>
-                  {isCreatingStudent ? "Creating..." : "Create Student"}
+          <AddStudentForm />
+        </TabsContent>
+
+        <TabsContent value="courses" className="space-y-4">
+          {courseView === 'create' ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Create New Course</h2>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCourseView('list')}
+                >
+                  View All Courses
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+              <CreateCourseForm />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <CourseList
+                onCreateNew={() => setCourseView('create')}
+                onViewCourse={handleViewCourse}
+                onEditCourse={handleEditCourse}
+                CourseContainer={CourseContainer}
+              />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="unit-management" className="space-y-4">
@@ -344,5 +334,13 @@ export const RegistrarDashboard = () => {
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+export const RegistrarDashboard = () => {
+  return (
+    <CoursesProvider>
+      <RegistrarDashboardContent />
+    </CoursesProvider>
   );
 };

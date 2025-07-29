@@ -1,10 +1,12 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudents } from "@/contexts/students/StudentsContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, FileCheck, CreditCard, AlertTriangle, Package, Receipt, Settings, File, UserCheck, Users, FileBarChart, PiggyBank, ShoppingCart, Gift, Ban, MessageSquare } from "lucide-react";
+import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 import { SupplyVerification } from "@/components/finance/SupplyVerification";
 import { FeeManagement } from "@/components/finance/FeeManagement";
 import { StudentFeesOverview } from "@/components/finance/StudentFeesOverview";
@@ -22,18 +24,19 @@ import { ProcurementOversight } from "@/components/finance/ProcurementOversight"
 import { FinancialReporting } from "@/components/finance/FinancialReporting";
 import { GrantsManagement } from "@/components/finance/GrantsManagement";
 import { StudentCardManagement } from "@/components/finance/StudentCardManagement";
+import { CoursesProvider } from "@/contexts/courses/CoursesContext";
 
 export const FinanceDashboard = () => {
-  const { user, supplyRequests, studentFees, getAllUsers, clearanceForms } = useAuth();
+  const { user, supplyRequests, studentFees, clearanceForms } = useAuth();
+  const { students } = useStudents();
   const { createdUnits } = useUnits();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("structures");
 
   const pendingSupplies = supplyRequests.filter(r => r.status === 'pending');
   const pendingFees = studentFees.filter(f => f.status === 'pending');
   const overdueFees = studentFees.filter(f => f.status === 'overdue');
   const totalRevenue = studentFees.filter(f => f.status === 'paid').reduce((sum, fee) => sum + (fee.paidAmount || fee.amount), 0);
   
-  const students = getAllUsers().filter(u => u.role === 'student' && u.approved);
   const defaulters = students.filter(s => s.financialStatus === 'defaulter');
   const pendingClearances = clearanceForms.filter(c => c.status === 'pending');
 
@@ -45,6 +48,22 @@ export const FinanceDashboard = () => {
     defaulters: defaulters.length,
     pendingClearances: pendingClearances.length
   };
+
+  // Tab configuration for ResponsiveTabsMenu
+  const tabItems = [
+    { value: "overview", label: "Student Fees" },
+    { value: "invoices", label: "Invoices" },
+    { value: "clearances", label: "Clearances" },
+    { value: "cards", label: "Student Cards" },
+    { value: "supplies", label: "Supply Verification" },
+    { value: "access", label: "Access Control" },
+    { value: "budgeting", label: "Budget Planning" },
+    { value: "payroll", label: "Payroll Management" },
+    { value: "procurement", label: "Procurement" },
+    { value: "grants", label: "Grants Management" },
+    { value: "structures", label: "Fee Structures" },
+    { value: "reporting", label: "Financial Reports" }
+  ];
 
   return (
     <div className="space-y-6">
@@ -137,63 +156,74 @@ export const FinanceDashboard = () => {
         </Card>
       </div>
 
-      {/* Main Content Tabs - Reorganized for better organization */}
+      {/* Main Content Tabs - Mobile-friendly with responsive navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
-          {/* Core Finance Operations */}
-          <TabsTrigger value="overview" className="flex flex-col items-center gap-1 text-xs">
-            <Receipt className="w-4 h-4" />
-            <span>Fees</span>
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex flex-col items-center gap-1 text-xs">
-            <File className="w-4 h-4" />
-            <span>Invoices</span>
-          </TabsTrigger>
-          <TabsTrigger value="clearances" className="flex flex-col items-center gap-1 text-xs">
-            <UserCheck className="w-4 h-4" />
-            <span>Clearances</span>
-          </TabsTrigger>
-          <TabsTrigger value="cards" className="flex flex-col items-center gap-1 text-xs">
-            <CreditCard className="w-4 h-4" />
-            <span>Cards</span>
-          </TabsTrigger>
-          <TabsTrigger value="supplies" className="flex flex-col items-center gap-1 text-xs">
-            <Package className="w-4 h-4" />
-            <span>Supplies</span>
-          </TabsTrigger>
-          <TabsTrigger value="access" className="flex flex-col items-center gap-1 text-xs">
-            <Ban className="w-4 h-4" />
-            <span>Access</span>
-          </TabsTrigger>
-          
-          {/* Planning & Management */}
-          <TabsTrigger value="budgeting" className="flex flex-col items-center gap-1 text-xs">
-            <PiggyBank className="w-4 h-4" />
-            <span>Budget</span>
-          </TabsTrigger>
-          <TabsTrigger value="payroll" className="flex flex-col items-center gap-1 text-xs">
-            <Users className="w-4 h-4" />
-            <span>Payroll</span>
-          </TabsTrigger>
-          <TabsTrigger value="procurement" className="flex flex-col items-center gap-1 text-xs">
-            <ShoppingCart className="w-4 h-4" />
-            <span>Procurement</span>
-          </TabsTrigger>
-          <TabsTrigger value="grants" className="flex flex-col items-center gap-1 text-xs">
-            <Gift className="w-4 h-4" />
-            <span>Grants</span>
-          </TabsTrigger>
-          
-          {/* Configuration & Reports */}
-          <TabsTrigger value="structures" className="flex flex-col items-center gap-1 text-xs">
-            <Settings className="w-4 h-4" />
-            <span>Structures</span>
-          </TabsTrigger>
-          <TabsTrigger value="reporting" className="flex flex-col items-center gap-1 text-xs">
-            <FileBarChart className="w-4 h-4" />
-            <span>Reports</span>
-          </TabsTrigger>
-        </TabsList>
+        {/* Mobile Navigation Menu */}
+        <ResponsiveTabsMenu 
+          tabs={tabItems} 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          className="mb-4"
+        />
+
+        {/* Desktop Tab Navigation */}
+        <div className="hidden md:block overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-1 h-auto p-1">
+            {/* Core Finance Operations */}
+            <TabsTrigger value="overview" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Receipt className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Fees</span>
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <File className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Invoices</span>
+            </TabsTrigger>
+            <TabsTrigger value="clearances" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <UserCheck className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Clearances</span>
+            </TabsTrigger>
+            <TabsTrigger value="cards" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <CreditCard className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Cards</span>
+            </TabsTrigger>
+            <TabsTrigger value="supplies" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Package className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Supplies</span>
+            </TabsTrigger>
+            <TabsTrigger value="access" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Ban className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Access</span>
+            </TabsTrigger>
+            
+            {/* Planning & Management */}
+            <TabsTrigger value="budgeting" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <PiggyBank className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Budget</span>
+            </TabsTrigger>
+            <TabsTrigger value="payroll" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Payroll</span>
+            </TabsTrigger>
+            <TabsTrigger value="procurement" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Procurement</span>
+            </TabsTrigger>
+            <TabsTrigger value="grants" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Gift className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Grants</span>
+            </TabsTrigger>
+            
+            {/* Configuration & Reports */}
+            <TabsTrigger value="structures" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Settings className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Structures</span>
+            </TabsTrigger>
+            <TabsTrigger value="reporting" className="flex flex-col items-center gap-1 text-xs p-2 h-auto min-h-[60px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <FileBarChart className="w-4 h-4 flex-shrink-0" />
+              <span className="text-center leading-tight">Reports</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Tab Contents */}
         <TabsContent value="overview" className="space-y-4">
@@ -237,7 +267,9 @@ export const FinanceDashboard = () => {
         </TabsContent>
 
         <TabsContent value="structures" className="space-y-4">
-          <FeeStructureManagement />
+          <CoursesProvider>
+            <FeeStructureManagement />
+          </CoursesProvider>
         </TabsContent>
 
         <TabsContent value="reporting" className="space-y-4">

@@ -4,10 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { allDepartments } from "@/data/zetechCourses";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { History, Search, User, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Predefined departments for staff
+const departments = [
+  'Computer Science',
+  'Engineering', 
+  'Business Studies',
+  'Health Sciences',
+  'Agriculture',
+  'Hospitality',
+  'Automotive',
+  'Construction',
+  'Fashion & Design',
+  'Arts & Media'
+];
 
 export const ActivityLogViewer = () => {
   const { getActivityLogs } = useAuth();
@@ -61,7 +74,7 @@ export const ActivityLogViewer = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {allDepartments.map(dep => (
+                {departments.map(dep => (
                   <SelectItem key={dep} value={dep}>{dep}</SelectItem>
                 ))}
               </SelectContent>

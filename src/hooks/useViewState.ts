@@ -12,9 +12,11 @@ export const useViewState = () => {
 
   // Redirect users to their respective dashboards on mount
   useEffect(() => {
+    console.log("=== USEVIEWSTATE DEBUG ===");
     console.log("useViewState - user:", user);
     console.log("useViewState - isAdmin:", isAdmin);
     console.log("useViewState - user role:", user?.role);
+    console.log("useViewState - currentView before change:", currentView);
     
     if (!user) {
       console.log("No user, staying on current view");
@@ -44,6 +46,8 @@ export const useViewState = () => {
       console.log("Setting view to catalog for authenticated user");
       setCurrentView("catalog");
     }
+    
+    console.log("useViewState - currentView after logic:", currentView);
   }, [user, isAdmin]);
 
   const handleBackToCatalog = () => {
