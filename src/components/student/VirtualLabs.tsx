@@ -14,39 +14,33 @@ import { toast } from "sonner";
 
 interface VirtualLab {
   id: string;
-  title: string;
-  domain: 'science' | 'engineering' | 'medical';
+  name: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  learning_objectives: string[];
+  category: string;
+  unit_code: string;
+  access_url: string;
+  instructions: string;
+  duration_minutes: number;
+  difficulty_level: string;
   created_at: string;
-  is_active: boolean;
 }
 
 interface Experiment {
   id: string;
   lab_id: string;
-  title: string;
-  description: string;
-  simulation_url: string;
-  max_score: number;
-  time_limit_minutes: number;
-  created_at: string;
-}
-
-interface ExperimentAttempt {
-  id: string;
-  experiment_id: string;
-  score: number;
-  completed_at: string;
+  user_id: string;
   status: string;
+  started_at?: string;
+  completed_at?: string;
+  results?: any;
+  created_at: string;
 }
 
 const VirtualLabs = () => {
   const { user } = useAuth();
   const [labs, setLabs] = useState<VirtualLab[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [attempts, setAttempts] = useState<ExperimentAttempt[]>([]);
+  const [attempts, setAttempts] = useState<any[]>([]);
   const [selectedLab, setSelectedLab] = useState<VirtualLab | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -61,7 +55,6 @@ const VirtualLabs = () => {
       const { data, error } = await supabase
         .from('virtual_labs')
         .select('*')
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -94,9 +87,9 @@ const VirtualLabs = () => {
 
     try {
       const { data, error } = await supabase
-        .from('experiment_attempts')
+        .from('experiments')
         .select('*')
-        .eq('student_id', user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setAttempts(data || []);
@@ -143,16 +136,16 @@ const VirtualLabs = () => {
     return { completed: completedCount, total: labExperiments.length };
   };
 
-  const startExperiment = async (experiment: Experiment) => {
+  const startExperiment = async (lab: VirtualLab) => {
     if (!user) return;
 
     try {
-      // Create attempt record
+      // Create experiment record
       const { data, error } = await supabase
-        .from('experiment_attempts')
+        .from('experiments')
         .insert({
-          experiment_id: experiment.id,
-          student_id: user.id,
+          lab_id: lab.id,
+          user_id: user.id,
           status: 'in_progress'
         })
         .select()
@@ -161,8 +154,8 @@ const VirtualLabs = () => {
       if (error) throw error;
 
       // Open simulation in new window/iframe
-      if (experiment.simulation_url) {
-        window.open(experiment.simulation_url, '_blank');
+      if (lab.access_url) {
+        window.open(lab.access_url, '_blank');
       }
       
       toast.success('Experiment started successfully!');
@@ -175,7 +168,7 @@ const VirtualLabs = () => {
 
   const filteredLabs = labs.filter(lab => {
     if (activeTab === 'all') return true;
-    return lab.domain === activeTab;
+    return lab.category === activeTab;
   });
 
   if (loading) {
@@ -216,14 +209,14 @@ const VirtualLabs = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {getDomainIcon(lab.domain)}
-                        <CardTitle className="text-lg">{lab.title}</CardTitle>
+                        {getDomainIcon(lab.category)}
+                        <CardTitle className="text-lg">{lab.name}</CardTitle>
                       </div>
                       <Badge 
                         variant="secondary" 
-                        className={`text-white ${getDifficultyColor(lab.difficulty)}`}
+                        className={`text-white ${getDifficultyColor(lab.difficulty_level)}`}
                       >
-                        {lab.difficulty}
+                        {lab.difficulty_level}
                       </Badge>
                     </div>
                     <CardDescription className="line-clamp-3">
@@ -241,35 +234,27 @@ const VirtualLabs = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Learning Objectives:</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {lab.learning_objectives?.slice(0, 3).map((objective, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <CheckCircle className="h-3 w-3 mt-0.5 text-green-500 flex-shrink-0" />
-                            {objective}
-                          </li>
-                        ))}
-                      </ul>
+                      <h4 className="font-medium text-sm">Instructions:</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {lab.instructions || 'No specific instructions provided'}
+                      </p>
                     </div>
 
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button 
                           className="w-full" 
-                          onClick={() => {
-                            setSelectedLab(lab);
-                            fetchExperiments(lab.id);
-                          }}
+                          onClick={() => startExperiment(lab)}
                         >
-                          View Experiments
+                          Start Lab
                         </Button>
                       </DialogTrigger>
                       
                       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2">
-                            {getDomainIcon(selectedLab?.domain || '')}
-                            {selectedLab?.title}
+                            {getDomainIcon(selectedLab?.category || '')}
+                            {selectedLab?.name}
                           </DialogTitle>
                           <DialogDescription>
                             {selectedLab?.description}
@@ -277,59 +262,9 @@ const VirtualLabs = () => {
                         </DialogHeader>
 
                         <div className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {experiments.map((experiment) => {
-                              const score = getAttemptScore(experiment.id);
-                              const isCompleted = attempts.some(
-                                attempt => attempt.experiment_id === experiment.id && attempt.status === 'completed'
-                              );
-
-                              return (
-                                <Card key={experiment.id}>
-                                  <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                      <CardTitle className="text-base">{experiment.title}</CardTitle>
-                                      {isCompleted && (
-                                        <div className="flex items-center gap-1">
-                                          <Trophy className="h-4 w-4 text-yellow-500" />
-                                          <span className="text-sm font-medium">{score}/{experiment.max_score}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <CardDescription>{experiment.description}</CardDescription>
-                                  </CardHeader>
-                                  
-                                  <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between text-sm">
-                                      <div className="flex items-center gap-1">
-                                        <Clock className="h-4 w-4" />
-                                        {experiment.time_limit_minutes} minutes
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <Star className="h-4 w-4" />
-                                        {experiment.max_score} points
-                                      </div>
-                                    </div>
-
-                                    <Button 
-                                      className="w-full"
-                                      onClick={() => startExperiment(experiment)}
-                                      disabled={!experiment.simulation_url}
-                                    >
-                                      <Play className="h-4 w-4 mr-2" />
-                                      {isCompleted ? 'Retry Experiment' : 'Start Experiment'}
-                                    </Button>
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
+                          <div className="text-center py-8 text-muted-foreground">
+                            Lab simulation will open in a new window when you click "Start Lab".
                           </div>
-
-                          {experiments.length === 0 && (
-                            <div className="text-center py-8 text-muted-foreground">
-                              No experiments available for this lab yet.
-                            </div>
-                          )}
                         </div>
                       </DialogContent>
                     </Dialog>

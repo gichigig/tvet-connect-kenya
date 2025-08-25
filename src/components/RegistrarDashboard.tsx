@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { saveAdminToFirebase } from "@/integrations/firebase/admin";
-import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings } from "lucide-react";
+import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings, Building2 } from "lucide-react";
 import { StudentApproval } from "@/components/registrar/StudentApproval";
 import { UnitAllocation } from "@/components/registrar/UnitAllocation";
 import { ExamManager } from "@/components/registrar/ExamManager";
@@ -16,6 +16,7 @@ import { ApprovedStudents } from "@/components/registrar/ApprovedStudents";
 import { PendingUnitRegistrations } from "@/components/registrar/PendingUnitRegistrations";
 import { UnitManagement } from "@/components/registrar/UnitManagement";
 import { allUndergraduateCourses, allDiplomaCourses, allCertificateCourses } from "@/data/zetechCourses";
+import DepartmentManagement from "@/components/registrar/DepartmentManagement";
 
 export const RegistrarDashboard = () => {
   const { user, getPendingUsers, getAllUsers, getPendingUnitRegistrations, setUsers, users } = useAuth();
@@ -184,6 +185,7 @@ export const RegistrarDashboard = () => {
           <option value="create-student">Create Student</option>
           <option value="unit-management">Unit Management</option>
           <option value="units">Unit Allocation</option>
+          <option value="departments">Departments</option>
           <option value="exams">Exam Management</option>
           <option value="retakes">Retake Management</option>
           <option value="pending-units">Pending Units</option>
@@ -191,7 +193,7 @@ export const RegistrarDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-8">
+        <TabsList className="hidden md:grid w-full grid-cols-9">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
@@ -207,6 +209,10 @@ export const RegistrarDashboard = () => {
           <TabsTrigger value="unit-management" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Unit Management
+          </TabsTrigger>
+          <TabsTrigger value="departments" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Departments
           </TabsTrigger>
           <TabsTrigger value="units" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -325,6 +331,10 @@ export const RegistrarDashboard = () => {
 
         <TabsContent value="unit-management" className="space-y-4">
           <UnitManagement />
+        </TabsContent>
+
+        <TabsContent value="departments" className="space-y-4">
+          <DepartmentManagement />
         </TabsContent>
 
         <TabsContent value="units" className="space-y-4">

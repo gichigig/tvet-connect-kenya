@@ -29,9 +29,10 @@ interface CalendarEvent {
 interface Reminder {
   id: string;
   event_id: string;
+  user_id: string;
   reminder_time: string;
-  is_sent: boolean;
   notification_type: string[];
+  created_at: string;
 }
 
 const CalendarReminders = () => {
