@@ -17,11 +17,12 @@ interface Submission {
   submission_text: string;
   submitted_at: string;
   ai_detection_status: string;
-  ai_confidence_score: number;
-  ai_detection_details: any;
+  ai_detection_score: number;
   human_review_status: string;
+  human_reviewer_id?: string;
+  human_review_notes?: string;
+  human_reviewed_at?: string;
   final_status: string;
-  grade: number;
 }
 
 export const AIEssayDetector = () => {
@@ -140,9 +141,9 @@ export const AIEssayDetector = () => {
                       {getStatusBadge(submission)}
                     </TableCell>
                     <TableCell>
-                      {submission.ai_confidence_score ? (
-                        <span className={getConfidenceColor(submission.ai_confidence_score)}>
-                          {submission.ai_confidence_score}%
+                      {submission.ai_detection_score ? (
+                        <span className={getConfidenceColor(submission.ai_detection_score)}>
+                          {submission.ai_detection_score}%
                         </span>
                       ) : (
                         '-'
@@ -203,7 +204,7 @@ export const AIEssayDetector = () => {
           {selectedSubmission && (
             <div className="space-y-4">
               {/* AI Detection Results */}
-              {selectedSubmission.ai_detection_details && (
+              {selectedSubmission.ai_detection_score && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">AI Detection Analysis</CardTitle>
@@ -212,8 +213,8 @@ export const AIEssayDetector = () => {
                     <div className="flex items-center gap-4">
                       <div>
                         <span className="font-semibold">Confidence: </span>
-                        <span className={getConfidenceColor(selectedSubmission.ai_confidence_score)}>
-                          {selectedSubmission.ai_confidence_score}%
+                        <span className={getConfidenceColor(selectedSubmission.ai_detection_score)}>
+                          {selectedSubmission.ai_detection_score}%
                         </span>
                       </div>
                       <div>
@@ -221,24 +222,6 @@ export const AIEssayDetector = () => {
                         {getStatusBadge(selectedSubmission)}
                       </div>
                     </div>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-2">Analysis Reasoning:</h4>
-                      <p className="text-sm text-gray-600">
-                        {selectedSubmission.ai_detection_details.reasoning}
-                      </p>
-                    </div>
-                    
-                    {selectedSubmission.ai_detection_details.flags?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-2">Detection Flags:</h4>
-                        <ul className="list-disc list-inside text-sm text-gray-600">
-                          {selectedSubmission.ai_detection_details.flags.map((flag: string, index: number) => (
-                            <li key={index}>{flag}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               )}

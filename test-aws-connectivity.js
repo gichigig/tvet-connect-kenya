@@ -1,9 +1,9 @@
-// Test AWS S3 connectivity
+// Test AWS S3 connectivity using environment variables
 const AWS_CONFIG = {
-  region: 'eu-north-1',
-  bucket: 'tvet-kenya-uploads-2024',
-  accessKeyId: '***REMOVED***WETSI3YJNMK4ILDU',
-  secretAccessKey: 'MxS5xtrH+XeVVlKjrZPa4vLBE8Jum9cyHuCCgslE'
+  region: process.env.AWS_REGION || 'eu-north-1',
+  bucket: process.env.AWS_BUCKET || 'tvet-kenya-uploads-2024',
+  accessKeyId: process.env.***REMOVED***,
+  secretAccessKey: process.env.***REMOVED***
 };
 
 async function testS3Access() {

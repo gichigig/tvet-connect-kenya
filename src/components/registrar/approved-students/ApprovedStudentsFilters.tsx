@@ -9,13 +9,15 @@ interface ApprovedStudentsFiltersProps {
   setSearchTerm: (term: string) => void;
   selectedCourse: string;
   setSelectedCourse: (course: string) => void;
+  courses: string[];
 }
 
 export const ApprovedStudentsFilters = ({
   searchTerm,
   setSearchTerm,
   selectedCourse,
-  setSelectedCourse
+  setSelectedCourse,
+  courses
 }: ApprovedStudentsFiltersProps) => {
   const { courses } = useCoursesContext();
   const courseNames = courses.map(course => course.name);

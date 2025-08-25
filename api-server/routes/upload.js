@@ -6,11 +6,11 @@ import cors from 'cors';
 
 const router = express.Router();
 
-// Configure AWS
+// Configure AWS from environment variables
 AWS.config.update({
-  region: 'eu-north-1',
-  accessKeyId: '***REMOVED***WETSI3YJNMK4ILDU',
-  secretAccessKey: 'MxS5xtrH+XeVVlKjrZPa4vLBE8Jum9cyHuCCgslE'
+  region: process.env.AWS_REGION || 'eu-north-1',
+  accessKeyId: process.env.***REMOVED***,
+  secretAccessKey: process.env.***REMOVED***
 });
 
 const s3 = new AWS.S3();

@@ -1,73 +1,37 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🎓 eLearning Website 🌐
 
-**URL**: https://lovable.dev/projects/c2f09644-0133-4ecb-a270-c14af1d18cea
+An all-in-one, Firebase-powered eLearning platform designed for universities and colleges. Built with scalability, accessibility, and modern web standards in mind — this site empowers institutions to manage courses, results, and user roles (students, admins, and instructors) with ease.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+- 🔐 **Role-Based Authentication**
+  - Admin, Student, Instructor, Field Manager, Station Manager, Regional Officer
+  - Admin approval for sensitive roles
+  - Auto-login redirect based on role
+- 🗃️ **Course & Content Management**
+  - Firebase Firestore integration
+  - Dynamic course loading and real-time updates
+- 📊 **Results & Dashboard System**
+  - Admin upload results via dashboard
+  - Students can view results and performance metrics
+- 📅 **Announcements & Notifications**
+  - Firebase-powered real-time alerts
+- 📍 **Location-Based Attendance (Optional)**
+  - GPS/IP tracking to prevent location spoofing
+- 🔍 **AI Essay Detector Integration (Optional)**
+  - Detects AI-written content for academic integrity
+- 🎨 **Clean UI/UX**
+  - Dark theme (black background)
+  - Role-specific dashboards
+  - Responsive design across devices
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c2f09644-0133-4ecb-a270-c14af1d18cea) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tech Stack
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c2f09644-0133-4ecb-a270-c14af1d18cea) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Frontend**: React + TailwindCSS (or your stack here)
+- **Backend**: Firebase Auth, Firestore, Firebase Storage
+portfolio billygichigidev.vercel.com
