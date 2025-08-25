@@ -67,6 +67,7 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -162,6 +163,7 @@ const Signup = () => {
       const signupData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        username: formData.username || undefined,
         email: formData.email,
         password: formData.password,
         role: formData.role,
@@ -231,6 +233,20 @@ const Signup = () => {
                   required
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username (Optional)</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="johndoe"
+                value={formData.username}
+                onChange={handleChange}
+              />
+              <p className="text-sm text-gray-500">
+                You can use either your username or email to login
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

@@ -168,6 +168,13 @@ export const UnitManagement = () => {
     const lecturer = lecturers.find(l => l.id === lecturerId);
     if (!lecturer) return;
 
+    console.log('Assigning lecturer:', {
+      unitId,
+      lecturerId: lecturer.id,
+      lecturerName: `${lecturer.firstName} ${lecturer.lastName}`,
+      lecturerEmail: lecturer.email
+    });
+
     updateCreatedUnit(unitId, {
       lecturerId: lecturer.id,
       lecturerName: `${lecturer.firstName} ${lecturer.lastName}`,

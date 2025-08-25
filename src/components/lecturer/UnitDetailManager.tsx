@@ -11,6 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadCourseMaterialSecurely } from '@/integrations/aws/secureUploadLambda';
+import { uploadCourseMaterialDirectly } from '@/integrations/aws/directUpload';
+import { uploadCourseMaterialLocally } from '@/integrations/aws/localUpload';
+import { uploadCourseMaterialViaAPI, testAPIServerConnectivity } from '@/integrations/aws/apiUpload';
+import { useCourseContent } from '@/contexts/CourseContentContext';
+import { SemesterPlanner } from './SemesterPlanner';
 import { 
   ArrowLeft, 
   FileText, 
@@ -27,7 +32,8 @@ import {
   GraduationCap,
   ClipboardList,
   Eye,
-  ExternalLink
+  ExternalLink,
+  CalendarDays
 } from 'lucide-react';
 import { Unit } from '@/types/unitManagement';
 
@@ -62,7 +68,8 @@ interface OnlineClass {
 }
 
 export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBack }) => {
-  const { user } = useAuth();
+  const { user, getFirebaseAuthToken, pendingUnitRegistrations } = useAuth();
+  const { getContentForUnit, addContent, updateContent, deleteContent } = useCourseContent();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('overview');
@@ -71,32 +78,8 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
   const [editingContent, setEditingContent] = useState<ContentItem | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Mock data - would come from context/API
-  const [unitContent, setUnitContent] = useState<ContentItem[]>([
-    {
-      id: '1',
-      type: 'notes',
-      title: 'Introduction to Programming Concepts',
-      description: 'Basic programming concepts and paradigms',
-      fileUrl: 'https://example.com/notes1.pdf',
-      fileName: 'intro_programming.pdf',
-      createdAt: '2025-01-20',
-      isVisible: true
-    },
-    {
-      id: '2',
-      type: 'assignment',
-      title: 'Assignment 1: Hello World Program',
-      description: 'Create your first program in Python',
-      fileUrl: 'https://example.com/assignment1.pdf',
-      fileName: 'assignment1.pdf',
-      dueDate: '2025-02-01',
-      maxMarks: 100,
-      instructions: 'Submit via LMS by midnight',
-      createdAt: '2025-01-18',
-      isVisible: true
-    }
-  ]);
+  // Get content for this unit from shared context
+  const unitContent = getContentForUnit(unit.id);
 
   const [onlineClasses, setOnlineClasses] = useState<OnlineClass[]>([
     {
@@ -130,11 +113,15 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
     isRecurring: false
   });
 
-  const enrolledStudents = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', admissionNumber: 'CS/001/2024' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com', admissionNumber: 'CS/002/2024' },
-    { id: '3', name: 'Mike Johnson', email: 'mike@example.com', admissionNumber: 'CS/003/2024' }
-  ];
+  // Get real students enrolled in this unit from pending registrations
+  const enrolledStudents = pendingUnitRegistrations
+    .filter(reg => reg.unitId === unit.id && reg.status === 'approved')
+    .map(reg => ({
+      id: reg.studentId,
+      name: reg.studentName || 'Unknown Student',
+      email: reg.studentEmail || 'No email provided',
+      admissionNumber: reg.studentId || 'No admission number' // Using studentId as fallback
+    }));
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -190,6 +177,16 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
       return;
     }
 
+    // Check if user is authenticated before attempting upload
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload files",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       let fileUrl = '';
       let fileName = '';
@@ -200,18 +197,109 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
           description: "Uploading file securely to S3..."
         });
         
-        // Use secure upload with Firebase Auth + S3 Signed URLs
-        fileUrl = await uploadCourseMaterialSecurely(selectedFile, unit.id);
-        fileName = selectedFile.name;
+        // Get Firebase Auth token from the auth context
+        let authToken;
+        try {
+          authToken = await getFirebaseAuthToken();
+          if (authToken) {
+            console.log('Got auth token for upload');
+          } else {
+            console.log('No Firebase Auth token available, but user is authenticated');
+            console.log('User info:', { email: user?.email, id: user?.id, role: user?.role });
+            
+            // Show a helpful message but still attempt upload
+            toast({
+              title: "Upload Notice",
+              description: "Attempting upload with alternative authentication. If this fails, you may need to log out and back in.",
+              variant: "default"
+            });
+          }
+        } catch (tokenError) {
+          console.error('Failed to get auth token:', tokenError);
+          toast({
+            title: "Authentication Warning",
+            description: "Proceeding with upload using alternative authentication method.",
+            variant: "default"
+          });
+        }
         
-        toast({
-          title: "File Uploaded Successfully",
-          description: `${selectedFile.name} uploaded securely to S3`
-        });
+        // Try API server upload first, then fallback to other methods
+        try {
+          fileUrl = await uploadCourseMaterialViaAPI(selectedFile, unit.id, unit.code);
+          fileName = selectedFile.name;
+          
+          toast({
+            title: "File Uploaded Successfully",
+            description: `${selectedFile.name} uploaded to S3 via API server`,
+            variant: "default"
+          });
+        } catch (apiError) {
+          console.warn('API server upload failed, trying Lambda:', apiError);
+          
+          toast({
+            title: "Trying Lambda Upload",
+            description: "API server upload failed, using Lambda...",
+            variant: "default"
+          });
+          
+          try {
+            fileUrl = await uploadCourseMaterialSecurely(selectedFile, unit.id, authToken || undefined);
+            fileName = selectedFile.name;
+            
+            toast({
+              title: "File Uploaded Successfully",
+              description: `${selectedFile.name} uploaded securely via Lambda + S3`
+            });
+          } catch (lambdaError) {
+            console.warn('Lambda upload also failed, trying direct upload:', lambdaError);
+            
+            toast({
+              title: "Trying Direct S3 Upload",
+              description: "Lambda upload failed, using direct S3 upload...",
+              variant: "default"
+            });
+            
+            try {
+              fileUrl = await uploadCourseMaterialDirectly(selectedFile, unit.id);
+              fileName = selectedFile.name;
+              
+              toast({
+                title: "File Uploaded Successfully",
+                description: `${selectedFile.name} uploaded directly to S3`,
+                variant: "default"
+              });
+            } catch (directError) {
+              console.warn('Direct upload also failed, using local storage as final fallback:', directError);
+              
+              toast({
+                title: "Using Local Storage",
+                description: "All S3 uploads failed, storing file locally for development...",
+                variant: "default"
+              });
+              
+              try {
+                fileUrl = await uploadCourseMaterialLocally(selectedFile, unit.id);
+                fileName = selectedFile.name;
+                
+                toast({
+                  title: "File Stored Locally",
+                  description: `${selectedFile.name} stored in browser memory (development mode)`,
+                  variant: "default"
+                });
+              } catch (localError) {
+                console.error('All upload methods failed:', { apiError, lambdaError, directError, localError });
+                throw new Error(`All upload methods failed. API: ${apiError.message}, Lambda: ${lambdaError.message}, Direct: ${directError.message}, Local: ${localError.message}`);
+              }
+            }
+          }
+        }
       }
 
-      const newContent: ContentItem = {
-        id: Date.now().toString(),
+      // Add content using the shared context
+      addContent({
+        unitId: unit.id,
+        unitCode: unit.code,
+        unitName: unit.name,
         type: contentForm.type,
         title: contentForm.title,
         description: contentForm.description,
@@ -220,11 +308,11 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
         dueDate: contentForm.dueDate,
         maxMarks: contentForm.maxMarks,
         instructions: contentForm.instructions,
-        createdAt: new Date().toISOString().split('T')[0],
-        isVisible: contentForm.isVisible
-      };
-
-      setUnitContent(prev => [...prev, newContent]);
+        createdAt: new Date().toISOString(),
+        isVisible: contentForm.isVisible,
+        lecturerId: user?.id || 'unknown',
+        lecturerName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Unknown'
+      });
 
       toast({
         title: "Content Created",
@@ -318,7 +406,7 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
   };
 
   const handleDeleteContent = (contentId: string) => {
-    setUnitContent(prev => prev.filter(content => content.id !== contentId));
+    deleteContent(contentId);
     toast({
       title: "Content Deleted",
       description: "Content has been removed"
@@ -412,8 +500,12 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="semester-plan">
+            <CalendarDays className="w-4 h-4 mr-2" />
+            Semester Plan
+          </TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
           <TabsTrigger value="exams">Exams & CATs</TabsTrigger>
@@ -473,6 +565,16 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
               <CardContent className="space-y-3">
                 <Button 
                   className="w-full justify-start"
+                  onClick={() => setActiveTab('semester-plan')}
+                  variant="default"
+                >
+                  <CalendarDays className="w-4 h-4 mr-2" />
+                  Plan Semester
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  className="w-full justify-start"
                   onClick={() => setIsCreateContentDialogOpen(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -499,6 +601,10 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="semester-plan" className="space-y-4">
+          <SemesterPlanner unit={unit} />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-4">

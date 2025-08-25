@@ -7,22 +7,24 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Embedder-Policy': 'unsafe-none'
-    },
-    middlewareMode: false,
-    cors: {
-      origin: true,
-      credentials: true
-    },
+    port: 5173,
     hmr: {
-      port: 8080
+      overlay: false
+    },
+    watch: {
+      // More aggressive file watching exclusions to prevent excessive reloads
+      ignored: [
+        '**/node_modules/**', 
+        '**/dist/**',
+        '**/.git/**',
+        '**/coverage/**',
+        '**/.nyc_output/**',
+        '**/test-results/**',
+        '**/playwright-report/**'
+      ],
+      // Reduce polling frequency
+      usePolling: false
     }
-  },
-  optimizeDeps: {
-    force: true
   },
   plugins: [
     react(),

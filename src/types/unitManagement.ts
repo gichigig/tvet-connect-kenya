@@ -21,6 +21,9 @@ export interface Unit {
   createdBy: string;
   createdDate: string;
   status: 'active' | 'inactive';
+  campusId?: string; // Campus where this unit is offered
+  campusName?: string;
+  availableCampuses?: string[]; // Multiple campuses where this unit is available
 }
 
 export interface CreateUnitData {

@@ -4,7 +4,6 @@ import { requirePermission } from '../middleware/auth.js';
 import { query, validationResult } from 'express-validator';
 
 const router = express.Router();
-const db = getFirestore();
 
 /**
  * Get all students
@@ -28,6 +27,7 @@ router.get('/',
         return res.status(400).json({ errors: errors.array() });
       }
 
+      const db = getFirestore();
       let studentsQuery = db.collection('students');
 
       // Apply filters
@@ -257,6 +257,183 @@ router.patch('/:identifier',
     } catch (error) {
       console.error('Error updating student:', error);
       res.status(500).json({ error: 'Failed to update student' });
+    }
+  }
+);
+
+/**
+ * Activate student account
+ * POST /api/students/activate/:studentId
+ */
+router.post('/activate/:studentId',
+  requirePermission('students:write'),
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const { email, approved = true, accountActive = true } = req.body;
+
+      const getDB = () => getFirestore();
+      const db = getDB();
+
+      // Update student in Firestore
+      const studentRef = db.collection('students').doc(studentId);
+      const studentDoc = await studentRef.get();
+
+      if (!studentDoc.exists) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+
+      const studentData = studentDoc.data();
+
+      // Update approval status in Firestore
+      await studentRef.update({
+        approved: approved,
+        accountActive: accountActive,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Update approval status in Realtime Database for authentication
+      const { getDatabase } = await import('firebase-admin/database');
+      const realtimeDb = getDatabase();
+
+      // Update in students collection in Realtime Database
+      const realtimeStudentRef = realtimeDb.ref('students');
+      const realtimeStudentSnapshot = await realtimeStudentRef.orderByChild('admissionNumber').equalTo(studentData.admissionNumber).once('value');
+      
+      if (realtimeStudentSnapshot.exists()) {
+        const students = realtimeStudentSnapshot.val();
+        const studentKey = Object.keys(students)[0];
+        await realtimeStudentRef.child(studentKey).update({
+          approved: approved,
+          accountActive: accountActive,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Also update in studentCredentials if it exists
+      if (studentData.admissionNumber) {
+        const credentialsRef = realtimeDb.ref(`studentCredentials/${studentData.admissionNumber}`);
+        const credentialsSnapshot = await credentialsRef.once('value');
+        if (credentialsSnapshot.exists()) {
+          await credentialsRef.update({
+            approved: approved,
+            accountActive: accountActive,
+            lastUpdated: new Date().toISOString()
+          });
+        }
+      }
+
+      res.json({ 
+        message: 'Student account activated successfully',
+        studentId: studentId,
+        approved: approved,
+        accountActive: accountActive
+      });
+
+    } catch (error) {
+      console.error('Error activating student account:', error);
+      res.status(500).json({ error: 'Failed to activate student account' });
+    }
+  }
+);
+
+/**
+ * Get approved units for a specific student
+ * GET /api/students/approved-units/:studentId
+ */
+router.get('/approved-units/:studentId',
+  requirePermission('students:read'),
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      
+      if (!studentId) {
+        return res.status(400).json({ error: 'Student ID is required' });
+      }
+
+      const db = getFirestore();
+      let actualStudentId = studentId;
+      
+      // If the studentId looks like an email, find the actual student ID
+      if (studentId.includes('@')) {
+        console.log('Looking up student by email:', studentId);
+        const studentsSnapshot = await db.collection('students')
+          .where('email', '==', studentId)
+          .limit(1)
+          .get();
+        
+        if (!studentsSnapshot.empty) {
+          actualStudentId = studentsSnapshot.docs[0].id;
+          console.log('Found student ID for email:', actualStudentId);
+        } else {
+          console.log('No student found with email:', studentId);
+          return res.json({
+            success: true,
+            units: [],
+            count: 0,
+            message: 'No student found with this email'
+          });
+        }
+      } else {
+        // If not an email, try to find by document ID first, if not found try by email
+        const studentDoc = await db.collection('students').doc(studentId).get();
+        if (!studentDoc.exists()) {
+          // Maybe it's stored as email in some field, let's search
+          const studentsSnapshot = await db.collection('students')
+            .where('email', '==', studentId)
+            .limit(1)
+            .get();
+          
+          if (!studentsSnapshot.empty) {
+            actualStudentId = studentsSnapshot.docs[0].id;
+            console.log('Found student by email search:', actualStudentId);
+          }
+        }
+      }
+      
+      console.log('Using student ID for unit lookup:', actualStudentId);
+      
+      // Query unit registrations for this student that are approved
+      const registrationsSnapshot = await db.collection('unit_registrations')
+        .where('studentId', '==', actualStudentId)
+        .where('status', '==', 'approved')
+        .get();
+
+      const approvedUnits = [];
+      
+      for (const doc of registrationsSnapshot.docs) {
+        const registration = doc.data();
+        
+        // Get unit details from the units collection
+        const unitDoc = await db.collection('units').doc(registration.unitId).get();
+        
+        if (unitDoc.exists) {
+          const unitData = unitDoc.data();
+          approvedUnits.push({
+            id: doc.id,
+            unitId: registration.unitId,
+            unitCode: unitData.code,
+            unitName: unitData.name,
+            semester: registration.semester,
+            year: registration.year,
+            course: registration.course,
+            approvedAt: registration.approvedAt,
+            approvedBy: registration.approvedBy
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        units: approvedUnits,
+        count: approvedUnits.length,
+        studentId: actualStudentId,
+        queriedId: studentId
+      });
+
+    } catch (error) {
+      console.error('Error fetching approved units:', error);
+      res.status(500).json({ error: 'Failed to fetch approved units' });
     }
   }
 );

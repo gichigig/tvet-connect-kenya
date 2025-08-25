@@ -1,22 +1,46 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Clock, Trash2 } from "lucide-react";
+import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CATFormProps {
   onAddCAT: (cat: any) => void;
+  unitCode?: string;
+  unitId?: string;
 }
 
-export const CATForm = ({ onAddCAT }: CATFormProps) => {
+export const CATForm = ({ onAddCAT, unitCode, unitId }: CATFormProps) => {
+  const { user } = useAuth();
+  const { semesterPlans, addExamToSemesterPlan, hasSemesterPlan } = useSemesterPlan();
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [duration, setDuration] = useState(30); // minutes
   const [questions, setQuestions] = useState([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
+  const [weekNumber, setWeekNumber] = useState<number | null>(null);
+  const [semesterWeeks, setSemesterWeeks] = useState<number[]>([]);
+
+  // Load available weeks when component mounts or unitId changes
+  useEffect(() => {
+    if (unitId) {
+      // First check if plan exists in memory
+      if (hasSemesterPlan(unitId)) {
+        const plan = semesterPlans[unitId];
+        const weeks = plan.weekPlans.map(w => w.weekNumber).sort((a, b) => a - b);
+        setSemesterWeeks(weeks);
+      } else {
+        setSemesterWeeks([]);
+      }
+    }
+  }, [unitId, semesterPlans, hasSemesterPlan]);
 
   const handleAddQuestion = () => {
     setQuestions([...questions, { question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
@@ -47,10 +71,30 @@ export const CATForm = ({ onAddCAT }: CATFormProps) => {
       duration,
       questions,
       isLive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      weekNumber // Add week number to CAT data
     };
     
     onAddCAT(cat);
+    
+    // Add to semester plan if week is selected and we have the necessary data
+    if (weekNumber && unitCode && unitId) {
+      addExamToSemesterPlan(unitId, weekNumber, {
+        id: Date.now().toString(),
+        title,
+        description,
+        examDate: new Date(scheduledDate),
+        examTime: scheduledDate,
+        duration,
+        venue: 'Online/Classroom',
+        maxMarks: questions.length * 2, // Assuming 2 marks per question
+        instructions: description,
+        type: 'cat',
+        questions: [],
+        isLocked: false,
+        approvalStatus: 'draft'
+      });
+    }
     
     // Reset form
     setTitle("");
@@ -58,6 +102,7 @@ export const CATForm = ({ onAddCAT }: CATFormProps) => {
     setScheduledDate("");
     setDuration(30);
     setQuestions([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
+    setWeekNumber(null);
   };
 
   return (
@@ -98,6 +143,36 @@ export const CATForm = ({ onAddCAT }: CATFormProps) => {
             onChange={(e) => setScheduledDate(e.target.value)}
           />
         </div>
+
+        {/* Week Selection - Only show when unit has semester plan */}
+        {semesterWeeks.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="weekNumber">Semester Week</Label>
+            <Select 
+              value={weekNumber?.toString()} 
+              onValueChange={(value) => setWeekNumber(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select week for this CAT" />
+              </SelectTrigger>
+              <SelectContent>
+                {semesterWeeks.map((weekNum) => (
+                  <SelectItem key={weekNum} value={weekNum.toString()}>
+                    Week {weekNum}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {semesterWeeks.length === 0 && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              ⚠️ No semester plan found for this unit. Please create a semester plan first to organize CATs by week.
+            </p>
+          </div>
+        )}
 
         <div>
           <Label>Instructions</Label>

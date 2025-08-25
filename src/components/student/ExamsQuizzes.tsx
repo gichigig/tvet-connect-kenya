@@ -6,7 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, PenTool, Award, AlertCircle, CheckCircle, GraduationCap, Lock } from "lucide-react";
 
-export const ExamsQuizzes = () => {
+interface SyncedExam {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  unitCode: string;
+  unitName: string;
+  examDate: string;
+  examTime?: string;
+  duration?: number;
+  venue?: string;
+  maxMarks?: number;
+  instructions?: string;
+  isFromSemesterPlan?: boolean;
+  status?: string;
+}
+
+interface ExamsQuizzesProps {
+  syncedExams?: SyncedExam[];
+}
+
+export const ExamsQuizzes = ({ syncedExams = [] }: ExamsQuizzesProps) => {
   const { user, pendingUnitRegistrations, createdContent } = useAuth();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'active' | 'completed' | 'graded'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'exam' | 'quiz' | 'cat' | 'assignment'>('all');
@@ -19,12 +40,44 @@ export const ExamsQuizzes = () => {
   // Get unit IDs that the student is registered for
   const registeredUnitIds = approvedRegistrations.map(reg => reg.unitId);
 
-  // Get exams and CATs for registered units
-  const availableExams = createdContent.filter(content => 
-    (content.type === 'exam' || content.type === 'cat') &&
-    registeredUnitIds.includes(content.unitId) &&
-    content.isVisible
-  );
+  // Get exams and CATs for registered units with enrollment type filtering
+  const availableExams = createdContent.filter(content => {
+    // Basic filters: registered units and visibility
+    const isRegistered = registeredUnitIds.includes(content.unitId);
+    const isVisible = content.isVisible;
+    
+    if (!isRegistered || !isVisible) return false;
+    
+    // Enrollment type filtering: Online students can see exams, others only see CATs and assignments
+    if (user?.enrollmentType === 'online') {
+      // Online students can see all types: exams, CATs, and assignments
+      return content.type === 'exam' || content.type === 'cat' || content.type === 'assignment';
+    } else {
+      // Full-time and part-time students only see CATs and assignments, not exams
+      return content.type === 'cat' || content.type === 'assignment';
+    }
+  });
+
+  // Combine original exams with synced exams from semester plans
+  const allExams = [
+    ...availableExams,
+    ...syncedExams.map(exam => ({
+      ...exam,
+      scheduledDate: exam.examDate,
+      lecturerName: 'Semester Plan',
+      isVisible: true,
+      unitId: exam.unitCode // Map unitCode to unitId for compatibility
+    }))
+  ];
+
+  console.log('Student ExamsQuizzes Debug:', {
+    userId: user?.id,
+    registeredUnitIds,
+    originalExamsCount: availableExams.length,
+    syncedExamsCount: syncedExams.length,
+    totalExamsCount: allExams.length,
+    syncedExams: syncedExams.slice(0, 3) // First 3 synced items for debugging
+  });
 
   const isExamAccessible = (exam: any) => {
     const now = new Date();
@@ -42,7 +95,7 @@ export const ExamsQuizzes = () => {
     return <Badge variant="outline" className="text-green-600">Available</Badge>;
   };
 
-  const filteredExams = availableExams.filter(exam => {
+  const filteredExams = allExams.filter(exam => {
     if (typeFilter !== 'all' && exam.type !== typeFilter) return false;
     
     switch (filter) {

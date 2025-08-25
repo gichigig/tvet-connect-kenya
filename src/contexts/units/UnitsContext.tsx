@@ -79,9 +79,28 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Get units assigned to a specific lecturer
   const getLecturerUnits = (lecturerId: string) => {
-    return createdUnits.filter(unit => 
+    const lecturerUnits = createdUnits.filter(unit => 
       unit.lecturerId === lecturerId && unit.status === 'active'
     );
+    
+    console.log('getLecturerUnits called:', {
+      lecturerId,
+      totalUnits: createdUnits.length,
+      lecturerUnitsFound: lecturerUnits.length,
+      lecturerUnits: lecturerUnits.map(unit => ({
+        id: unit.id,
+        code: unit.code,
+        name: unit.name,
+        lecturerId: unit.lecturerId
+      })),
+      allUnitsWithLecturers: createdUnits.filter(unit => unit.lecturerId).map(unit => ({
+        id: unit.id,
+        code: unit.code,
+        lecturerId: unit.lecturerId
+      }))
+    });
+    
+    return lecturerUnits;
   };
 
   // Get all units that need lecturer assignment (for registrar)

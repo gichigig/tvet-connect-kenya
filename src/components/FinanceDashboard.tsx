@@ -24,7 +24,7 @@ import { ProcurementOversight } from "@/components/finance/ProcurementOversight"
 import { FinancialReporting } from "@/components/finance/FinancialReporting";
 import { GrantsManagement } from "@/components/finance/GrantsManagement";
 import { StudentCardManagement } from "@/components/finance/StudentCardManagement";
-import { CoursesProvider } from "@/contexts/courses/CoursesContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 
 export const FinanceDashboard = () => {
   const { user, supplyRequests, studentFees, clearanceForms } = useAuth();
@@ -267,9 +267,7 @@ export const FinanceDashboard = () => {
         </TabsContent>
 
         <TabsContent value="structures" className="space-y-4">
-          <CoursesProvider>
-            <FeeStructureManagement />
-          </CoursesProvider>
+          <FeeStructureManagement />
         </TabsContent>
 
         <TabsContent value="reporting" className="space-y-4">

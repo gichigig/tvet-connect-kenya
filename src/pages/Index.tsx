@@ -50,27 +50,31 @@ const Index = () => {
     // Test Firebase connection on app start
     testFirebaseConnection();
     
-    // Test registrar login functionality
-    
     // Debug user state
     console.log('=== INDEX PAGE USER DEBUG ===');
     console.log('isAdmin:', isAdmin);
     console.log('Current view should be determined by useViewState hook');
 
     const coursesRef = ref(db, 'courses/');
-    onValue(coursesRef, (snapshot) => {
+    const coursesUnsubscribe = onValue(coursesRef, (snapshot) => {
       const data = snapshot.val();
       console.log("Live course data: ", data);
       // Handle live data updates here
     });
 
     const progressRef = ref(db, 'userProgress/');
-    onValue(progressRef, (snapshot) => {
+    const progressUnsubscribe = onValue(progressRef, (snapshot) => {
       const data = snapshot.val();
       console.log("Live progress data: ", data);
       // Handle live data updates here
     });
-  }, [db, isAdmin]);
+
+    // Cleanup function to unsubscribe from listeners
+    return () => {
+      coursesUnsubscribe();
+      progressUnsubscribe();
+    };
+  }, []); // Remove db and isAdmin from dependencies to prevent recreation
 
   return (
     <div className="min-h-screen bg-gray-50">

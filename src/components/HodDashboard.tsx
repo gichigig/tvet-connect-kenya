@@ -21,8 +21,10 @@ import { StudentFeesOverview } from "@/components/hod/StudentFeesOverview";
 import { UnitAssignment } from "@/components/hod/UnitAssignment";
 import { TimetableManagement } from "@/components/hod/TimetableManager";
 import { CourseApprovalManagement } from "@/components/hod/CourseApprovalManagement";
+import { UnitRegistrationApproval } from "@/components/hod/UnitRegistrationApproval";
+import HODGradeVaultDashboard from "@/components/hod/HODGradeVaultDashboard";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { CoursesProvider, useCoursesContext } from "@/contexts/courses/CoursesContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { HodCourseContainer } from "@/components/hod/HodCourseContainer";
 import { HodSemesterControl } from "@/components/hod/HodSemesterControl";
 
@@ -53,6 +55,7 @@ export const HodDashboard = () => {
   const tabItems = [
     { value: 'courses', label: 'Course Approval' },
     { value: 'course-units', label: 'Course Units' },
+    { value: 'unit-registrations', label: 'Unit Registrations' },
     { value: 'results', label: 'Results' },
     { value: 'send-results', label: 'Send Results' },
     { value: 'students', label: 'Students' },
@@ -187,9 +190,17 @@ export const HodDashboard = () => {
                 <BookOpen className="w-3 h-3" />
                 Course Units
               </TabsTrigger>
+              <TabsTrigger value="unit-registrations" className="flex items-center gap-1 text-xs">
+                <GraduationCap className="w-3 h-3" />
+                Unit Registrations
+              </TabsTrigger>
               <TabsTrigger value="results" className="flex items-center gap-1 text-xs">
                 <FileCheck className="w-3 h-3" />
                 Results
+              </TabsTrigger>
+              <TabsTrigger value="grade-vault" className="flex items-center gap-1 text-xs">
+                <GraduationCap className="w-3 h-3" />
+                Grade Vault
               </TabsTrigger>
               <TabsTrigger value="send-results" className="flex items-center gap-1 text-xs">
                 <Send className="w-3 h-3" />
@@ -255,13 +266,19 @@ export const HodDashboard = () => {
         </TabsContent>
 
         <TabsContent value="course-units" className="space-y-4">
-          <CoursesProvider>
-            <HodCourseUnitsContent />
-          </CoursesProvider>
+          <HodCourseUnitsContent />
+        </TabsContent>
+
+        <TabsContent value="unit-registrations" className="space-y-4">
+          <UnitRegistrationApproval />
         </TabsContent>
 
         <TabsContent value="results" className="space-y-4">
           <ResultsApproval />
+        </TabsContent>
+
+        <TabsContent value="grade-vault" className="space-y-4">
+          <HODGradeVaultDashboard />
         </TabsContent>
 
         <TabsContent value="send-results" className="space-y-4">

@@ -1,24 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Upload, Trash2, FileText } from "lucide-react";
+import { Plus, Upload, Trash2, FileText, PenTool } from "lucide-react";
+import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AssignmentFormProps {
   onAddAssignment: (assignment: any) => void;
+  unitCode?: string;
+  unitId?: string;
 }
 
-export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
-  const [assignmentType, setAssignmentType] = useState<"multiple_choice" | "file_upload" | "question_file">("file_upload");
+export const AssignmentForm = ({ onAddAssignment, unitCode, unitId }: AssignmentFormProps) => {
+  const { user } = useAuth();
+  const { semesterPlans, addAssignmentToSemesterPlan, hasSemesterPlan } = useSemesterPlan();
+  
+  const [assignmentType, setAssignmentType] = useState<"essay" | "multiple_choice" | "file_upload" | "question_file">("file_upload");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [acceptedFormats, setAcceptedFormats] = useState<string[]>(["pdf"]);
   const [questions, setQuestions] = useState([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
   const [questionFile, setQuestionFile] = useState<File | null>(null);
+  const [weekNumber, setWeekNumber] = useState<number | null>(null);
+  const [semesterWeeks, setSemesterWeeks] = useState<number[]>([]);
+
+  // Load available weeks when component mounts or unitId changes
+  useEffect(() => {
+    if (unitId) {
+      // First check if plan exists in memory
+      if (hasSemesterPlan(unitId)) {
+        const plan = semesterPlans[unitId];
+        const weeks = plan.weekPlans.map(w => w.weekNumber).sort((a, b) => a - b);
+        setSemesterWeeks(weeks);
+      } else {
+        setSemesterWeeks([]);
+      }
+    }
+  }, [unitId, semesterPlans, hasSemesterPlan]);
 
   const handleAddQuestion = () => {
     setQuestions([...questions, { question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
@@ -47,20 +70,48 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
   };
 
   const handleSubmit = () => {
+    // Always set studentType correctly for AssignmentWorkplace
+    const getStudentAssignmentType = (assignmentType: string): 'essay' | 'document' => {
+      return assignmentType === 'essay' ? 'essay' : 'document';
+    };
+
     const assignment = {
-      type: "assignment",
-      assignmentType,
+      type: "assignment", // For CreatedContent type classification
+      assignmentType, // Original assignment type for lecturer reference
       title,
       description,
       dueDate,
+      // Add the student-facing type field that AssignmentWorkplace expects
+      studentType: getStudentAssignmentType(assignmentType), // This will be 'essay' | 'document'
       acceptedFormats: assignmentType === "file_upload" ? acceptedFormats : [],
       questions: assignmentType === "multiple_choice" ? questions : [],
       questionFile: assignmentType === "question_file" ? questionFile : null,
       questionFileName: questionFile?.name || "",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      weekNumber // Add week number to assignment data
     };
     
     onAddAssignment(assignment);
+    
+    // Add to semester plan if week is selected and we have the necessary data
+    if (weekNumber && unitCode && unitId) {
+      const mappedType = getStudentAssignmentType(assignmentType);
+      addAssignmentToSemesterPlan(unitId, weekNumber, {
+        id: Date.now().toString(),
+        title,
+        description,
+        dueDate: new Date(dueDate),
+        type: mappedType,
+        studentType: mappedType,
+        maxMarks: mappedType === "essay" ? 100 : 100,
+        instructions: description,
+        assignDate: new Date(),
+        fileUrl: '',
+        fileName: '',
+        isUploaded: false,
+        requiresAICheck: false
+      });
+    }
     
     // Reset form
     setTitle("");
@@ -68,6 +119,7 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
     setDueDate("");
     setQuestions([{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]);
     setQuestionFile(null);
+    setWeekNumber(null);
   };
 
   return (
@@ -87,6 +139,7 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="essay">Essay Writing</SelectItem>
                 <SelectItem value="file_upload">File Upload</SelectItem>
                 <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
                 <SelectItem value="question_file">Question File Upload</SelectItem>
@@ -121,6 +174,72 @@ export const AssignmentForm = ({ onAddAssignment }: AssignmentFormProps) => {
             rows={3}
           />
         </div>
+
+        {/* Week Selection - Only show when unit has semester plan */}
+        {semesterWeeks.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="weekNumber">Semester Week</Label>
+            <Select 
+              value={weekNumber?.toString()} 
+              onValueChange={(value) => setWeekNumber(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select week for this assignment" />
+              </SelectTrigger>
+              <SelectContent>
+                {semesterWeeks.map((weekNum) => (
+                  <SelectItem key={weekNum} value={weekNum.toString()}>
+                    Week {weekNum}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {semesterWeeks.length === 0 && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              ⚠️ No semester plan found for this unit. Please create a semester plan first to organize assignments by week.
+            </p>
+          </div>
+        )}
+
+        {assignmentType === "essay" && (
+          <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <PenTool className="w-4 h-4 text-blue-600" />
+              <Label className="text-blue-800 font-medium">Essay Assignment Settings</Label>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="wordLimit">Word Limit (Optional)</Label>
+                <Input
+                  id="wordLimit"
+                  type="number"
+                  placeholder="e.g. 1500"
+                  min="100"
+                  max="10000"
+                />
+                <p className="text-xs text-gray-600">Leave empty for no word limit</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="requiresAICheck"
+                  defaultChecked
+                />
+                <Label htmlFor="requiresAICheck" className="text-sm">
+                  Enable AI originality check (Recommended)
+                </Label>
+              </div>
+            </div>
+            <div className="text-xs text-blue-700 bg-blue-100 p-2 rounded">
+              <strong>Note:</strong> Students will write their essays directly in the platform using the essay workspace. 
+              AI checking will help detect plagiarism and AI-generated content.
+            </div>
+          </div>
+        )}
 
         {assignmentType === "file_upload" && (
           <div>

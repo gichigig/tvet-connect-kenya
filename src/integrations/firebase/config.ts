@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 // Note: Using AWS Lambda instead of Firebase Functions for backend operations
 
 const firebaseConfig = {
@@ -17,5 +18,14 @@ const firebaseConfig = {
 export const firebaseApp = initializeApp(firebaseConfig);
 export const db = getFirestore(firebaseApp);
 export const realtimeDb = getDatabase(firebaseApp);
+
+// Initialize auth with persistence
+export const auth = getAuth(firebaseApp);
+
+// Set authentication persistence to local storage
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Failed to set auth persistence:", error);
+});
+
 // Note: functions export removed - using AWS Lambda instead
 

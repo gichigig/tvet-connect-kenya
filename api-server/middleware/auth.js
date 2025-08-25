@@ -2,23 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  };
-
-  initializeApp({
-    credential: cert(serviceAccount),
-    projectId: process.env.FIREBASE_PROJECT_ID,
-  });
-}
-
-const db = getFirestore();
+const db = getFirestore;
 
 /**
  * Middleware to authenticate API keys
@@ -26,69 +11,77 @@ const db = getFirestore();
 export const authenticateApiKey = async (req, res, next) => {
   try {
     const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+    
     if (!apiKey) {
-      return res.status(401).json({ 
-        error: 'API key required',
+      return res.status(401).json({
+        error: 'Unauthorized',
         message: 'Please provide an API key in the x-api-key header or Authorization Bearer token'
       });
     }
 
-    // Check static API key from .env
+    // Check static API key first (for development/testing)
     if (process.env.STATIC_API_KEY && apiKey === process.env.STATIC_API_KEY) {
+      req.user = {
+        id: 'static-api-user',
+        type: 'static'
+      };
       req.apiKey = {
-        id: 'static',
-        name: 'Static API Key',
-        permissions: ['*'],
-        createdBy: 'env',
-        scope: 'admin'
+        id: 'static-api-key',
+        permissions: [
+          'hod:units:read', 
+          'hod:units:approve', 
+          'hod:deferment:read', 
+          'hod:deferment:approve', 
+          'students:read',
+          'semester:read',
+          'semester:write'
+        ],
+        scope: 'full'
       };
       return next();
     }
 
-    // Get API key from database
-    const apiKeysRef = db.collection('api_keys');
-    const querySnapshot = await apiKeysRef.where('hashedKey', '==', await hashApiKey(apiKey)).get();
-    if (querySnapshot.empty) {
+    // Check dynamic API keys in Firestore
+    const apiKeysRef = db().collection('api_keys');
+    const snapshot = await apiKeysRef.where('isActive', '==', true).get();
+
+    let validKey = null;
+    for (const doc of snapshot.docs) {
+      const keyData = doc.data();
+      const isValid = await bcrypt.compare(apiKey, keyData.hashedKey);
+      if (isValid) {
+        validKey = {
+          id: doc.id,
+          ...keyData
+        };
+        break;
+      }
+    }
+
+    if (!validKey) {
       return res.status(401).json({ 
         error: 'Invalid API key',
-        message: 'The provided API key is not valid or has been revoked'
+        message: 'The provided API key is not valid'
       });
     }
-    const apiKeyDoc = querySnapshot.docs[0];
-    const apiKeyData = apiKeyDoc.data();
-    // Check if API key is active
-    if (!apiKeyData.isActive) {
-      return res.status(401).json({ 
-        error: 'API key inactive',
-        message: 'This API key has been deactivated'
-      });
-    }
-    // Check expiration
-    if (apiKeyData.expiresAt && new Date() > apiKeyData.expiresAt.toDate()) {
-      return res.status(401).json({ 
-        error: 'API key expired',
-        message: 'This API key has expired'
-      });
-    }
+
     // Update last used timestamp
-    await apiKeyDoc.ref.update({
-      lastUsed: new Date(),
-      usageCount: (apiKeyData.usageCount || 0) + 1
+    await apiKeysRef.doc(validKey.id).update({
+      lastUsed: new Date()
     });
-    // Add API key info to request
-    req.apiKey = {
-      id: apiKeyDoc.id,
-      name: apiKeyData.name,
-      permissions: apiKeyData.permissions || [],
-      createdBy: apiKeyData.createdBy,
-      scope: apiKeyData.scope || 'read'
+
+    req.apiKey = validKey;
+    req.user = {
+      id: validKey.id,
+      type: 'api-key'
     };
+
     next();
   } catch (error) {
     console.error('API key authentication error:', error);
     res.status(500).json({ 
-      error: 'Authentication error',
-      message: 'Failed to authenticate API key'
+      error: 'Authentication failed',
+      message: 'Internal server error during authentication'
     });
   }
 };

@@ -24,6 +24,15 @@ export const findUserByEmail = (users: User[], email: string): User | undefined 
   return users.find(u => u.email === email);
 };
 
+export const findUserByUsername = (users: User[], username: string): User | undefined => {
+  return users.find(u => u.username === username);
+};
+
+export const findUserByEmailOrUsername = (users: User[], identifier: string): User | undefined => {
+  // Try to find by email first, then by username
+  return users.find(u => u.email === identifier || u.username === identifier);
+};
+
 export const updateUserInList = (users: User[], userId: string, updates: Partial<User>): User[] => {
   return users.map(user => 
     user.id === userId ? { ...user, ...updates } : user

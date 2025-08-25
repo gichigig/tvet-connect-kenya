@@ -1,6 +1,6 @@
 import React, { useState, useRef, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BookOpen, User, Search, LogOut, Shield, GraduationCap, Bell } from "lucide-react";
+import { User, Search, LogOut, Shield, GraduationCap, Bell } from "lucide-react";
 import Cropper from "react-easy-crop";
 import { MobileMenu } from "@/components/ui/MobileMenu";
 import { Button } from "@/components/ui/button";
@@ -256,15 +256,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
     <header className="bg-white shadow sticky top-0 z-40">
       <div className="container mx-auto flex items-center justify-between py-3 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-blue-600" />
-          <span className="font-bold text-lg">TVET</span>
+          <img src="/WhatsApp Image 2025-08-06 at 11.54.03 PM.jpeg" alt="Billy Dev Logo" className="w-8 h-8 object-cover" />
+          <span className="font-bold text-lg">Billy Dev</span>
         </Link>
         <div className="flex-1 mx-4 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search TVET courses..."
+              placeholder="Search Billy Dev courses..."
               className="pl-10 w-full border rounded px-3 py-2"
               onChange={(e) => onSearch(e.target.value)}
             />

@@ -5,44 +5,65 @@ import { AssignmentManager } from "@/components/lecturer/AssignmentManager";
 import { NotesManager } from "@/components/lecturer/NotesManager";
 import { AttendanceManager } from "@/components/lecturer/AttendanceManager";
 import { ExamManager } from "@/components/lecturer/ExamManager";
+import { OnlineClassManager } from "@/components/lecturer/OnlineClassManager";
 import { QuizAttendance } from "@/components/lecturer/QuizAttendance";
 import { UnitManagement } from "@/components/lecturer/UnitManagement";
 import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardStats";
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
 import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
+import { SemesterPlanner } from "@/components/lecturer/SemesterPlanner";
+import { CampusManagement } from "@/components/lecturer/CampusManagement";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardSync } from "@/hooks/useDashboardSync";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
 export const LecturerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { user, createdUnits, createdContent } = useAuth();
+  
+  // Get synced content from semester plans
+  const { getContentByType } = useDashboardSync('lecturer');
+  const syncedAssignments = getContentByType('assignment');
+  const syncedNotes = getContentByType('notes');
+  const syncedExams = getContentByType('exam');
+  const syncedCats = getContentByType('cat');
+  const syncedOnlineClasses = getContentByType('online-class');
 
   // Get units assigned to current lecturer
   const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
   const totalStudents = assignedUnits.reduce((total, unit) => total + unit.enrolled, 0);
 
-  // Get content created by current lecturer
+  // Get manually created content by current lecturer
   const lecturerContent = createdContent.filter(content => content.lecturerId === user?.id);
-  const assignments = lecturerContent.filter(content => content.type === 'assignment');
-  const notes = lecturerContent.filter(content => content.type === 'notes');
-  const exams = lecturerContent.filter(content => content.type === 'exam' || content.type === 'cat');
+  const manualAssignments = lecturerContent.filter(content => content.type === 'assignment');
+  const manualNotes = lecturerContent.filter(content => content.type === 'notes');
+  const manualExams = lecturerContent.filter(content => content.type === 'exam' || content.type === 'cat');
+
+  // Combine manual and synced content for accurate counts
+  const totalAssignments = manualAssignments.length + syncedAssignments.length;
+  const totalNotes = manualNotes.length + syncedNotes.length;
+  const totalExams = manualExams.length + syncedExams.length + syncedCats.length;
+  const totalOnlineClasses = syncedOnlineClasses.length; // Assuming online classes are mainly from semester plans
 
   const stats = {
     totalCourses: assignedUnits.length,
     totalStudents: totalStudents,
-    pendingAssignments: assignments.length,
-    upcomingExams: exams.length
+    pendingAssignments: totalAssignments,
+    upcomingExams: totalExams
   };
 
   // Hamburger tab menu config
   const tabItems = [
     { value: "overview", label: "Overview" },
     { value: "units", label: `My Units (${assignedUnits.length})` },
-    { value: "assignments", label: `Assignments (${assignments.length})` },
-    { value: "notes", label: `Notes (${notes.length})` },
+    { value: "semester-planning", label: "Semester Planning" },
+    { value: "campus-management", label: "Campus Management" },
+    { value: "assignments", label: `Assignments (${totalAssignments})` },
+    { value: "notes", label: `Notes (${totalNotes})` },
+    { value: "online-classes", label: `Online Classes (${totalOnlineClasses})` },
     { value: "attendance", label: "Attendance" },
     { value: "quiz-attendance", label: "Quiz Attendance" },
-    { value: "exams", label: `Exams & CATs (${exams.length})` },
+    { value: "exams", label: `Exams & CATs (${totalExams})` },
     { value: "location-restrictions", label: "Location Restrictions" },
   ];
 
@@ -66,7 +87,7 @@ export const LecturerDashboard = () => {
       </div>
       <div className="hidden md:block mb-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-11">
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -83,11 +104,20 @@ export const LecturerDashboard = () => {
         <TabsContent value="units">
           <UnitManagement />
         </TabsContent>
+        <TabsContent value="semester-planning">
+          <SemesterPlanner unit={assignedUnits[0]} />
+        </TabsContent>
+        <TabsContent value="campus-management">
+          <CampusManagement />
+        </TabsContent>
         <TabsContent value="assignments">
           <AssignmentManager />
         </TabsContent>
         <TabsContent value="notes">
           <NotesManager />
+        </TabsContent>
+        <TabsContent value="online-classes">
+          <OnlineClassManager />
         </TabsContent>
         <TabsContent value="attendance">
           <AttendanceManager />

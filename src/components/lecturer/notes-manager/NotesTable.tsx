@@ -3,14 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Download, Edit, Trash2, FileText } from "lucide-react";
+import { Eye, Download, Edit, Trash2, FileText, BookOpen } from "lucide-react";
 import { CreatedContent } from "@/contexts/auth/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface NotesTableProps {
-  notes: CreatedContent[];
+  notes: (CreatedContent | any)[];
 }
 
 export const NotesTable = ({ notes }: NotesTableProps) => {
+  const { toast } = useToast();
+  
   const getFileTypeColor = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
@@ -27,6 +30,60 @@ export const NotesTable = ({ notes }: NotesTableProps) => {
   const getFileSize = (fileName: string) => {
     // Since we don't have actual file size, return a placeholder
     return "N/A";
+  };
+
+  const handleViewNote = (note: any) => {
+    toast({
+      title: "View Note",
+      description: "Note viewing functionality will be implemented here.",
+      duration: 3000,
+    });
+  };
+
+  const handleDownloadNote = (note: any) => {
+    if (note.fileUrl) {
+      window.open(note.fileUrl, '_blank');
+    } else {
+      toast({
+        title: "Download Note",
+        description: "Note download functionality will be implemented here.",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleEditNote = (note: any) => {
+    if (note.isFromSemesterPlan) {
+      toast({
+        title: "Edit in Semester Planning",
+        description: "This note was created through semester planning. Please edit it in the Semester Planning tab.",
+        duration: 3000,
+      });
+    } else {
+      toast({
+        title: "Edit Note",
+        description: "Note editing functionality will be implemented here.",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleDeleteNote = (note: any) => {
+    if (note.isFromSemesterPlan) {
+      toast({
+        title: "Cannot Delete",
+        description: "Notes from semester plans cannot be deleted here. Edit them in the Semester Planning tab.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } else {
+      toast({
+        title: "Delete Note",
+        description: "Note deletion functionality will be implemented here.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   return (
@@ -46,6 +103,7 @@ export const NotesTable = ({ notes }: NotesTableProps) => {
                 <TableHead>Upload Date</TableHead>
                 <TableHead>File Size</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -59,7 +117,7 @@ export const NotesTable = ({ notes }: NotesTableProps) => {
                     </div>
                   </TableCell>
                   <TableCell>{note.unitCode}</TableCell>
-                  <TableCell>{note.topic || '-'}</TableCell>
+                  <TableCell>{note.topic || note.description || '-'}</TableCell>
                   <TableCell>{new Date(note.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>{getFileSize(note.fileName || '')}</TableCell>
                   <TableCell>
@@ -68,17 +126,43 @@ export const NotesTable = ({ notes }: NotesTableProps) => {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    {note.isFromSemesterPlan ? (
+                      <Badge className="bg-blue-100 text-blue-800">
+                        <BookOpen className="w-3 h-3 mr-1" />
+                        Week {note.weekNumber}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Manual</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleViewNote(note)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDownloadNote(note)}
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditNote(note)}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDeleteNote(note)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

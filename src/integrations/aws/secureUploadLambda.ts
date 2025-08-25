@@ -1,4 +1,5 @@
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { firebaseApp } from '@/integrations/firebase/config';
 
 // AWS Lambda endpoint for secure uploads 
 // You'll need to replace this with your actual Lambda API Gateway endpoint
@@ -12,46 +13,139 @@ interface LambdaUploadResponse {
 }
 
 /**
+ * Wait for Firebase Auth to be ready and return the current user
+ */
+async function getCurrentUser(): Promise<any> {
+  const auth = getAuth(firebaseApp);
+  
+  console.log('getCurrentUser - Initial auth state:', {
+    hasAuth: !!auth,
+    currentUser: !!auth.currentUser,
+    userId: auth.currentUser?.uid
+  });
+  
+  return new Promise((resolve, reject) => {
+    // If user is already available, return immediately
+    if (auth.currentUser) {
+      console.log('User already available:', auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+    
+    console.log('Waiting for auth state change...');
+    
+    // Otherwise wait for auth state to change
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed in getCurrentUser:', !!user, user?.uid);
+      unsubscribe();
+      if (user) {
+        resolve(user);
+      } else {
+        reject(new Error('User must be authenticated to upload files'));
+      }
+    });
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      console.log('Auth state timeout reached');
+      unsubscribe();
+      reject(new Error('Authentication timeout - please try logging in again'));
+    }, 5000);
+  });
+}
+
+/**
  * Secure file upload using Firebase Auth + AWS Lambda + S3 Signed URLs
  * This follows the pattern: Auth → Lambda → Signed URL → Direct S3 Upload
  */
 export async function uploadFileSecurely(
   file: File, 
-  folder: string = 'uploads'
+  folder: string = 'uploads',
+  token?: string
 ): Promise<string> {
   try {
-    // Step 1: Get Firebase ID Token
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error('User must be authenticated to upload files');
-    }
-
-    const token = await user.getIdToken();
+    let authToken = token;
     
-    console.log('Requesting signed URL for:', file.name, file.type);
+    // If no token provided, try to get it from Firebase Auth
+    if (!authToken) {
+      try {
+        const user = await getCurrentUser();
+        console.log('Firebase Auth check:', {
+          hasUser: !!user,
+          userId: user?.uid,
+          userEmail: user?.email
+        });
+        authToken = await user.getIdToken();
+      } catch (error) {
+        console.warn('Firebase Auth not available, proceeding without token:', error);
+        // Continue without token - let the Lambda decide if it's acceptable
+      }
+    }
+    
+    console.log('Requesting signed URL for:', file.name, file.type, {
+      hasToken: !!authToken,
+      tokenLength: authToken ? authToken.length : 0,
+      endpoint: LAMBDA_ENDPOINT
+    });
     
     // Step 2: Request signed URL from AWS Lambda
-    const response = await fetch(LAMBDA_ENDPOINT, {
-      method: 'POST',
-      headers: {
+    console.log('Making request to Lambda endpoint:', LAMBDA_ENDPOINT);
+    
+    let response;
+    try {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        folder,
-      }),
-    });
+      };
+      
+      // Add Authorization header if we have a token
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Add CORS headers for preflight requests
+      headers['Access-Control-Request-Method'] = 'POST';
+      headers['Access-Control-Request-Headers'] = 'Content-Type, Authorization';
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      response = await fetch(LAMBDA_ENDPOINT, {
+        method: 'POST',
+        headers,
+        mode: 'cors', // Explicitly enable CORS
+        body: JSON.stringify({
+          token: authToken,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          folder,
+        }),
+      });
+    } catch (fetchError) {
+      console.error('Network error when calling Lambda:', fetchError);
+      throw new Error(`Network error: ${fetchError.message}. Check if Lambda endpoint is accessible: ${LAMBDA_ENDPOINT}`);
     }
 
-    const uploadData: LambdaUploadResponse = await response.json();
+    console.log('Lambda response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.error('Lambda response not OK:', response.status, response.statusText);
+      let errorData;
+      try {
+        errorData = await response.json();
+        console.error('Lambda error response:', errorData);
+      } catch (parseError) {
+        console.error('Could not parse error response:', parseError);
+        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+      }
+      throw new Error(errorData.error || `Lambda returned ${response.status}: ${response.statusText}`);
+    }
+
+    let uploadData: LambdaUploadResponse;
+    try {
+      uploadData = await response.json();
+      console.log('Lambda response data:', uploadData);
+    } catch (parseError) {
+      console.error('Could not parse Lambda response:', parseError);
+      throw new Error('Invalid response from Lambda function');
+    }
     
     // Step 3: Upload file directly to S3 using signed URL
     const formData = new FormData();
@@ -141,12 +235,13 @@ export async function uploadStudentDocumentSecurely(
  */
 export async function uploadCourseMaterialSecurely(
   file: File, 
-  courseId: string
+  courseId: string,
+  token?: string
 ): Promise<string> {
   const maxSize = 50 * 1024 * 1024; // 50MB for course materials
   if (file.size > maxSize) {
     throw new Error('File size must be less than 50MB');
   }
   
-  return uploadFileSecurely(file, `course-materials`);
+  return uploadFileSecurely(file, `course-materials`, token);
 }

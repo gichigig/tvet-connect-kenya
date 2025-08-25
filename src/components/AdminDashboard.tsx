@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, Users, Clock, Shield, Ban, Unlock, Bell } from "l
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCoursesContext, CoursesProvider } from "@/contexts/courses/CoursesContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import NotificationManager from "@/components/admin/NotificationManager";
 
 // Predefined departments for staff
@@ -86,6 +86,7 @@ function AdminDashboard() {
 
   // State for create user form
   const [showAdminForm, setShowAdminForm] = useState(false);
+  const [newUserUsername, setNewUserUsername] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserFirstName, setNewUserFirstName] = useState("");
@@ -162,6 +163,17 @@ function AdminDashboard() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
+    
+    // Check if username already exists
+    const { getUserByUsername } = await import("@/integrations/firebase/realtimeAuth");
+    const existingUser = await getUserByUsername(newUserUsername);
+    if (existingUser) {
+      toast({ title: "Username Exists", description: "A user with this username already exists.", variant: "destructive" });
+      setIsCreating(false);
+      return;
+    }
+
+    // Check if email already exists
     if (users.some(u => u.email === newUserEmail)) {
       toast({ title: "Email Exists", description: "A user with this email already exists.", variant: "destructive" });
       setIsCreating(false);
@@ -171,6 +183,7 @@ function AdminDashboard() {
       // Dynamically import to avoid SSR issues
       const { saveAdminToFirebase } = await import("@/integrations/firebase/admin");
       let userData: any = {
+        username: newUserUsername,
         email: newUserEmail,
         firstName: newUserFirstName,
         lastName: newUserLastName,
@@ -188,8 +201,9 @@ function AdminDashboard() {
       // Add more fields as needed for other roles
       await saveAdminToFirebase(userData);
       setUsers(prev => [...prev, { ...userData, approved: true, blocked: false }]);
-      toast({ title: "User Created", description: `${newUserRole.charAt(0).toUpperCase() + newUserRole.slice(1)} ${newUserEmail} created and saved to database.` });
+      toast({ title: "User Created", description: `${newUserRole.charAt(0).toUpperCase() + newUserRole.slice(1)} ${newUserUsername} created and saved to database.` });
       setShowAdminForm(false);
+      setNewUserUsername("");
       setNewUserEmail("");
       setNewUserPassword("");
       setNewUserFirstName("");
@@ -347,6 +361,14 @@ function AdminDashboard() {
                   required
                 />
               </div>
+              <input
+                className="border p-2 rounded w-full"
+                type="text"
+                placeholder="Username"
+                value={newUserUsername}
+                onChange={e => setNewUserUsername(e.target.value)}
+                required
+              />
               <input
                 className="border p-2 rounded w-full"
                 type="email"
@@ -697,11 +719,7 @@ function AdminDashboard() {
   );
 }
 
-// Wrap AdminDashboard with CoursesProvider
-const AdminDashboardWithProvider = () => (
-  <CoursesProvider>
-    <AdminDashboard />
-  </CoursesProvider>
-);
+// AdminDashboard component (CoursesProvider now provided at app level)
+const AdminDashboardWithProvider = () => <AdminDashboard />;
 
 export default AdminDashboardWithProvider;

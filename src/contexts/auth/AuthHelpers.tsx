@@ -1,24 +1,27 @@
 
 import { useNavigate } from 'react-router-dom';
 import { User } from './types';
-import { createNewUser, findUserByEmail } from './authUtils';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { firebaseApp } from '@/integrations/firebase/config';
+import { createNewUser, findUserByEmail, findUserByEmailOrUsername } from './authUtils';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/integrations/firebase/config';
 
 export const useAuthHelpers = () => {
   const navigate = useNavigate();
 
-  const login = async (email: string, password: string, role: string | undefined, users: User[], setUser: (user: User | null) => void) => {
+  const login = async (identifier: string, password: string, role: string | undefined, users: User[], setUser: (user: User | null) => void) => {
     try {
-      // First, try to authenticate using realtime database
+      console.log('🔐 Login attempt with identifier:', identifier, 'role:', role);
+      
+      // First, try to authenticate using realtime database (supports both email and username)
       const { authenticateUser } = await import('@/integrations/firebase/realtimeAuth');
-      const realtimeUser = await authenticateUser(email, password);
+      const realtimeUser = await authenticateUser(identifier, password);
       
       if (realtimeUser) {
         // User found in realtime database with correct credentials
         const user: User = {
           id: realtimeUser.id || '',
           email: realtimeUser.email,
+          username: realtimeUser.username,
           firstName: realtimeUser.firstName,
           lastName: realtimeUser.lastName,
           role: realtimeUser.role as any,
@@ -28,22 +31,32 @@ export const useAuthHelpers = () => {
           courseId: realtimeUser.courseId,
           phone: realtimeUser.phone,
         };
+        
+        // Also try to sign into Firebase Auth for upload functionality (using email)
+        try {
+          await signInWithEmailAndPassword(auth, realtimeUser.email, password);
+          console.log('Successfully signed into Firebase Auth as well');
+        } catch (firebaseError) {
+          console.log('Could not sign into Firebase Auth, uploads may not work:', firebaseError);
+          // Continue anyway - user can still use the app, just uploads won't work
+        }
+        
         setUser(user);
         navigate('/');
         return;
       }
 
-      // Try Firebase Auth for admin login
-      if (role === 'admin' || email.endsWith('@admin.com')) {
-        const auth = getAuth(firebaseApp);
+      // Try Firebase Auth for admin login (only works with email)
+      const isEmailFormat = identifier.includes('@');
+      if ((role === 'admin' || identifier.endsWith('@admin.com')) && isEmailFormat) {
         try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
           // Find or create user profile in local state
-          let foundUser = findUserByEmail(users, email);
+          let foundUser = findUserByEmail(users, identifier);
           if (!foundUser) {
             foundUser = {
               id: userCredential.user.uid,
-              email,
+              email: identifier,
               firstName: '',
               lastName: '',
               role: 'admin',
@@ -57,8 +70,9 @@ export const useAuthHelpers = () => {
           // If Firebase Auth fails, fall back to local logic for legacy/hardcoded admins
         }
       }
+      
       // Local fallback for non-admins or legacy admins
-      const foundUser = findUserByEmail(users, email);
+      const foundUser = findUserByEmailOrUsername(users, identifier);
       if (!foundUser) {
         throw new Error('Invalid credentials or account not approved.');
       }

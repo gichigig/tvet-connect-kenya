@@ -1,21 +1,45 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Upload } from "lucide-react";
+import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NotesFormProps {
   onAddNotes: (notes: any) => void;
+  unitCode?: string;
+  unitId?: string;
 }
 
-export const NotesForm = ({ onAddNotes }: NotesFormProps) => {
+export const NotesForm = ({ onAddNotes, unitCode, unitId }: NotesFormProps) => {
+  const { user } = useAuth();
+  const { semesterPlans, addMaterialToSemesterPlan, hasSemesterPlan } = useSemesterPlan();
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [topic, setTopic] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [weekNumber, setWeekNumber] = useState<number | null>(null);
+  const [semesterWeeks, setSemesterWeeks] = useState<number[]>([]);
+
+  // Load available weeks when component mounts or unitId changes
+  useEffect(() => {
+    if (unitId) {
+      // First check if plan exists in memory
+      if (hasSemesterPlan(unitId)) {
+        const plan = semesterPlans[unitId];
+        const weeks = plan.weekPlans.map(w => w.weekNumber).sort((a, b) => a - b);
+        setSemesterWeeks(weeks);
+      } else {
+        setSemesterWeeks([]);
+      }
+    }
+  }, [unitId, semesterPlans, hasSemesterPlan]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -34,16 +58,32 @@ export const NotesForm = ({ onAddNotes }: NotesFormProps) => {
         size: file.size,
         type: file.type
       })),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      weekNumber // Add week number to notes data
     };
     
     onAddNotes(notes);
+    
+    // Add to semester plan if week is selected and we have the necessary data
+    if (weekNumber && unitCode && unitId) {
+      addMaterialToSemesterPlan(unitId, weekNumber, {
+        id: Date.now().toString(),
+        title,
+        description,
+        type: 'notes',
+        dayOfWeek: 'Monday',
+        releaseTime: '08:00',
+        isUploaded: files.length > 0,
+        isVisible: true
+      });
+    }
     
     // Reset form
     setTitle("");
     setDescription("");
     setTopic("");
     setFiles([]);
+    setWeekNumber(null);
     // Reset file input
     const fileInput = document.getElementById('notes-files') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -86,6 +126,36 @@ export const NotesForm = ({ onAddNotes }: NotesFormProps) => {
             rows={3}
           />
         </div>
+
+        {/* Week Selection - Only show when unit has semester plan */}
+        {semesterWeeks.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="weekNumber">Semester Week</Label>
+            <Select 
+              value={weekNumber?.toString()} 
+              onValueChange={(value) => setWeekNumber(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select week for these notes" />
+              </SelectTrigger>
+              <SelectContent>
+                {semesterWeeks.map((weekNum) => (
+                  <SelectItem key={weekNum} value={weekNum.toString()}>
+                    Week {weekNum}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {semesterWeeks.length === 0 && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              ⚠️ No semester plan found for this unit. Please create a semester plan first to organize notes by week.
+            </p>
+          </div>
+        )}
 
         <div>
           <Label>Upload Files</Label>

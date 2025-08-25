@@ -5,50 +5,70 @@ import { useAuth } from "@/contexts/AuthContext";
 type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod" | "student" | "finance";
 
 export const useViewState = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, loading } = useAuth();
   const [currentView, setCurrentView] = useState<ViewState>("catalog");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [viewInitialized, setViewInitialized] = useState(false);
 
   // Redirect users to their respective dashboards on mount
   useEffect(() => {
     console.log("=== USEVIEWSTATE DEBUG ===");
+    console.log("useViewState - loading:", loading);
     console.log("useViewState - user:", user);
     console.log("useViewState - isAdmin:", isAdmin);
     console.log("useViewState - user role:", user?.role);
     console.log("useViewState - currentView before change:", currentView);
+    console.log("useViewState - viewInitialized:", viewInitialized);
+    
+    // Don't set view while authentication is still loading
+    if (loading) {
+      console.log("Auth still loading, waiting...");
+      return;
+    }
     
     if (!user) {
       console.log("No user, staying on current view");
+      setViewInitialized(true);
+      return;
+    }
+
+    // Only initialize view once after authentication is complete
+    if (viewInitialized) {
+      console.log("View already initialized, skipping...");
       return;
     }
 
     // Check user role first, then admin status
+    let newView: ViewState = "catalog";
+    
     if (user.role === "finance") {
       console.log("Setting view to finance");
-      setCurrentView("finance");
+      newView = "finance";
     } else if (user.role === "hod") {
       console.log("Setting view to hod");
-      setCurrentView("hod");
+      newView = "hod";
     } else if (user.role === "lecturer") {
       console.log("Setting view to lecturer");
-      setCurrentView("lecturer");
+      newView = "lecturer";
     } else if (user.role === "registrar") {
       console.log("Setting view to registrar");
-      setCurrentView("registrar");
+      newView = "registrar";
     } else if (user.role === "student") {
       console.log("Setting view to student");
-      setCurrentView("student");
+      newView = "student";
     } else if (isAdmin) {
       console.log("Setting view to admin");
-      setCurrentView("admin");
+      newView = "admin";
     } else {
       console.log("Setting view to catalog for authenticated user");
-      setCurrentView("catalog");
+      newView = "catalog";
     }
     
-    console.log("useViewState - currentView after logic:", currentView);
-  }, [user, isAdmin]);
+    setCurrentView(newView);
+    setViewInitialized(true);
+    console.log("useViewState - new view set to:", newView);
+  }, [user, isAdmin, loading, viewInitialized]); // Added loading and viewInitialized to dependencies
 
   const handleBackToCatalog = () => {
     if (user?.role === "finance") {

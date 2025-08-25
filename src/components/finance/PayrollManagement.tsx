@@ -56,24 +56,16 @@ export const PayrollManagement = () => {
   // Track custom workers (added via dialog)
   const [customWorkers, setCustomWorkers] = useState<CustomWorker[]>([]);
 
-  // Load custom workers from localStorage on mount
+  // Custom workers would be loaded from backend context on mount
   useEffect(() => {
-    const stored = localStorage.getItem("customPayrollWorkers");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setCustomWorkers(parsed);
-        }
-      } catch (e) {
-        // ignore parse errors, just start with empty list
-      }
-    }
+    // Load custom workers from backend instead of localStorage
+    // setCustomWorkers(customWorkersFromBackend);
   }, []);
 
-  // Save custom workers to localStorage on change
+  // Custom workers would be saved to backend on change
   useEffect(() => {
-    localStorage.setItem("customPayrollWorkers", JSON.stringify(customWorkers));
+    // Save custom workers to backend instead of localStorage
+    // saveCustomWorkersToBackend(customWorkers);
   }, [customWorkers]);
 
   const [emailTemplate, setEmailTemplate] = useState({

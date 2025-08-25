@@ -4,7 +4,6 @@ import { requirePermission } from '../middleware/auth.js';
 import { query, validationResult } from 'express-validator';
 
 const router = express.Router();
-const db = getFirestore();
 
 /**
  * Generate exam card for a student

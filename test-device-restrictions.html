@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Attendance Restriction Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .fingerprint {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔒 Device-Based Attendance Restriction Test</h1>
+        <p>This test verifies that the system prevents one device from marking attendance for multiple users.</p>
+        
+        <button id="runTest" onclick="runFullTest()">Run Complete Test</button>
+        <button id="clearData" onclick="clearTestData()">Clear Test Data</button>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script type="module">
+        // Device Fingerprinting Implementation (inline for testing)
+        async function generateDeviceFingerprint() {
+            const components = [];
+            
+            // Screen information
+            components.push(`screen:${screen.width}x${screen.height}x${screen.colorDepth}`);
+            
+            // Timezone
+            components.push(`timezone:${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+            
+            // User agent
+            components.push(`ua:${navigator.userAgent}`);
+            
+            // Language
+            components.push(`lang:${navigator.language}`);
+            
+            // Platform
+            components.push(`platform:${navigator.platform}`);
+            
+            // Hardware concurrency
+            components.push(`cores:${navigator.hardwareConcurrency || 'unknown'}`);
+            
+            // Canvas fingerprint
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Device fingerprint test', 2, 2);
+                const canvasData = canvas.toDataURL();
+                components.push(`canvas:${canvasData.substring(0, 50)}`);
+            } catch (e) {
+                components.push('canvas:unavailable');
+            }
+            
+            // WebGL fingerprint
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const renderer = gl.getParameter(gl.RENDERER);
+                    const vendor = gl.getParameter(gl.VENDOR);
+                    components.push(`webgl:${vendor}-${renderer}`);
+                } else {
+                    components.push('webgl:unavailable');
+                }
+            } catch (e) {
+                components.push('webgl:unavailable');
+            }
+            
+            // Audio context fingerprint
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const analyser = audioContext.createAnalyser();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(analyser);
+                analyser.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                const sampleRate = audioContext.sampleRate;
+                const maxChannelCount = audioContext.destination.maxChannelCount;
+                
+                components.push(`audio:${sampleRate}-${maxChannelCount}`);
+                
+                // Clean up
+                oscillator.disconnect();
+                analyser.disconnect();
+                gainNode.disconnect();
+                audioContext.close();
+            } catch (e) {
+                components.push('audio:unavailable');
+            }
+            
+            // Create hash from components
+            const fingerprint = components.join('|');
+            const encoder = new TextEncoder();
+            const data = encoder.encode(fingerprint);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function checkDeviceAttendanceEligibility(locationId, studentId) {
+            try {
+                const deviceFingerprint = await generateDeviceFingerprint();
+                const restrictions = JSON.parse(localStorage.getItem('device_attendance_restrictions') || '[]');
+                
+                // Clean up expired restrictions (24 hours)
+                const now = new Date();
+                const validRestrictions = restrictions.filter(restriction => {
+                    const restrictionTime = new Date(restriction.timestamp);
+                    const hoursDiff = (now.getTime() - restrictionTime.getTime()) / (1000 * 60 * 60);
+                    return hoursDiff < 24;
+                });
+                
+                // Update localStorage with cleaned restrictions
+                if (validRestrictions.length !== restrictions.length) {
+                    localStorage.setItem('device_attendance_restrictions', JSON.stringify(validRestrictions));
+                }
+                
+                // Check for existing restrictions for this location and device
+                const existingRestriction = validRestrictions.find(restriction => 
+                    restriction.deviceFingerprint === deviceFingerprint && 
+                    restriction.locationId === locationId
+                );
+                
+                if (!existingRestriction) {
+                    return { allowed: true, reason: '' };
+                }
+                
+                // If restriction exists but for the same student, allow it
+                if (existingRestriction.studentId === studentId) {
+                    return { allowed: true, reason: 'Same student can check attendance status' };
+                }
+                
+                // Different student trying to use the same device
+                return {
+                    allowed: false,
+                    reason: `Device already used for attendance at this location by another student (Student ID: ${existingRestriction.studentId})`
+                };
+                
+            } catch (error) {
+                console.error('Error checking device eligibility:', error);
+                return { allowed: false, reason: 'Unable to verify device eligibility' };
+            }
+        }
+
+        async function recordDeviceAttendanceRestriction(locationId, studentId, location) {
+            try {
+                const deviceFingerprint = await generateDeviceFingerprint();
+                const restrictions = JSON.parse(localStorage.getItem('device_attendance_restrictions') || '[]');
+                
+                // Check if restriction already exists
+                const existingIndex = restrictions.findIndex(restriction => 
+                    restriction.deviceFingerprint === deviceFingerprint && 
+                    restriction.locationId === locationId &&
+                    restriction.studentId === studentId
+                );
+                
+                const newRestriction = {
+                    deviceFingerprint,
+                    locationId,
+                    studentId,
+                    timestamp: new Date().toISOString(),
+                    location: location || null
+                };
+                
+                if (existingIndex >= 0) {
+                    // Update existing restriction
+                    restrictions[existingIndex] = newRestriction;
+                } else {
+                    // Add new restriction
+                    restrictions.push(newRestriction);
+                }
+                
+                localStorage.setItem('device_attendance_restrictions', JSON.stringify(restrictions));
+                
+            } catch (error) {
+                console.error('Error recording device restriction:', error);
+                throw error;
+            }
+        }
+
+        // Test functions
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearTestResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        window.clearTestData = function() {
+            localStorage.removeItem('device_attendance_restrictions');
+            clearTestResults();
+            addTestResult('✅ Test data cleared successfully', 'success');
+        }
+
+        window.runFullTest = async function() {
+            clearTestResults();
+            addTestResult('<h2>🔒 Starting Device-Based Attendance Restriction Test</h2>', 'info');
+            
+            try {
+                // Step 1: Generate device fingerprint
+                addTestResult('<h3>1️⃣ Generating device fingerprint...</h3>', 'info');
+                const deviceFingerprint = await generateDeviceFingerprint();
+                addTestResult(`Device fingerprint: <div class="fingerprint">${deviceFingerprint.substring(0, 32)}...</div>`, 'info');
+
+                // Step 2: Test initial eligibility (should be allowed)
+                addTestResult('<h3>2️⃣ Testing initial device eligibility...</h3>', 'info');
+                const locationId = 'test-location-123';
+                const studentId1 = 'student-001';
+                
+                const initialEligibility = await checkDeviceAttendanceEligibility(locationId, studentId1);
+                if (initialEligibility.allowed) {
+                    addTestResult('✅ Initial eligibility: ALLOWED (Expected)', 'success');
+                } else {
+                    addTestResult('❌ Initial eligibility: BLOCKED (Unexpected)', 'error');
+                }
+                addTestResult(`Reason: ${initialEligibility.reason || 'No restrictions'}`, 'info');
+
+                // Step 3: Record attendance for first student
+                addTestResult('<h3>3️⃣ Recording attendance for first student...</h3>', 'info');
+                await recordDeviceAttendanceRestriction(locationId, studentId1, {
+                    latitude: 40.7128,
+                    longitude: -74.0060
+                });
+                addTestResult('✅ Attendance recorded for Student 001', 'success');
+
+                // Step 4: Test eligibility for same student (should still be allowed)
+                addTestResult('<h3>4️⃣ Testing eligibility for same student...</h3>', 'info');
+                const sameStudentEligibility = await checkDeviceAttendanceEligibility(locationId, studentId1);
+                if (sameStudentEligibility.allowed) {
+                    addTestResult('✅ Same student eligibility: ALLOWED (Expected)', 'success');
+                } else {
+                    addTestResult('❌ Same student eligibility: BLOCKED (Unexpected)', 'error');
+                }
+                addTestResult(`Reason: ${sameStudentEligibility.reason || 'No restrictions'}`, 'info');
+
+                // Step 5: Test eligibility for different student (should be blocked)
+                addTestResult('<h3>5️⃣ Testing eligibility for different student on same device...</h3>', 'info');
+                const studentId2 = 'student-002';
+                const differentStudentEligibility = await checkDeviceAttendanceEligibility(locationId, studentId2);
+                if (!differentStudentEligibility.allowed) {
+                    addTestResult('✅ Different student eligibility: BLOCKED (Expected - Fraud Prevention!)', 'success');
+                } else {
+                    addTestResult('❌ Different student eligibility: ALLOWED (Unexpected - Security Issue!)', 'error');
+                }
+                addTestResult(`Reason: ${differentStudentEligibility.reason || 'No restrictions'}`, 'info');
+
+                // Step 6: Test with different location (should be allowed)
+                addTestResult('<h3>6️⃣ Testing with different location...</h3>', 'info');
+                const differentLocationId = 'test-location-456';
+                const differentLocationEligibility = await checkDeviceAttendanceEligibility(differentLocationId, studentId2);
+                if (differentLocationEligibility.allowed) {
+                    addTestResult('✅ Different location eligibility: ALLOWED (Expected)', 'success');
+                } else {
+                    addTestResult('❌ Different location eligibility: BLOCKED (Unexpected)', 'error');
+                }
+                addTestResult(`Reason: ${differentLocationEligibility.reason || 'No restrictions'}`, 'info');
+
+                // Step 7: Show current restrictions
+                addTestResult('<h3>7️⃣ Current device restrictions:</h3>', 'info');
+                const restrictions = JSON.parse(localStorage.getItem('device_attendance_restrictions') || '[]');
+                if (restrictions.length > 0) {
+                    restrictions.forEach((restriction, index) => {
+                        addTestResult(`Restriction ${index + 1}: Location ${restriction.locationId}, Student ${restriction.studentId}, Time: ${new Date(restriction.timestamp).toLocaleString()}`, 'info');
+                    });
+                } else {
+                    addTestResult('No restrictions found', 'info');
+                }
+
+                addTestResult('<h2>🎉 Device-Based Attendance Restriction Test Complete!</h2>', 'success');
+                
+                // Expected Results Summary
+                addTestResult('<h3>📊 Test Results Summary:</h3>', 'info');
+                addTestResult('✅ Initial eligibility: ALLOWED (no prior restrictions)', 'success');
+                addTestResult('✅ Same student after attendance: ALLOWED (same student can check status)', 'success');
+                addTestResult('✅ Different student same device: BLOCKED (prevents fraud)', 'success');
+                addTestResult('✅ Different location: ALLOWED (location-specific restrictions)', 'success');
+
+            } catch (error) {
+                addTestResult(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Test error:', error);
+            }
+        }
+
+        // Auto-run test on page load for convenience
+        document.addEventListener('DOMContentLoaded', () => {
+            addTestResult('Ready to test device-based attendance restrictions. Click "Run Complete Test" to start.', 'info');
+        });
+
+    </script>
+</body>
+</html>

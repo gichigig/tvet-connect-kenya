@@ -29,7 +29,8 @@ import {
   MapPin,
   GraduationCap,
   Calendar,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react";
 
 interface EditStudentData {
@@ -61,9 +62,18 @@ interface EditStudentData {
 
 export const ApprovedStudents = () => {
   const { updateUser } = useAuth();
-  const { students: approvedStudents, updateStudent } = useStudents();
+  const { students: approvedStudents, updateStudent, deleteStudent } = useStudents();
   const { courses } = useCoursesContext();
   const { toast } = useToast();
+  
+  // Utility function to format semester display
+  const formatSemester = (semester: any) => {
+    if (!semester) return 'N/A';
+    if (typeof semester === 'string') {
+      return semester.replace('_', ' ').toUpperCase();
+    }
+    return `SEMESTER ${semester}`;
+  };
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
@@ -77,8 +87,8 @@ export const ApprovedStudents = () => {
   // Debug logging
   console.log('Approved students from StudentsContext:', approvedStudents);
 
-  // Get unique values for filters
-  const availableCourses = [...new Set(approvedStudents.map(s => s.courseName).filter(Boolean))];
+  // Get unique values for filters from all students
+  const availableCourses = [...new Set(approvedStudents.map(s => s.courseName || s.course).filter(Boolean))];
   const availableYears = [...new Set(approvedStudents.map(s => s.academicYear).filter(Boolean))];
   const availableSemesters = ['semester_1', 'semester_2', 'semester_3'];
 
@@ -87,9 +97,12 @@ export const ApprovedStudents = () => {
                          student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.admissionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.nationalId?.toLowerCase().includes(searchTerm.toLowerCase());
+                         student.nationalId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.phone?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCourse = selectedCourse === "all" || student.courseName === selectedCourse;
+    const matchesCourse = selectedCourse === "all" || 
+                         student.courseName === selectedCourse || 
+                         student.course === selectedCourse;
     const matchesYear = selectedYear === "all" || student.academicYear === selectedYear;
     const matchesSemester = selectedSemester === "all" || student.semester === selectedSemester;
     
@@ -117,7 +130,7 @@ export const ApprovedStudents = () => {
       guardianEmail: student.guardianEmail || '',
       guardianRelationship: student.guardianRelationship || '',
       guardianAddress: student.guardianAddress || '',
-      courseId: student.courseId || '',
+      courseId: student.courseId || student.course || '',
       academicYear: student.academicYear || '',
       semester: student.semester || '',
       previousEducation: student.previousEducation || '',
@@ -134,7 +147,8 @@ export const ApprovedStudents = () => {
       
       await updateStudent(editingStudent.id, {
         ...editingStudent,
-        courseName: selectedCourseData?.name || editingStudent.courseId
+        courseName: selectedCourseData?.name || editingStudent.courseId,
+        course: editingStudent.courseId
       });
 
       toast({
@@ -149,6 +163,66 @@ export const ApprovedStudents = () => {
       toast({
         title: "Error",
         description: "Failed to update student information",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteStudent(studentId);
+      toast({
+        title: "Student Deleted",
+        description: `${studentName} has been removed from the system`
+      });
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete student",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleActivateAccount = async (studentId: string, studentEmail: string, studentName: string) => {
+    try {
+      // Call API to activate student account
+      const response = await fetch(`http://localhost:3001/api/students/activate/${studentId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: studentEmail,
+          approved: true,
+          accountActive: true
+        })
+      });
+
+      if (response.ok) {
+        // Update student in context
+        await updateStudent(studentId, {
+          approved: true,
+          accountActive: true
+        });
+
+        toast({
+          title: "Account Activated",
+          description: `${studentName}'s account has been activated and can now login`
+        });
+      } else {
+        throw new Error('Failed to activate account');
+      }
+    } catch (error) {
+      console.error('Error activating account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to activate student account",
         variant: "destructive"
       });
     }
@@ -360,14 +434,16 @@ export const ApprovedStudents = () => {
                         <TableCell>
                           <div className="space-y-1">
                             <div className="text-sm">{student.email}</div>
-                            <div className="text-sm text-muted-foreground">{student.phone}</div>
+                            <div className="text-sm text-muted-foreground">{student.phone || student.guardianPhone || 'N/A'}</div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium text-sm">{student.courseName}</div>
+                            <div className="font-medium text-sm">
+                              {student.courseName || courses.find((course) => course.id === student.course)?.name || student.course || 'N/A'}
+                            </div>
                             <Badge variant="outline" className="text-xs">
-                              {student.semester?.replace('_', ' ').toUpperCase()}
+                              {formatSemester(student.semester)}
                             </Badge>
                           </div>
                         </TableCell>
@@ -375,7 +451,7 @@ export const ApprovedStudents = () => {
                           <div className="space-y-1">
                             <div className="text-sm">{student.academicYear}</div>
                             <div className="text-xs text-muted-foreground">
-                              {student.previousEducation}
+                              Year {student.academicYear}
                             </div>
                           </div>
                         </TableCell>
@@ -413,22 +489,21 @@ export const ApprovedStudents = () => {
                                       <div className="space-y-2 text-sm">
                                         <div><strong>Name:</strong> {student.firstName} {student.lastName}</div>
                                         <div><strong>Email:</strong> {student.email}</div>
-                                        <div><strong>Phone:</strong> {student.phone}</div>
+                                        <div><strong>Phone:</strong> {student.phone || student.guardianPhone || 'N/A'}</div>
                                         <div><strong>National ID:</strong> {student.nationalId}</div>
-                                        <div><strong>Date of Birth:</strong> {student.dateOfBirth}</div>
-                                        <div><strong>Gender:</strong> {student.gender}</div>
-                                        <div><strong>Nationality:</strong> {student.nationality}</div>
+                                        <div><strong>Date of Birth:</strong> {student.dateOfBirth || 'N/A'}</div>
+                                        <div><strong>Gender:</strong> {student.gender || 'N/A'}</div>
                                       </div>
                                     </div>
                                     
                                     <div>
                                       <h4 className="font-medium text-sm text-muted-foreground mb-2">Address</h4>
                                       <div className="space-y-2 text-sm">
-                                        <div><strong>County:</strong> {student.county}</div>
-                                        <div><strong>Sub-County:</strong> {student.subcounty}</div>
-                                        <div><strong>Ward:</strong> {student.ward}</div>
-                                        <div><strong>Postal Address:</strong> {student.postalAddress}</div>
-                                        <div><strong>Postal Code:</strong> {student.postalCode}</div>
+                                        <div><strong>County:</strong> {student.county || 'N/A'}</div>
+                                        <div><strong>Sub-County:</strong> {student.subcounty || 'N/A'}</div>
+                                        <div><strong>Ward:</strong> {student.ward || 'N/A'}</div>
+                                        <div><strong>Postal Address:</strong> {student.postalAddress || 'N/A'}</div>
+                                        <div><strong>Postal Code:</strong> {student.postalCode || 'N/A'}</div>
                                       </div>
                                     </div>
                                   </div>
@@ -437,22 +512,32 @@ export const ApprovedStudents = () => {
                                     <div>
                                       <h4 className="font-medium text-sm text-muted-foreground mb-2">Guardian Information</h4>
                                       <div className="space-y-2 text-sm">
-                                        <div><strong>Name:</strong> {student.guardianName}</div>
-                                        <div><strong>Phone:</strong> {student.guardianPhone}</div>
-                                        <div><strong>Email:</strong> {student.guardianEmail}</div>
-                                        <div><strong>Relationship:</strong> {student.guardianRelationship}</div>
-                                        <div><strong>Address:</strong> {student.guardianAddress}</div>
+                                        <div><strong>Name:</strong> {student.guardianName || 'N/A'}</div>
+                                        <div><strong>Phone:</strong> {student.guardianPhone || 'N/A'}</div>
+                                        <div><strong>Email:</strong> {student.guardianEmail || 'N/A'}</div>
+                                        <div><strong>Relationship:</strong> {student.guardianRelationship || 'N/A'}</div>
+                                        <div><strong>Address:</strong> {student.guardianAddress || 'N/A'}</div>
                                       </div>
                                     </div>
                                     
                                     <div>
                                       <h4 className="font-medium text-sm text-muted-foreground mb-2">Academic Information</h4>
                                       <div className="space-y-2 text-sm">
-                                        <div><strong>Course:</strong> {student.courseName}</div>
+                                        <div><strong>Course:</strong> {student.courseName || courses.find((course) => course.id === student.course)?.name || student.course || 'N/A'}</div>
                                         <div><strong>Academic Year:</strong> {student.academicYear}</div>
-                                        <div><strong>Semester:</strong> {student.semester?.replace('_', ' ').toUpperCase()}</div>
-                                        <div><strong>Previous Education:</strong> {student.previousEducation}</div>
-                                        <div><strong>Previous Grade:</strong> {student.previousGrade}</div>
+                                        <div><strong>Semester:</strong> {formatSemester(student.semester)}</div>
+                                        <div><strong>Status:</strong> 
+                                          <Badge variant={student.approved ? "default" : "secondary"} className="ml-2">
+                                            {student.approved ? "Approved" : "Pending Approval"}
+                                          </Badge>
+                                        </div>
+                                        <div><strong>Account Status:</strong> 
+                                          <Badge variant={student.accountActive ? "default" : "destructive"} className="ml-2">
+                                            {student.accountActive ? "Active" : "Inactive"}
+                                          </Badge>
+                                        </div>
+                                        <div><strong>Previous Education:</strong> {student.previousEducation || 'N/A'}</div>
+                                        <div><strong>Previous Grade:</strong> {student.previousGrade || 'N/A'}</div>
                                         <div><strong>Admission Number:</strong> 
                                           <span className="ml-2 font-mono">{student.admissionNumber}</span>
                                           <Button
@@ -478,6 +563,26 @@ export const ApprovedStudents = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            
+                            {!student.accountActive && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleActivateAccount(student.id, student.email, `${student.firstName} ${student.lastName}`)}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              >
+                                <User className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteStudent(student.id, `${student.firstName} ${student.lastName}`)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -495,9 +600,13 @@ export const ApprovedStudents = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{student.firstName} {student.lastName}</CardTitle>
-                  <Badge variant="outline">{student.semester?.replace('_', ' ').toUpperCase()}</Badge>
+                  <Badge variant="outline">{formatSemester(student.semester)}</Badge>
                 </div>
-                <CardDescription>{student.courseName}</CardDescription>
+                <CardDescription>
+                  {student.courseName || 
+                   courses.find((course) => course.id === student.course)?.name || 
+                   student.course || 'N/A'}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -507,7 +616,7 @@ export const ApprovedStudents = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{student.phone}</span>
+                    <span>{student.phone || student.guardianPhone || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <FileText className="h-4 w-4 text-muted-foreground" />
@@ -551,6 +660,28 @@ export const ApprovedStudents = () => {
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
+                    </Button>
+                    
+                    {!student.accountActive && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleActivateAccount(student.id, student.email, `${student.firstName} ${student.lastName}`)}
+                        className="text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
+                      >
+                        <User className="h-4 w-4 mr-1" />
+                        Activate
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteStudent(student.id, `${student.firstName} ${student.lastName}`)}
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
                     </Button>
                   </div>
                 </div>
@@ -626,6 +757,30 @@ export const ApprovedStudents = () => {
                         onChange={(e) => setEditingStudent(prev => prev ? {...prev, dateOfBirth: e.target.value} : null)}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="edit-gender">Gender</Label>
+                      <Select 
+                        value={editingStudent.gender} 
+                        onValueChange={(value) => setEditingStudent(prev => prev ? {...prev, gender: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-nationality">Nationality</Label>
+                      <Input
+                        id="edit-nationality"
+                        value={editingStudent.nationality}
+                        onChange={(e) => setEditingStudent(prev => prev ? {...prev, nationality: e.target.value} : null)}
+                      />
+                    </div>
                   </div>
                 </div>
                 
@@ -655,6 +810,33 @@ export const ApprovedStudents = () => {
                         type="email"
                         value={editingStudent.guardianEmail}
                         onChange={(e) => setEditingStudent(prev => prev ? {...prev, guardianEmail: e.target.value} : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-guardianRelationship">Guardian Relationship</Label>
+                      <Select 
+                        value={editingStudent.guardianRelationship} 
+                        onValueChange={(value) => setEditingStudent(prev => prev ? {...prev, guardianRelationship: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select relationship" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Parent">Parent</SelectItem>
+                          <SelectItem value="Guardian">Guardian</SelectItem>
+                          <SelectItem value="Sibling">Sibling</SelectItem>
+                          <SelectItem value="Relative">Relative</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-guardianAddress">Guardian Address</Label>
+                      <Textarea
+                        id="edit-guardianAddress"
+                        value={editingStudent.guardianAddress}
+                        onChange={(e) => setEditingStudent(prev => prev ? {...prev, guardianAddress: e.target.value} : null)}
+                        rows={2}
                       />
                     </div>
                   </div>
@@ -743,6 +925,30 @@ export const ApprovedStudents = () => {
                         id="edit-county"
                         value={editingStudent.county}
                         onChange={(e) => setEditingStudent(prev => prev ? {...prev, county: e.target.value} : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-subcounty">Sub-County</Label>
+                      <Input
+                        id="edit-subcounty"
+                        value={editingStudent.subcounty}
+                        onChange={(e) => setEditingStudent(prev => prev ? {...prev, subcounty: e.target.value} : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-ward">Ward</Label>
+                      <Input
+                        id="edit-ward"
+                        value={editingStudent.ward}
+                        onChange={(e) => setEditingStudent(prev => prev ? {...prev, ward: e.target.value} : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-postalCode">Postal Code</Label>
+                      <Input
+                        id="edit-postalCode"
+                        value={editingStudent.postalCode}
+                        onChange={(e) => setEditingStudent(prev => prev ? {...prev, postalCode: e.target.value} : null)}
                       />
                     </div>
                     <div>

@@ -13,14 +13,14 @@ import {
   AlertCircle,
   FileText,
   MapPin,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAttendanceData } from "@/hooks/useAttendanceData";
 
 interface AttendanceSession {
   id: string;
@@ -73,85 +73,28 @@ interface AttendanceRecord {
 export const AttendancePortal = () => {
   const { toast } = useToast();
   const { user, pendingUnitRegistrations } = useAuth();
-  const [activeSessions, setActiveSessions] = useState<AttendanceSession[]>([]);
-  const [activeQuizzes, setActiveQuizzes] = useState<QuizAttendance[]>([]);
-  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttendance | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<{ [key: string]: number }>({});
   const [attendanceCode, setAttendanceCode] = useState("");
 
+  // Use real-time attendance data hook
+  const {
+    activeSessions,
+    activeQuizzes,
+    attendanceHistory,
+    isLoading,
+    error,
+    markAttendance,
+    submitQuizAttendance,
+    refreshSessions
+  } = useAttendanceData();
+
   // Get student's enrolled units
   const enrolledUnits = pendingUnitRegistrations.filter(
     reg => reg.studentId === user?.id && reg.status === 'approved'
   );
-
-  // Mock data - in real app, this would come from the backend
-  useEffect(() => {
-    const mockSessions: AttendanceSession[] = [
-      {
-        id: "sess1",
-        unitCode: "CS101",
-        unitName: "Introduction to Computer Science",
-        lecturer: "Dr. Jane Smith",
-        date: new Date().toISOString().split('T')[0],
-        startTime: "09:00",
-        endTime: "10:30",
-        type: "manual",
-        isActive: true,
-        attendanceCode: "CS101-TODAY",
-        description: "Regular lecture attendance"
-      },
-      {
-        id: "sess2",
-        unitCode: "MATH201",
-        unitName: "Advanced Mathematics",
-        lecturer: "Prof. John Doe",
-        date: new Date().toISOString().split('T')[0],
-        startTime: "14:00",
-        endTime: "15:30",
-        type: "manual",
-        isActive: true,
-        locationRequired: true,
-        latitude: -1.2921,
-        longitude: 36.8219,
-        radius: 100,
-        attendanceCode: "MATH201-LOC",
-        description: "Location-based attendance required"
-      }
-    ];
-
-    const mockQuizzes: QuizAttendance[] = [
-      {
-        id: "quiz1",
-        title: "Programming Fundamentals Quiz",
-        unitCode: "CS101",
-        unitName: "Introduction to Computer Science",
-        timeLimit: 10,
-        isActive: true,
-        startTime: new Date(),
-        timeRemaining: 600, // 10 minutes
-        questions: [
-          {
-            id: "q1",
-            question: "What is the output of print('Hello World')?",
-            options: ["Hello World", "hello world", "HELLO WORLD", "Error"],
-            correctAnswer: 0
-          },
-          {
-            id: "q2",
-            question: "Which of the following is a programming language?",
-            options: ["HTML", "CSS", "Python", "JSON"],
-            correctAnswer: 2
-          }
-        ]
-      }
-    ];
-
-    setActiveSessions(mockSessions);
-    setActiveQuizzes(mockQuizzes);
-  }, []);
 
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
@@ -202,66 +145,65 @@ export const AttendancePortal = () => {
     return R * c;
   };
 
-  const handleMarkAttendance = (session: AttendanceSession) => {
+  const handleMarkAttendance = async (session: AttendanceSession) => {
     if (!user) return;
 
-    // Check location if required
-    if (session.locationRequired && session.latitude && session.longitude) {
-      if (!currentLocation) {
+    try {
+      // Check location if required
+      if (session.locationRequired && session.latitude && session.longitude) {
+        if (!currentLocation) {
+          toast({
+            title: "Location Required",
+            description: "Please share your location to mark attendance.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const distance = calculateDistance(
+          currentLocation.lat,
+          currentLocation.lng,
+          session.latitude,
+          session.longitude
+        );
+
+        if (distance > (session.radius || 100)) {
+          toast({
+            title: "Location Check Failed",
+            description: `You are ${Math.round(distance)}m away from the allowed location (${session.radius}m radius).`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Check attendance code if provided
+      if (session.attendanceCode && attendanceCode !== session.attendanceCode) {
         toast({
-          title: "Location Required",
-          description: "Please share your location to mark attendance.",
+          title: "Invalid Attendance Code",
+          description: "Please enter the correct attendance code.",
           variant: "destructive",
         });
         return;
       }
 
-      const distance = calculateDistance(
-        currentLocation.lat,
-        currentLocation.lng,
-        session.latitude,
-        session.longitude
-      );
-
-      if (distance > (session.radius || 100)) {
+      // Mark attendance using the hook
+      const record = await markAttendance(session.id, attendanceCode, currentLocation);
+      
+      if (record) {
+        setAttendanceCode("");
         toast({
-          title: "Location Check Failed",
-          description: `You are ${Math.round(distance)}m away from the allowed location (${session.radius}m radius).`,
-          variant: "destructive",
+          title: "Attendance Marked",
+          description: `Your attendance has been recorded for ${session.unitCode}`,
         });
-        return;
       }
-    }
-
-    // Check attendance code if provided
-    if (session.attendanceCode && attendanceCode !== session.attendanceCode) {
+    } catch (error) {
       toast({
-        title: "Invalid Attendance Code",
-        description: "Please enter the correct attendance code.",
+        title: "Error",
+        description: "Failed to mark attendance. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Mark attendance
-    const newRecord: AttendanceRecord = {
-      id: Date.now().toString(),
-      sessionId: session.id,
-      unitCode: session.unitCode,
-      unitName: session.unitName,
-      date: session.date,
-      status: 'present',
-      timestamp: new Date().toISOString(),
-      type: session.type
-    };
-
-    setAttendanceHistory([newRecord, ...attendanceHistory]);
-    setAttendanceCode("");
-    
-    toast({
-      title: "Attendance Marked",
-      description: `Your attendance has been recorded for ${session.unitCode}`,
-    });
   };
 
   const handleSubmitQuiz = (quiz: QuizAttendance) => {
@@ -277,30 +219,26 @@ export const AttendancePortal = () => {
       return;
     }
 
-    // Calculate score
-    const correctAnswers = quiz.questions.filter(q => quizAnswers[q.id] === q.correctAnswer).length;
-    const score = Math.round((correctAnswers / quiz.questions.length) * 100);
-
-    const newRecord: AttendanceRecord = {
-      id: Date.now().toString(),
-      sessionId: quiz.id,
-      unitCode: quiz.unitCode,
-      unitName: quiz.unitName,
-      date: new Date().toISOString().split('T')[0],
-      status: score >= 60 ? 'present' : 'absent',
-      timestamp: new Date().toISOString(),
-      type: 'quiz',
-      score: score
-    };
-
-    setAttendanceHistory([newRecord, ...attendanceHistory]);
-    setSelectedQuiz(null);
-    setQuizAnswers({});
-    
-    toast({
-      title: "Quiz Submitted",
-      description: `Score: ${score}% - ${score >= 60 ? 'Attendance marked' : 'Below attendance threshold'}`,
-    });
+    try {
+      // Submit quiz using the hook
+      const result = submitQuizAttendance(quiz, quizAnswers);
+      
+      if (result) {
+        setSelectedQuiz(null);
+        setQuizAnswers({});
+        
+        toast({
+          title: "Quiz Submitted",
+          description: `Score: ${result.score}% - ${result.record.status === 'present' ? 'Attendance marked' : 'Below attendance threshold'}`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit quiz. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -316,8 +254,30 @@ export const AttendancePortal = () => {
           <h2 className="text-2xl font-bold">Attendance Portal</h2>
           <p className="text-gray-600">Mark your attendance for classes and quizzes</p>
         </div>
-        <Users className="w-8 h-8 text-blue-600" />
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshSessions}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Users className="w-8 h-8 text-blue-600" />
+        </div>
       </div>
+
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -327,92 +287,104 @@ export const AttendancePortal = () => {
         </TabsList>
 
         <TabsContent value="active" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeSessions.map((session) => (
-              <Card key={session.id} className="border-green-200">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{session.unitCode}</CardTitle>
-                    <Badge variant="default" className="bg-green-600">
-                      Active
-                    </Badge>
-                  </div>
-                  <CardDescription>{session.unitName}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      <span>{session.lecturer}</span>
+          {isLoading ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <RefreshCw className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Sessions</h3>
+                <p className="text-gray-500">
+                  Fetching active attendance sessions...
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeSessions.map((session) => (
+                <Card key={session.id} className="border-green-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{session.unitCode}</CardTitle>
+                      <Badge variant="default" className="bg-green-600">
+                        Active
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(session.date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>{session.startTime} - {session.endTime}</span>
-                    </div>
-                    {session.locationRequired && (
+                    <CardDescription>{session.unitName}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>Location verification required</span>
+                        <User className="w-4 h-4" />
+                        <span>{session.lecturer}</span>
                       </div>
-                    )}
-                  </div>
-
-                  {session.description && (
-                    <p className="text-sm text-gray-600">{session.description}</p>
-                  )}
-
-                  {session.locationRequired && (
-                    <div className="space-y-2">
-                      <Button 
-                        onClick={getCurrentLocation}
-                        disabled={isGettingLocation}
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                      >
-                        {isGettingLocation ? "Getting Location..." : "Share Location"}
-                      </Button>
-                      {currentLocation && (
-                        <Badge variant="secondary" className="w-full justify-center">
-                          Location: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-                        </Badge>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(session.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        <span>{session.startTime} - {session.endTime}</span>
+                      </div>
+                      {session.locationRequired && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>Location verification required</span>
+                        </div>
                       )}
                     </div>
-                  )}
 
-                  {session.attendanceCode && (
-                    <div className="space-y-2">
-                      <Label htmlFor="attendance-code">Attendance Code</Label>
-                      <Input
-                        id="attendance-code"
-                        value={attendanceCode}
-                        onChange={(e) => setAttendanceCode(e.target.value)}
-                        placeholder="Enter attendance code"
-                      />
-                    </div>
-                  )}
+                    {session.description && (
+                      <p className="text-sm text-gray-600">{session.description}</p>
+                    )}
 
-                  <Button 
-                    onClick={() => handleMarkAttendance(session)}
-                    className="w-full"
-                    disabled={
-                      (session.locationRequired && !currentLocation) ||
-                      (session.attendanceCode && !attendanceCode)
-                    }
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Mark Attendance
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    {session.locationRequired && (
+                      <div className="space-y-2">
+                        <Button 
+                          onClick={getCurrentLocation}
+                          disabled={isGettingLocation}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          {isGettingLocation ? "Getting Location..." : "Share Location"}
+                        </Button>
+                        {currentLocation && (
+                          <Badge variant="secondary" className="w-full justify-center">
+                            Location: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
 
-          {activeSessions.length === 0 && (
+                    {session.attendanceCode && (
+                      <div className="space-y-2">
+                        <Label htmlFor="attendance-code">Attendance Code</Label>
+                        <Input
+                          id="attendance-code"
+                          value={attendanceCode}
+                          onChange={(e) => setAttendanceCode(e.target.value)}
+                          placeholder="Enter attendance code"
+                        />
+                      </div>
+                    )}
+
+                    <Button 
+                      onClick={() => handleMarkAttendance(session)}
+                      className="w-full"
+                      disabled={
+                        (session.locationRequired && !currentLocation) ||
+                        (session.attendanceCode && !attendanceCode)
+                      }
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Mark Attendance
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && activeSessions.length === 0 && (
             <Card>
               <CardContent className="text-center py-12">
                 <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />

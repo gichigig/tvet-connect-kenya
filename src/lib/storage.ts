@@ -1,41 +1,35 @@
 import { User, AttendanceRecord, AttendanceLocation, Student, Teacher } from '@/types/attendance';
 
-// Mock data storage using localStorage for demo purposes
+// In-memory data storage (no localStorage usage)
 export class StorageService {
-  private static readonly KEYS = {
-    CURRENT_USER: 'attendance_current_user',
-    ATTENDANCE_RECORDS: 'attendance_records',
-    LOCATIONS: 'attendance_locations',
-    STUDENTS: 'attendance_students',
-  };
+  private static currentUser: User | null = null;
+  private static attendanceRecords: AttendanceRecord[] = [];
+  private static locations: AttendanceLocation[] = [];
+  private static students: Student[] = [];
 
   // User management
   static getCurrentUser(): User | null {
-    const userData = localStorage.getItem(this.KEYS.CURRENT_USER);
-    return userData ? JSON.parse(userData) : null;
+    return this.currentUser;
   }
 
   static setCurrentUser(user: User): void {
-    localStorage.setItem(this.KEYS.CURRENT_USER, JSON.stringify(user));
+    this.currentUser = user;
   }
 
   static logout(): void {
-    localStorage.removeItem(this.KEYS.CURRENT_USER);
+    this.currentUser = null;
   }
 
   // Attendance records
   static getAttendanceRecords(): AttendanceRecord[] {
-    const records = localStorage.getItem(this.KEYS.ATTENDANCE_RECORDS);
-    return records ? JSON.parse(records).map((r: any) => ({
+    return this.attendanceRecords.map(r => ({
       ...r,
       timestamp: new Date(r.timestamp)
-    })) : [];
+    }));
   }
 
   static addAttendanceRecord(record: AttendanceRecord): void {
-    const records = this.getAttendanceRecords();
-    records.push(record);
-    localStorage.setItem(this.KEYS.ATTENDANCE_RECORDS, JSON.stringify(records));
+    this.attendanceRecords.push(record);
   }
 
   static getStudentAttendanceRecords(studentId: string): AttendanceRecord[] {
@@ -44,54 +38,48 @@ export class StorageService {
 
   // Locations
   static getLocations(): AttendanceLocation[] {
-    const locations = localStorage.getItem(this.KEYS.LOCATIONS);
-    return locations ? JSON.parse(locations) : this.getDefaultLocations();
+    if (this.locations.length === 0) {
+      // Initialize with empty array - lecturers can create their own
+      this.locations = [];
+    }
+    return this.locations;
   }
 
   static saveLocations(locations: AttendanceLocation[]): void {
-    localStorage.setItem(this.KEYS.LOCATIONS, JSON.stringify(locations));
+    this.locations = locations;
   }
 
   static addLocation(location: AttendanceLocation): void {
-    const locations = this.getLocations();
-    locations.push(location);
-    this.saveLocations(locations);
+    this.locations.push(location);
   }
 
   static updateLocation(locationId: string, updates: Partial<AttendanceLocation>): void {
-    const locations = this.getLocations();
-    const index = locations.findIndex(l => l.id === locationId);
+    const index = this.locations.findIndex(l => l.id === locationId);
     if (index !== -1) {
-      locations[index] = { ...locations[index], ...updates };
-      this.saveLocations(locations);
+      this.locations[index] = { ...this.locations[index], ...updates };
     }
   }
 
   static deleteLocation(locationId: string): void {
-    const locations = this.getLocations().filter(l => l.id !== locationId);
-    this.saveLocations(locations);
+    this.locations = this.locations.filter(l => l.id !== locationId);
   }
 
   // Students
   static getStudents(): Student[] {
-    const students = localStorage.getItem(this.KEYS.STUDENTS);
-    return students ? JSON.parse(students) : this.getDefaultStudents();
+    if (this.students.length === 0) {
+      // Initialize with default students
+      this.students = this.getDefaultStudents();
+    }
+    return this.students;
   }
 
   static saveStudents(students: Student[]): void {
-    localStorage.setItem(this.KEYS.STUDENTS, JSON.stringify(students));
+    this.students = students;
   }
 
   // Default mock data
-  private static getDefaultLocations(): AttendanceLocation[] {
-    // Don't create default locations - let lecturers create their own
-    const locations: AttendanceLocation[] = [];
-    this.saveLocations(locations);
-    return locations;
-  }
-
   private static getDefaultStudents(): Student[] {
-    const students = [
+    return [
       {
         id: '1',
         name: 'John Doe',
@@ -109,8 +97,6 @@ export class StorageService {
         year: 2
       }
     ];
-    this.saveStudents(students);
-    return students;
   }
 
   // Initialize demo user

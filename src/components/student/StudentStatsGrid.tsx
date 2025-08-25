@@ -8,6 +8,7 @@ interface StudentStatsGridProps {
     pendingRegistrations: number;
     upcomingExams: number;
     completedAssignments: number;
+    availableNotes?: number;
     feesOwed: number;
   };
 }

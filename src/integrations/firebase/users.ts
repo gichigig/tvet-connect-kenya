@@ -10,6 +10,7 @@ const STUDENTS_COLLECTION = 'students';
 export interface CreateStudentData {
   firstName: string;
   lastName: string;
+  username: string;
   email: string;
   phoneNumber: string;
   dateOfBirth: string;
@@ -20,6 +21,8 @@ export interface CreateStudentData {
   year: number;
   semester: number;
   academicYear: string;
+  enrollmentType: 'fulltime' | 'parttime' | 'online';
+  institutionBranch: string;
   guardianName?: string;
   guardianPhone?: string;
   address?: string;
@@ -31,7 +34,8 @@ export interface Student {
   id?: string;
   firstName: string;
   lastName: string;
-  email: string;
+  username: string;
+  email?: string; // Keep for backward compatibility
   phoneNumber: string;
   dateOfBirth: string;
   gender: 'male' | 'female' | 'other';
@@ -44,8 +48,13 @@ export interface Student {
   admissionNumber: string;
   role: 'student';
   status: 'active' | 'inactive' | 'suspended';
+  approved?: boolean; // Approval status for the student
+  accountActive?: boolean; // Whether the account can login
   guardianName?: string;
   guardianPhone?: string;
+  campusId?: string; // Primary campus assignment
+  campusName?: string;
+  registeredCampuses?: string[]; // Multiple campuses where student is registered
   address?: string;
   nationalId?: string;
   createdAt: string;
@@ -54,29 +63,38 @@ export interface Student {
 
 export async function createStudent(studentData: CreateStudentData): Promise<Student> {
   try {
+    console.log('🚀 Creating student with data:', studentData);
+    
     // Generate admission number
     const admissionNumber = await getNextAdmissionNumber(studentData.department);
+    console.log('📝 Generated admission number:', admissionNumber);
     
     const newStudent: Omit<Student, 'id'> = {
       ...studentData,
       admissionNumber,
       role: 'student',
       status: 'active',
+      approved: true, // Students created by registrar are automatically approved
+      accountActive: true, // Account is immediately active for login
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      email: studentData.email, // Use the provided email
     };
 
     // Store student in Firestore students collection
     const docRef = await addDoc(collection(db, STUDENTS_COLLECTION), newStudent);
+    console.log('✅ Student added to Firestore with ID:', docRef.id);
     
     // Store credentials in Firebase Realtime Database for authentication
     if (studentData.password) {
+      console.log('🔐 Setting up authentication for student...');
       const database = getDatabase(firebaseApp);
       
       // Store in the format expected by the authentication system
       const { createUserInRealtimeDB } = await import('./realtimeAuth');
-      await createUserInRealtimeDB({
-        email: studentData.email,
+      const realtimeUserId = await createUserInRealtimeDB({
+        username: studentData.username,
+        email: studentData.email, // Use the provided email
         password: studentData.password,
         firstName: studentData.firstName,
         lastName: studentData.lastName,
@@ -86,6 +104,7 @@ export async function createStudent(studentData: CreateStudentData): Promise<Stu
         courseId: studentData.course,
         phone: studentData.phoneNumber,
         approved: true, // Students created by registrar are automatically approved
+        accountActive: true, // Account is immediately active for login
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         // Additional student fields
@@ -96,17 +115,20 @@ export async function createStudent(studentData: CreateStudentData): Promise<Stu
         guardianPhone: studentData.guardianPhone,
         academicYear: studentData.academicYear,
       });
+      console.log('✅ Student created in Realtime DB with ID:', realtimeUserId);
       
       // Also store credentials in the legacy format for backward compatibility
       const credentialsRef = ref(database, `studentCredentials/${admissionNumber}`);
       await set(credentialsRef, {
-        email: studentData.email,
-        password: studentData.password,
+        username: studentData.username,
+        email: studentData.email, // Use the provided email
+        password: studentData.password, // Store plain text for now (API server will handle both)
         admissionNumber,
         studentId: docRef.id,
         createdAt: new Date().toISOString(),
         lastUpdated: new Date().toISOString()
       });
+      console.log('✅ Student credentials stored for admission:', admissionNumber);
     }
     
     return {

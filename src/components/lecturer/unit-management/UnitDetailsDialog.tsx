@@ -40,7 +40,7 @@ export const UnitDetailsDialog = ({
   onAddItem
 }: UnitDetailsDialogProps) => {
   const { toast } = useToast();
-  const { user, addCreatedContent } = useAuth();
+  const { user } = useAuth();
 
   if (!unit) return null;
 
@@ -53,8 +53,6 @@ export const UnitDetailsDialog = ({
       unitName: unit.name,
       unitCode: unit.code
     };
-    
-    addCreatedContent(contentItem);
     
     toast({
       title: "Assignment Created",
@@ -73,8 +71,6 @@ export const UnitDetailsDialog = ({
       unitCode: unit.code
     };
     
-    addCreatedContent(contentItem);
-    
     toast({
       title: "CAT Scheduled",
       description: `${cat.title} has been scheduled successfully.`,
@@ -91,8 +87,6 @@ export const UnitDetailsDialog = ({
       unitName: unit.name,
       unitCode: unit.code
     };
-    
-    addCreatedContent(contentItem);
     
     toast({
       title: "Exam Submitted for Approval",
@@ -111,8 +105,6 @@ export const UnitDetailsDialog = ({
       unitCode: unit.code
     };
     
-    addCreatedContent(contentItem);
-    
     toast({
       title: "Notes Uploaded",
       description: `${notes.title} has been uploaded successfully.`,
@@ -129,8 +121,6 @@ export const UnitDetailsDialog = ({
       unitName: unit.name,
       unitCode: unit.code
     };
-    
-    addCreatedContent(contentItem);
     
     toast({
       title: "Online Class Scheduled",
@@ -177,16 +167,16 @@ export const UnitDetailsDialog = ({
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-0">
           <TabsContent value="assignments" className="space-y-4">
-            <AssignmentForm onAddAssignment={handleAddAssignment} />
+            <AssignmentForm onAddAssignment={handleAddAssignment} unitCode={unit.code} unitId={unit.id} />
           </TabsContent>
           <TabsContent value="cats" className="space-y-4">
-            <CATForm onAddCAT={handleAddCAT} />
+            <CATForm onAddCAT={handleAddCAT} unitCode={unit.code} unitId={unit.id} />
           </TabsContent>
           <TabsContent value="exams" className="space-y-4">
-            <ExamForm onAddExam={handleAddExam} />
+            <ExamForm onAddExam={handleAddExam} unitCode={unit.code} unitId={unit.id} />
           </TabsContent>
           <TabsContent value="notes" className="space-y-4">
-            <NotesForm onAddNotes={handleAddNotes} />
+            <NotesForm onAddNotes={handleAddNotes} unitCode={unit.code} unitId={unit.id} />
           </TabsContent>
           <TabsContent value="classes" className="space-y-4">
             <OnlineClassForm onAddOnlineClass={handleAddOnlineClass} />

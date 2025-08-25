@@ -172,6 +172,7 @@ export const AddStudentForm: React.FC = () => {
   const [formData, setFormData] = useState<CreateStudentData>({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
     phoneNumber: '',
     dateOfBirth: '',
@@ -182,6 +183,8 @@ export const AddStudentForm: React.FC = () => {
     year: 1,
     semester: 1,
     academicYear: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+    enrollmentType: 'fulltime',
+    institutionBranch: 'main_campus',
     guardianName: '',
     guardianPhone: '',
     address: '',
@@ -230,8 +233,8 @@ export const AddStudentForm: React.FC = () => {
     handleInputChange('lastName', e.target.value);
   }, [handleInputChange]);
 
-  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange('email', e.target.value);
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('username', e.target.value);
   }, [handleInputChange]);
 
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,7 +307,7 @@ export const AddStudentForm: React.FC = () => {
 
     try {
       // Validate required fields
-      if (!formData.firstName || !formData.lastName || !formData.email || 
+      if (!formData.firstName || !formData.lastName || !formData.username || !formData.email ||
           !formData.phoneNumber || !formData.course || !formData.department) {
         throw new Error('Please fill in all required fields');
       }
@@ -328,6 +331,7 @@ export const AddStudentForm: React.FC = () => {
       setFormData({
         firstName: '',
         lastName: '',
+        username: '',
         email: '',
         phoneNumber: '',
         dateOfBirth: '',
@@ -342,6 +346,8 @@ export const AddStudentForm: React.FC = () => {
         guardianPhone: '',
         address: '',
         nationalId: '',
+        enrollmentType: 'fulltime',
+        institutionBranch: '',
       });
       setSelectedDepartment('');
       setSelectedLevel('');
@@ -397,16 +403,30 @@ export const AddStudentForm: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="email">Email Address *</Label>
+              <Label htmlFor="username">Username *</Label>
+              <Input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={handleUsernameChange}
+                placeholder="student_username"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={handleEmailChange}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="student@example.com"
                 required
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="phoneNumber">Phone Number *</Label>
               <Input
@@ -601,6 +621,43 @@ export const AddStudentForm: React.FC = () => {
                   onChange={handleAcademicYearChange}
                   placeholder="2025/2026"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="enrollmentType">Enrollment Type *</Label>
+                <Select
+                  value={formData.enrollmentType || 'fulltime'}
+                  onValueChange={(value) => handleInputChange('enrollmentType', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select enrollment type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fulltime">Full Time</SelectItem>
+                    <SelectItem value="parttime">Part Time</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="institutionBranch">Institution Branch</Label>
+                <Select
+                  value={formData.institutionBranch || ''}
+                  onValueChange={(value) => handleInputChange('institutionBranch', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="main_campus">Main Campus</SelectItem>
+                    <SelectItem value="nairobi_branch">Nairobi Branch</SelectItem>
+                    <SelectItem value="mombasa_branch">Mombasa Branch</SelectItem>
+                    <SelectItem value="kisumu_branch">Kisumu Branch</SelectItem>
+                    <SelectItem value="nakuru_branch">Nakuru Branch</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

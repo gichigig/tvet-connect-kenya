@@ -1,38 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Video, FileText, Clock, PenTool, GraduationCap, Menu, MessageCircle, DollarSign, Download, FlaskConical, Calendar } from "lucide-react";
-import { UnitRegistration } from "@/components/student/UnitRegistration";
-import { OnlineClasses } from "@/components/student/OnlineClasses";
-import { NotesAccess } from "@/components/student/NotesAccess";
-import { ExamsQuizzes } from "@/components/student/ExamsQuizzes";
+import { GraduationCap, Download, FileText, CalendarIcon } from "lucide-react";
 import { MyUnits } from "@/components/student/MyUnits";
-import { DiscussionGroups } from "@/components/student/DiscussionGroups";
-import { StudentFees } from "@/components/student/StudentFees";
-import { AttendancePortal } from "@/components/student/AttendancePortal";
-import VirtualLabs from "@/components/student/VirtualLabs";
-import CalendarReminders from "@/components/student/CalendarReminders";
+import { SemesterPlanCalendar } from "@/components/student/SemesterPlanCalendar";
 import jsPDF from "jspdf";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { StudentDashboardTopbar } from "@/components/student/StudentDashboardTopbar";
-import { StudentMobileMenu } from "@/components/student/StudentMobileMenu";
 import { StudentStatsGrid } from "@/components/student/StudentStatsGrid";
-import { ExamCardDownloadButton } from "@/components/student/ExamCardDownloadButton";
 import { EnhancedExamCard } from "@/components/student/EnhancedExamCard";
+import { useDashboardSync } from "@/hooks/useDashboardSync";
 
 export const StudentDashboard = () => {
   const { user, pendingUnitRegistrations, studentFees, getStudentCard } = useAuth();
-  const [activeTab, setActiveTab] = useState("units");
+  
+  // Use dashboard sync hook for real-time semester plan integration
+  const { syncedContent, getContentByType } = useDashboardSync('student');
 
   // Get stats for current user
   const userPendingRegistrations = pendingUnitRegistrations.filter(
@@ -42,6 +26,11 @@ export const StudentDashboard = () => {
   const enrolledUnits = pendingUnitRegistrations.filter(
     reg => reg.studentId === user?.id && reg.status === 'approved'
   );
+
+  // Get synced content counts for dashboard stats
+  const syncedAssignments = getContentByType('assignment');
+  const syncedNotes = getContentByType('notes');
+  const syncedExams = [...getContentByType('exam'), ...getContentByType('cat')];
 
   const myFees = studentFees.filter(fee => fee.studentId === user?.id);
   const totalOwed = myFees.filter(f => f.status === 'pending' || f.status === 'overdue').reduce((sum, fee) => sum + fee.amount, 0);
@@ -108,30 +97,16 @@ export const StudentDashboard = () => {
   const stats = {
     enrolledUnits: enrolledUnits.length,
     pendingRegistrations: userPendingRegistrations.length,
-    upcomingExams: 0, // No exams until units are enrolled
-    completedAssignments: 0, // No assignments until units are enrolled
+    upcomingExams: syncedExams.length, // Include synced exams from semester plans
+    completedAssignments: syncedAssignments.length, // Include synced assignments from semester plans
+    availableNotes: syncedNotes.length, // Include synced notes from semester plans
     feesOwed: totalOwed
   };
-
-  const menuItems = [
-    { id: "units", label: "My Units", icon: BookOpen },
-    { id: "register", label: "Unit Registration", icon: GraduationCap },
-    { id: "fees", label: "My Fees", icon: DollarSign },
-    { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "labs", label: "Virtual Labs", icon: FlaskConical },
-    { id: "attendance", label: "Attendance", icon: Clock },
-    { id: "classes", label: "Online Classes", icon: Video },
-    { id: "notes", label: "Notes & Materials", icon: FileText },
-    { id: "exams", label: "Exams & Quizzes", icon: PenTool },
-    { id: "discussions", label: "Discussion Groups", icon: MessageCircle },
-  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <StudentDashboardTopbar user={user} />
-        {/* Mobile Menu */}
-        <StudentMobileMenu menuItems={menuItems} activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
       {/* Student Card Status */}
@@ -174,57 +149,23 @@ export const StudentDashboard = () => {
       {/* Stats Cards */}
       <StudentStatsGrid stats={stats} />
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="hidden md:grid w-full grid-cols-10">
-          {menuItems.map((item) => (
-            <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
-              <item.icon className="w-4 h-4" />
-              <span className="hidden lg:inline">{item.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* My Units Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-5 h-5" />
+          <h2 className="text-xl font-semibold">My Units</h2>
+        </div>
+        <MyUnits />
+      </div>
 
-        <TabsContent value="units" className="space-y-4">
-          <MyUnits />
-        </TabsContent>
-
-        <TabsContent value="register" className="space-y-4">
-          <UnitRegistration />
-        </TabsContent>
-
-        <TabsContent value="fees" className="space-y-4">
-          <StudentFees />
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-4">
-          <CalendarReminders />
-        </TabsContent>
-
-        <TabsContent value="labs" className="space-y-4">
-          <VirtualLabs />
-        </TabsContent>
-
-        <TabsContent value="attendance" className="space-y-4">
-          <AttendancePortal />
-        </TabsContent>
-
-        <TabsContent value="classes" className="space-y-4">
-          <OnlineClasses />
-        </TabsContent>
-
-        <TabsContent value="notes" className="space-y-4">
-          <NotesAccess />
-        </TabsContent>
-
-        <TabsContent value="exams" className="space-y-4">
-          <ExamsQuizzes />
-        </TabsContent>
-
-        <TabsContent value="discussions" className="space-y-4">
-          <DiscussionGroups />
-        </TabsContent>
-      </Tabs>
+      {/* Calendar Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="w-5 h-5" />
+          <h2 className="text-xl font-semibold">Academic Calendar</h2>
+        </div>
+        <SemesterPlanCalendar />
+      </div>
     </div>
   );
 };

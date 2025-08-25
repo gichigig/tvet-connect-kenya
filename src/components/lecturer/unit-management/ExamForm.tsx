@@ -1,12 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Clock, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Question {
   id: string;
@@ -16,9 +19,14 @@ interface Question {
 
 interface ExamFormProps {
   onAddExam: (exam: any) => void;
+  unitCode?: string;
+  unitId?: string;
 }
 
-export const ExamForm = ({ onAddExam }: ExamFormProps) => {
+export const ExamForm = ({ onAddExam, unitCode, unitId }: ExamFormProps) => {
+  const { user } = useAuth();
+  const { semesterPlans, addExamToSemesterPlan, hasSemesterPlan } = useSemesterPlan();
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
@@ -28,6 +36,22 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [currentMarks, setCurrentMarks] = useState(10);
+  const [weekNumber, setWeekNumber] = useState<number | null>(null);
+  const [semesterWeeks, setSemesterWeeks] = useState<number[]>([]);
+
+  // Load available weeks when component mounts or unitId changes
+  useEffect(() => {
+    if (unitId) {
+      // First check if plan exists in memory
+      if (hasSemesterPlan(unitId)) {
+        const plan = semesterPlans[unitId];
+        const weeks = plan.weekPlans.map(w => w.weekNumber).sort((a, b) => a - b);
+        setSemesterWeeks(weeks);
+      } else {
+        setSemesterWeeks([]);
+      }
+    }
+  }, [unitId, semesterPlans, hasSemesterPlan]);
 
   const addQuestion = () => {
     if (!currentQuestion.trim()) return;
@@ -71,10 +95,30 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
       status: "pending_approval",
       isVisible: true,
       isAccessible: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      weekNumber // Add week number to exam data
     };
     
     onAddExam(exam);
+    
+    // Add to semester plan if week is selected and we have the necessary data
+    if (weekNumber && unitCode && unitId) {
+      addExamToSemesterPlan(unitId, weekNumber, {
+        id: Date.now().toString(),
+        title,
+        description,
+        examDate: new Date(scheduledDate),
+        examTime: scheduledDate,
+        duration,
+        venue,
+        maxMarks: calculateTotalMarks(),
+        instructions: description,
+        type: 'exam',
+        questions: [],
+        isLocked: false,
+        approvalStatus: 'draft'
+      });
+    }
     
     // Reset form
     setTitle("");
@@ -84,6 +128,7 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
     setVenue("");
     setTotalMarks(100);
     setQuestions([]);
+    setWeekNumber(null);
   };
 
   return (
@@ -119,6 +164,36 @@ export const ExamForm = ({ onAddExam }: ExamFormProps) => {
             />
           </div>
         </div>
+
+        {/* Week Selection - Only show when unit has semester plan */}
+        {semesterWeeks.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="weekNumber">Semester Week</Label>
+            <Select 
+              value={weekNumber?.toString()} 
+              onValueChange={(value) => setWeekNumber(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select week for this exam" />
+              </SelectTrigger>
+              <SelectContent>
+                {semesterWeeks.map((weekNum) => (
+                  <SelectItem key={weekNum} value={weekNum.toString()}>
+                    Week {weekNum}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {semesterWeeks.length === 0 && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              ⚠️ No semester plan found for this unit. Please create a semester plan first to organize exams by week.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>

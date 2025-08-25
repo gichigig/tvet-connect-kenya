@@ -2,6 +2,7 @@
 export interface User {
   id: string;
   email: string;
+  username?: string; // New field for username-based login
   firstName: string;
   lastName: string;
   role: 'admin' | 'student' | 'lecturer' | 'registrar' | 'hod' | 'finance';
@@ -43,6 +44,8 @@ export interface User {
   academicYear?: string;
   previousEducation?: string;
   previousGrade?: string;
+  enrollmentType?: 'fulltime' | 'parttime' | 'online';
+  institutionBranch?: string;
   createdAt?: string;
 }
 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings, Plus } from "lucide-react";
+import { UserCheck, GraduationCap, FileText, Clock, BookOpen, Users, Settings, Plus, Building } from "lucide-react";
 import { StudentApproval } from "@/components/registrar/StudentApproval";
 import { UnitAllocation } from "@/components/registrar/UnitAllocation";
 import { ExamManager } from "@/components/registrar/ExamManager";
@@ -14,12 +14,13 @@ import { RetakeManager } from "@/components/registrar/RetakeManager";
 import ApprovedStudents from "@/components/registrar/ApprovedStudents";
 import { PendingUnitRegistrations } from "@/components/registrar/PendingUnitRegistrations";
 import { UnitManagement } from "@/components/registrar/UnitManagement";
+import { DepartmentManagement } from "@/components/registrar/DepartmentManagement";
 import AddStudentForm from "@/components/registrar/AddStudentFormMultiStep";
 import CreateStudentForm from "@/components/registrar/CreateStudentForm";
 import { CourseManagement } from "@/components/registrar/CourseManagement";
 import { CreateCourseForm } from "@/components/registrar/CreateCourseForm";
 import { CourseList } from "@/components/registrar/CourseList";
-import { CoursesProvider, useCoursesContext } from "@/contexts/courses/CoursesContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { Course } from "@/types/course";
 import { CourseContainer } from "@/components/registrar/CourseContainer";
 
@@ -215,6 +216,7 @@ const RegistrarDashboardContent = () => {
           <option value="students">Student Approval</option>
           <option value="approved">Approved Students</option>
           <option value="create-student">Create Student</option>
+          <option value="departments">Departments</option>
           <option value="courses">Course Management</option>
           <option value="unit-management">Unit Management</option>
           <option value="units">Unit Allocation</option>
@@ -226,7 +228,7 @@ const RegistrarDashboardContent = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         {/* Desktop tabs */}
-        <TabsList className="hidden md:grid w-full grid-cols-9">
+        <TabsList className="hidden md:grid w-full grid-cols-10">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
@@ -238,6 +240,10 @@ const RegistrarDashboardContent = () => {
           <TabsTrigger value="create-student" className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4" />
             Create Student
+          </TabsTrigger>
+          <TabsTrigger value="departments" className="flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            Departments
           </TabsTrigger>
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -285,6 +291,10 @@ const RegistrarDashboardContent = () => {
 
         <TabsContent value="create-student" className="space-y-4">
           <AddStudentForm />
+        </TabsContent>
+
+        <TabsContent value="departments" className="space-y-4">
+          <DepartmentManagement />
         </TabsContent>
 
         <TabsContent value="courses" className="space-y-4">
@@ -338,9 +348,5 @@ const RegistrarDashboardContent = () => {
 };
 
 export const RegistrarDashboard = () => {
-  return (
-    <CoursesProvider>
-      <RegistrarDashboardContent />
-    </CoursesProvider>
-  );
+  return <RegistrarDashboardContent />;
 };

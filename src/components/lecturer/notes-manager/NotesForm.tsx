@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
 import { Unit } from "@/types/unitManagement";
 
 interface NotesFormProps {
@@ -17,7 +18,8 @@ interface NotesFormProps {
 
 export const NotesForm = ({ onClose, onSubmit }: NotesFormProps) => {
   const { toast } = useToast();
-  const { user, createdUnits, addCreatedContent } = useAuth();
+  const { user, createdUnits } = useAuth();
+  const { getSemesterPlan, addMaterialToSemesterPlan, hasSemesterPlan } = useSemesterPlan();
   
   // Get units assigned to current lecturer
   const assignedUnits = createdUnits.filter(unit => unit.lecturerId === user?.id);
@@ -27,10 +29,45 @@ export const NotesForm = ({ onClose, onSubmit }: NotesFormProps) => {
     unitCode: '',
     topic: '',
     description: '',
-    files: null as File[] | null
+    files: null as File[] | null,
+    weekNumber: undefined as number | undefined
   });
 
-  const handleUploadNotes = (e: React.FormEvent) => {
+  const [semesterWeeks, setSemesterWeeks] = useState<number[]>([]);
+
+  // Load semester plan when unit is selected
+  const handleUnitChange = async (unitCode: string) => {
+    setFormData({ ...formData, unitCode, weekNumber: undefined });
+    setSemesterWeeks([]);
+    
+    const selectedUnit = assignedUnits.find(unit => unit.code === unitCode);
+    if (selectedUnit) {
+      try {
+        // Always fetch the latest semester plan (will use cache if available)
+        const plan = await getSemesterPlan(selectedUnit.id);
+        if (plan.weekPlans.length > 0) {
+          setSemesterWeeks(plan.weekPlans.map(week => week.weekNumber));
+        } else {
+          setSemesterWeeks([]);
+          toast({
+            title: "No Semester Plan",
+            description: "Please create a semester plan for this unit first.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error loading semester plan:', error);
+        setSemesterWeeks([]);
+        toast({
+          title: "No Semester Plan",
+          description: "Please create a semester plan for this unit first.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleUploadNotes = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.files || formData.files.length === 0) {
@@ -52,39 +89,67 @@ export const NotesForm = ({ onClose, onSubmit }: NotesFormProps) => {
       return;
     }
 
-    formData.files.forEach((file, index) => {
-      const newNote = {
-        id: `${Date.now()}-${index}`,
-        type: 'notes' as const,
-        title: formData.title || file.name,
+    if (!formData.weekNumber) {
+      toast({
+        title: "Error",
+        description: "Please select a week for these notes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create material for semester plan
+      const semesterMaterial = {
+        id: `material-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+        title: formData.title || formData.files[0].name,
         description: formData.description,
-        unitId: selectedUnit.id,
-        unitCode: formData.unitCode,
-        unitName: selectedUnit.name,
-        lecturerId: user?.id || '',
+        type: 'notes' as const,
+        dayOfWeek: 'monday', // Default, can be made configurable
+        releaseTime: '08:00', // Default, can be made configurable
+        isUploaded: true,
         isVisible: true,
-        createdAt: new Date().toISOString(),
-        fileName: file.name,
-        topic: formData.topic
+        documents: formData.files.map(file => ({
+          id: `doc-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+          title: file.name,
+          description: formData.description,
+          fileName: file.name,
+          fileUrl: `https://storage.example.com/${selectedUnit.id}/${file.name}`, // Placeholder URL
+          fileSize: file.size,
+          uploadDate: new Date(),
+          isVisible: true,
+          uploadedBy: user?.id || ''
+        }))
       };
 
-      addCreatedContent(newNote);
-    });
+      // Add to semester plan
+      await addMaterialToSemesterPlan(selectedUnit.id, formData.weekNumber, semesterMaterial);
 
-    setFormData({
-      title: '',
-      unitCode: '',
-      topic: '',
-      description: '',
-      files: null
-    });
+      setFormData({
+        title: '',
+        unitCode: '',
+        topic: '',
+        description: '',
+        files: null,
+        weekNumber: undefined
+      });
+      setSemesterWeeks([]);
 
-    toast({
-      title: "Notes Uploaded",
-      description: `${formData.files.length} file(s) uploaded successfully.`,
-    });
+      toast({
+        title: "Notes Uploaded",
+        description: `${formData.files.length} file(s) uploaded and added to Week ${formData.weekNumber}.`,
+      });
 
-    onSubmit();
+      onClose();
+      onSubmit();
+    } catch (error) {
+      console.error('Failed to upload notes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload notes. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +178,7 @@ export const NotesForm = ({ onClose, onSubmit }: NotesFormProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="unitCode">Unit</Label>
-              <Select value={formData.unitCode} onValueChange={(value) => setFormData({ ...formData, unitCode: value })}>
+              <Select value={formData.unitCode} onValueChange={handleUnitChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
@@ -127,6 +192,36 @@ export const NotesForm = ({ onClose, onSubmit }: NotesFormProps) => {
               </Select>
             </div>
           </div>
+
+          {/* Week Selection - Only show when unit is selected and has semester plan */}
+          {formData.unitCode && semesterWeeks.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="weekNumber">Semester Week</Label>
+              <Select 
+                value={formData.weekNumber?.toString()} 
+                onValueChange={(value) => setFormData({ ...formData, weekNumber: parseInt(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select week for these notes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesterWeeks.map((weekNum) => (
+                    <SelectItem key={weekNum} value={weekNum.toString()}>
+                      Week {weekNum}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {formData.unitCode && semesterWeeks.length === 0 && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ No semester plan found for this unit. Please create a semester plan first to organize notes by week.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="topic">Topic/Chapter</Label>

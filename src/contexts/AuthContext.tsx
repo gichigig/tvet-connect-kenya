@@ -5,19 +5,20 @@ import { useAuthHelpers } from './auth/AuthHelpers';
 import { UsersProvider, useUsers } from './users/UsersContext';
 import { UnitsProvider, useUnits } from './units/UnitsContext';
 import { FinanceProvider, useFinance } from './finance/FinanceContext';
-import { CoursesProvider } from './courses/CoursesContext';
 import { Unit } from '@/types/unitManagement';
-import { saveUnitToFirebase, fetchUnitsFromFirebase, updateUnitInFirebase, deleteUnitFromFirebase } from '@/integrations/firebase/units';
-import { getFirestore, collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { firebaseApp } from '@/integrations/firebase/config';
+import { supabase, getCurrentProfile } from '@/integrations/supabase/config';
+import { AuthService } from '@/integrations/auth/supabase';
+import { DataService } from '@/integrations/data/supabase';
+import { saveUserToStorage, getUserFromStorage, removeUserFromStorage } from '@/utils/authPersistence';
 
 export interface AuthContextType {
   user: User | null;
+  loading: boolean; // Add loading state
   supplyRequests: SupplyRequest[]; // <-- Add this line
   studentFees: StudentFee[];
   updateFeeStatus: (feeId: string, status: StudentFee['status'], paidDate?: string, paidAmount?: number, paymentMethod?: string, receiptNumber?: string) => void;
-  login: (email: string, password: string, role?: string) => Promise<void>;
+  login: (identifier: string, password: string, role?: string) => Promise<void>;
+  signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   isAdmin: boolean;
   isAuthenticated: boolean;
@@ -54,30 +55,63 @@ export interface AuthContextType {
   activateStudentCard: (studentId: string, activatedBy: string) => void;
   deactivateStudentCard: (studentId: string, deactivatedBy: string) => void;
   getAvailableUnits: (course: string, year: number, semester: number) => Unit[];
+  getFirebaseAuthToken: () => Promise<string | null>;
 addPendingUnitRegistration: (registration: {
     studentId: string;
-    studentName: string;
-    studentEmail: string;
+    studentName?: string;
+    studentEmail?: string;
     unitId: string;
     unitCode: string;
     unitName: string;
-    course: string;
-    year: number;
-    semester: number;
+    course?: string;
+    year?: number;
+    semester?: number;
+    status?: string;
+    id?: string;
+    dateRegistered?: string;
+    approvedAt?: string;
+    approvedBy?: string;
+    remarks?: string;
 }) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Initialize user from localStorage on app start
+    return getUserFromStorage();
+  });
+  const [loading, setLoading] = useState(true); // Add loading state
   const { login: loginHelper, signup: signupHelper, logout: logoutHelper } = useAuthHelpers();
+
+  // Enhanced setUser function that also saves to localStorage
+  const setUserWithPersistence = (newUser: User | null | ((prev: User | null) => User | null)) => {
+    if (typeof newUser === 'function') {
+      setUser(prev => {
+        const updatedUser = newUser(prev);
+        if (updatedUser) {
+          saveUserToStorage(updatedUser);
+        } else {
+          removeUserFromStorage();
+        }
+        return updatedUser;
+      });
+    } else {
+      setUser(newUser);
+      if (newUser) {
+        saveUserToStorage(newUser);
+      } else {
+        removeUserFromStorage();
+      }
+    }
+  };
   
   // Listen for Firebase Auth state changes with automatic token refresh
   useEffect(() => {
-    const auth = getAuth(firebaseApp);
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('Firebase Auth state changed:', firebaseUser?.uid);
+      setLoading(true); // Set loading to true when auth state changes
       
       if (firebaseUser) {
         // Check if token is valid and refresh if needed
@@ -87,7 +121,8 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
         } catch (tokenError) {
           console.error('Token refresh failed:', tokenError);
           // If token refresh fails, log out the user
-          setUser(null);
+          setUserWithPersistence(null);
+          setLoading(false);
           return;
         }
 
@@ -111,7 +146,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
               profilePicture: userData.profilePicture,
               ...userData
             };
-            setUser(userProfile);
+            setUserWithPersistence(userProfile);
             console.log('User profile loaded from Firestore:', userProfile);
           } else {
             console.log('No user profile found in Firestore for:', firebaseUser.uid);
@@ -124,7 +159,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
               role: 'student',
               approved: false
             };
-            setUser(basicUser);
+            setUserWithPersistence(basicUser);
           }
         } catch (error) {
           console.error('Error loading user profile:', error);
@@ -137,18 +172,27 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
             role: 'student',
             approved: false
           };
-          setUser(basicUser);
+          setUserWithPersistence(basicUser);
         }
       } else {
-        // No Firebase user, clear the user state
-        console.log('No Firebase user, clearing user state');
-        setUser(null);
+        // No Firebase user - only clear if we don't have a realtime DB user
+        const storedUser = getUserFromStorage();
+        if (storedUser && storedUser.id && !storedUser.id.startsWith('firebase-')) {
+          // This might be a realtime DB user, keep them logged in
+          console.log('Keeping realtime DB user logged in:', storedUser.email);
+          setUser(storedUser);
+        } else {
+          // Clear Firebase-based users
+          console.log('No Firebase user, clearing user state');
+          setUserWithPersistence(null);
+        }
       }
+      
+      setLoading(false); // Set loading to false after processing auth state
     });
 
     // Set up periodic token refresh (every 45 minutes)
     const tokenRefreshInterval = setInterval(async () => {
-      const auth = getAuth(firebaseApp);
       if (auth.currentUser) {
         try {
           await auth.currentUser.getIdToken(true);
@@ -177,6 +221,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     unblockUser,
     getAllUsers,
     pendingUnitRegistrations,
+    setPendingUnitRegistrations,
   } = useUsers();
 
   // Update profile picture with automatic deletion of old picture
@@ -190,7 +235,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
       const newImageUrl = await updateUserProfilePicture(user.id, file);
       
       // Update the user state with new profile picture
-      setUser(prev => prev ? { ...prev, profilePicture: newImageUrl } : null);
+      setUserWithPersistence(prev => prev ? { ...prev, profilePicture: newImageUrl } : null);
       
       return newImageUrl;
     } catch (error: any) {
@@ -203,11 +248,15 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     return pendingUnitRegistrations.filter(reg => reg.status === 'pending');
   };
 
-  const login = async (email: string, password: string, role?: string) => {
-    return loginHelper(email, password, role, users, setUser);
+  const login = async (identifier: string, password: string, role?: string) => {
+    return loginHelper(identifier, password, role, users, setUserWithPersistence);
+  };
+
+  const signup = async (userData: any) => {
+    return signupHelper(userData, setUsers, setUserWithPersistence);
   };
   const logout = async () => {
-    return logoutHelper(setUser);
+    return logoutHelper(setUserWithPersistence);
   };
 
   // Student cards array with sample data - should be replaced with Firebase integration
@@ -296,16 +345,60 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const addPendingUnitRegistration = (registration: {
     studentId: string;
-    studentName: string;
-    studentEmail: string;
+    studentName?: string;
+    studentEmail?: string;
     unitId: string;
     unitCode: string;
     unitName: string;
-    course: string;
-    year: number;
-    semester: number;
+    course?: string;
+    year?: number;
+    semester?: number;
+    status?: string;
+    id?: string;
+    dateRegistered?: string;
+    approvedAt?: string;
+    approvedBy?: string;
+    remarks?: string;
   }) => {
-    // TODO: Implement actual logic to add pending registration
+    // Create a new registration with all required fields
+    const newRegistration: PendingUnitRegistration = {
+      id: registration.id || `temp-${Date.now()}-${Math.random()}`,
+      studentId: registration.studentId,
+      studentName: registration.studentName || 'Unknown',
+      studentEmail: registration.studentEmail || '',
+      unitId: registration.unitId,
+      unitCode: registration.unitCode,
+      unitName: registration.unitName,
+      course: registration.course || 'Unknown',
+      year: registration.year || 1,
+      semester: registration.semester || 1,
+      status: (registration.status === 'approved' || registration.status === 'pending' || registration.status === 'rejected')
+        ? registration.status
+        : 'pending',
+      submittedDate: registration.dateRegistered || registration.approvedAt || new Date().toISOString(),
+    };
+
+    console.log('Adding pending unit registration:', newRegistration);
+    
+    setPendingUnitRegistrations(prev => {
+      // Check if registration already exists to avoid duplicates
+      const existingIndex = prev.findIndex(reg => 
+        reg.studentId === newRegistration.studentId && 
+        reg.unitCode === newRegistration.unitCode
+      );
+      
+      if (existingIndex >= 0) {
+        // Update existing registration
+        const updated = [...prev];
+        updated[existingIndex] = newRegistration;
+        console.log('Updated existing registration:', newRegistration);
+        return updated;
+      } else {
+        // Add new registration
+        console.log('Added new registration:', newRegistration);
+        return [...prev, newRegistration];
+      }
+    });
   };
 
   const [createdUnits, setCreatedUnits] = useState<Unit[]>([]);
@@ -336,9 +429,45 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
     setCreatedUnits(prev => prev.filter(unit => unit.id !== unitId));
   };
 
+  // Get Firebase Auth token for authenticated requests
+  const getFirebaseAuthToken = async (): Promise<string | null> => {
+    const firebaseUser = auth.currentUser;
+    
+    console.log('getFirebaseAuthToken debug:', {
+      hasAuth: !!auth,
+      hasFirebaseUser: !!firebaseUser,
+      firebaseUserId: firebaseUser?.uid,
+      firebaseUserEmail: firebaseUser?.email,
+      contextUser: user?.id,
+      contextUserEmail: user?.email
+    });
+    
+    if (!firebaseUser) {
+      if (user) {
+        console.log('Firebase Auth not available but user authenticated through other means:', user.email);
+        console.log('Consider implementing custom JWT tokens or alternative upload method');
+        return null; // Return null instead of throwing error
+      } else {
+        console.log('No Firebase user and no context user found');
+        return null;
+      }
+    }
+    
+    try {
+      const token = await firebaseUser.getIdToken();
+      console.log('Successfully got Firebase Auth token');
+      return token;
+    } catch (error) {
+      console.error('Failed to get Firebase Auth token:', error);
+      return null;
+    }
+  };
+
   const value: AuthContextType = {
     user,
+    loading,
     login,
+    signup,
     logout,
     users,
     setUsers,
@@ -492,13 +621,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }
         throw error;
       }
     },
+    getFirebaseAuthToken,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      <CoursesProvider>
-        {children}
-      </CoursesProvider>
+      {children}
     </AuthContext.Provider>
   );
 };

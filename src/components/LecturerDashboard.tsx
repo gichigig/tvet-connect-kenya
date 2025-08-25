@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
 import { AssignmentManager } from "@/components/lecturer/AssignmentManager";
@@ -11,20 +11,18 @@ import { LecturerDashboardStats } from "@/components/lecturer/LecturerDashboardS
 import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboardOverview";
 import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
 import { AIEssayDetector } from "@/components/lecturer/AIEssayDetector";
+import { ManualMarksInput } from "@/components/lecturer/ManualMarksInput";
 import { AvailableCourses } from "@/components/courses/AvailableCourses";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
-import { CoursesProvider, useCoursesContext } from "@/contexts/courses/CoursesContext";
+import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { LecturerCourseContainer } from "@/components/lecturer/LecturerCourseContainer";
 import { UnitDetailManager } from "@/components/lecturer/UnitDetailManager";
+import { useDashboardSync } from "@/hooks/useDashboardSync";
 
 export const LecturerDashboard = () => {
-  return (
-    <CoursesProvider>
-      <LecturerDashboardContent />
-    </CoursesProvider>
-  );
+  return <LecturerDashboardContent />;
 };
 
 const LecturerDashboardContent = () => {
@@ -33,6 +31,9 @@ const LecturerDashboardContent = () => {
   const { user, createdContent } = useAuth();
   const { getLecturerUnits } = useUnits();
   const { courses } = useCoursesContext();
+  
+  // Use dashboard sync hook for real-time semester plan integration
+  const { syncedContent, getContentByType } = useDashboardSync('lecturer');
 
   // Get units assigned to current lecturer
   const assignedUnits = getLecturerUnits(user?.id || '');
@@ -43,11 +44,35 @@ const LecturerDashboardContent = () => {
     assignedUnits.some(unit => unit.course === course.name || unit.course === course.code)
   );
 
-  // Get content created by current lecturer
+  // Combine manual created content with semester plan synced content
   const lecturerContent = createdContent.filter(content => content.lecturerId === user?.id);
-  const assignments = lecturerContent.filter(content => content.type === 'assignment');
-  const notes = lecturerContent.filter(content => content.type === 'notes');
-  const exams = lecturerContent.filter(content => content.type === 'exam' || content.type === 'cat');
+  const semesterPlanContent = syncedContent.filter(content => content.isFromSemesterPlan);
+  
+  // Merge and deduplicate content
+  const allAssignments = [
+    ...lecturerContent.filter(content => content.type === 'assignment'),
+    ...getContentByType('assignment')
+  ];
+  const allNotes = [
+    ...lecturerContent.filter(content => content.type === 'notes'),
+    ...getContentByType('notes')
+  ];
+  const allExams = [
+    ...lecturerContent.filter(content => content.type === 'exam' || content.type === 'cat'),
+    ...getContentByType('exam'),
+    ...getContentByType('cat')
+  ];
+
+  // Remove duplicates based on ID
+  const uniqueAssignments = allAssignments.filter((item, index, self) =>
+    index === self.findIndex(i => i.id === item.id)
+  );
+  const uniqueNotes = allNotes.filter((item, index, self) =>
+    index === self.findIndex(i => i.id === item.id)
+  );
+  const uniqueExams = allExams.filter((item, index, self) =>
+    index === self.findIndex(i => i.id === item.id)
+  );
 
   // If a unit is selected for detailed management, show the UnitDetailManager
   if (selectedUnit) {
@@ -62,8 +87,8 @@ const LecturerDashboardContent = () => {
   const lecturerStats = {
     totalCourses: assignedUnits.length,
     totalStudents: totalStudents,
-    pendingAssignments: assignments.length,
-    upcomingExams: exams.length
+    pendingAssignments: uniqueAssignments.length,
+    upcomingExams: uniqueExams.length
   };
 
   // Hamburger tab menu config
@@ -71,12 +96,13 @@ const LecturerDashboardContent = () => {
     { value: "overview", label: "Overview" },
     { value: "courses", label: "My Courses" },
     { value: "units", label: `My Units (${assignedUnits.length})` },
-    { value: "assignments", label: `Assignments (${assignments.length})` },
+    { value: "assignments", label: `Assignments (${uniqueAssignments.length})` },
     { value: "ai-detection", label: "AI Detection" },
-    { value: "notes", label: `Notes (${notes.length})` },
+    { value: "notes", label: `Notes (${uniqueNotes.length})` },
     { value: "attendance", label: "Attendance" },
     { value: "quiz-attendance", label: "Quiz Attendance" },
-    { value: "exams", label: `Exams & CATs (${exams.length})` },
+    { value: "exams", label: `Exams & CATs (${uniqueExams.length})` },
+    { value: "manual-marks", label: "Manual Marks Input" },
     { value: "location-restrictions", label: "Location Restrictions" },
   ];
 
@@ -100,7 +126,7 @@ const LecturerDashboardContent = () => {
       </div>
       <div className="hidden md:block mb-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -227,6 +253,9 @@ const LecturerDashboardContent = () => {
         </TabsContent>
         <TabsContent value="exams">
           <ExamManager />
+        </TabsContent>
+        <TabsContent value="manual-marks">
+          <ManualMarksInput />
         </TabsContent>
         <TabsContent value="location-restrictions">
           <LocationRestrictionManager />

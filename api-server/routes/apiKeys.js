@@ -4,7 +4,6 @@ import { authenticateAdmin, generateApiKey, hashApiKey } from '../middleware/aut
 import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
-const db = getFirestore();
 
 /**
  * Create a new API key

@@ -1,8 +1,9 @@
-import { getDatabase, ref, push } from "firebase/database";
+import { getDatabase, ref, push, set } from "firebase/database";
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { firebaseApp } from "./config";
 
 export async function saveAdminToFirebase(admin: {
+  username: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -11,10 +12,16 @@ export async function saveAdminToFirebase(admin: {
   course?: string;
   level?: string;
   admissionNumber?: string;
+  departments?: string[];
+  courses?: string[];
+  units?: string[];
+  department?: string;
 }) {
   const auth = getAuth(firebaseApp);
-  // Create user in Firebase Authentication
+  
+  // Create user in Firebase Authentication using the provided email
   const userCredential = await createUserWithEmailAndPassword(auth, admin.email, admin.password);
+  
   // Send email verification
   if (userCredential && userCredential.user) {
     try {
@@ -23,10 +30,12 @@ export async function saveAdminToFirebase(admin: {
       // Ignore or log error
     }
   }
+  
   // Save user profile in database (for app use)
   const db = getDatabase(firebaseApp);
   let dbRef;
   let data: any = {
+    username: admin.username,
     email: admin.email,
     firstName: admin.firstName,
     lastName: admin.lastName,
@@ -40,7 +49,25 @@ export async function saveAdminToFirebase(admin: {
     data.admissionNumber = admin.admissionNumber || "";
   } else {
     dbRef = ref(db, "admins");
+    // Add role-specific data
+    if (admin.role === "hod" && admin.department) {
+      data.department = admin.department;
+    }
+    if (admin.role === "lecturer") {
+      data.departments = admin.departments || [];
+      data.courses = admin.courses || [];
+      data.units = admin.units || [];
+    }
   }
   await push(dbRef, data);
+  
+  // Also save to username index for lookup
+  const usernameRef = ref(db, `usersByUsername/${admin.username}`);
+  await set(usernameRef, {
+    uid: userCredential.user.uid,
+    role: admin.role,
+    ...data
+  });
+  
   return userCredential;
 }

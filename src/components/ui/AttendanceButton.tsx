@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { MapPin, Clock, CheckCircle, AlertCircle, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GeolocationService } from '@/lib/geolocation';
 import { StorageService } from '@/lib/storage';
 import { AttendanceLocation, AttendanceRecord, GeolocationData } from '@/types/attendance';
+import { checkDeviceAttendanceEligibility, recordDeviceAttendanceRestriction } from '@/utils/deviceFingerprinting';
 
 import type { StudentData } from "@/types/attendance";
 interface AttendanceButtonProps {
@@ -22,12 +23,29 @@ export function AttendanceButton({ location, onAttendanceMarked, student, isInsi
   const [canMarkAttendance, setCanMarkAttendance] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [alreadyMarked, setAlreadyMarked] = useState(false);
+  const [deviceEligible, setDeviceEligible] = useState(true);
+  const [deviceRestrictionReason, setDeviceRestrictionReason] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
     checkExistingAttendance();
+    checkDeviceEligibility();
     // eslint-disable-next-line
   }, [location?.id, student?.id]);
+
+  const checkDeviceEligibility = async () => {
+    if (!location?.id || !student?.id) return;
+
+    try {
+      const eligibility = await checkDeviceAttendanceEligibility(location.id, student.id);
+      setDeviceEligible(eligibility.allowed);
+      setDeviceRestrictionReason(eligibility.reason || '');
+    } catch (error) {
+      console.error('Error checking device eligibility:', error);
+      setDeviceEligible(false);
+      setDeviceRestrictionReason('Unable to verify device eligibility');
+    }
+  };
 
   const checkExistingAttendance = () => {
     let studentId = student?.id;
@@ -87,6 +105,16 @@ export function AttendanceButton({ location, onAttendanceMarked, student, isInsi
       return;
     }
 
+    // Check device eligibility first
+    if (!deviceEligible) {
+      toast({
+        title: "Device Not Eligible",
+        description: deviceRestrictionReason || "This device cannot mark attendance at this time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let studentId = student?.id;
     if (!studentId) {
       const user = StorageService.getCurrentUser();
@@ -118,6 +146,13 @@ export function AttendanceButton({ location, onAttendanceMarked, student, isInsi
 
       StorageService.addAttendanceRecord(attendanceRecord);
       setAlreadyMarked(true);
+
+      // Record device restriction to prevent reuse
+      await recordDeviceAttendanceRestriction(
+        location.id, 
+        studentId, 
+        { latitude: currentLocation.latitude, longitude: currentLocation.longitude }
+      );
 
       toast({
         title: "Attendance Marked!",
@@ -201,16 +236,30 @@ export function AttendanceButton({ location, onAttendanceMarked, student, isInsi
           </div>
         </div>
 
+        {!deviceEligible && (
+          <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+            <div className="flex items-center space-x-2">
+              <Shield className="w-4 h-4 text-destructive" />
+              <p className="text-sm text-destructive font-medium">Device Restricted</p>
+            </div>
+            <p className="text-sm text-destructive/80 mt-1">
+              {deviceRestrictionReason || "This device cannot mark attendance at this time."}
+            </p>
+          </div>
+        )}
+
         <Button
           variant={alreadyMarked ? "secondary" : "default"}
           size="lg"
           className="w-full mt-4"
           onClick={markAttendance}
-          disabled={isLoading || alreadyMarked || !location.isActive}
+          disabled={isLoading || alreadyMarked || !location.isActive || !deviceEligible}
         >
           {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {alreadyMarked 
             ? "Attendance Already Marked" 
+            : !deviceEligible
+            ? "Device Not Eligible"
             : canMarkAttendance 
             ? "Mark Attendance" 
             : "Check Location"

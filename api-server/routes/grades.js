@@ -4,13 +4,40 @@ import { requirePermission } from '../middleware/auth.js';
 import { body, query, validationResult } from 'express-validator';
 
 const router = express.Router();
-const db = getFirestore();
+
+/**
+ * Middleware to block grades access for tvet-connect-kenya app
+ * Grades should only be accessible via grade-vault-tvet app
+ */
+const blockTvetConnectAccess = (req, res, next) => {
+  const userAgent = req.headers['user-agent'] || '';
+  const referer = req.headers['referer'] || '';
+  const origin = req.headers['origin'] || '';
+  
+  // Check if request is coming from tvet-connect-kenya app
+  const isTvetConnectApp = (
+    userAgent.includes('tvet-connect') ||
+    referer.includes('tvet-connect') ||
+    origin.includes('tvet-connect') ||
+    req.headers['x-app-name'] === 'tvet-connect-kenya'
+  );
+  
+  if (isTvetConnectApp) {
+    return res.status(403).json({
+      error: 'Access Denied',
+      message: 'Grades are not accessible through tvet-connect-kenya app. Please use grade-vault-tvet app.'
+    });
+  }
+  
+  next();
+};
 
 /**
  * Get grades for a student
  * GET /api/grades/student/:studentId
  */
 router.get('/student/:studentId',
+  blockTvetConnectAccess,
   requirePermission('grades:read'),
   [
     query('semester').optional().isInt(),
@@ -74,6 +101,7 @@ router.get('/student/:studentId',
  * GET /api/grades/unit/:unitId
  */
 router.get('/unit/:unitId',
+  blockTvetConnectAccess,
   requirePermission('grades:read'),
   [
     query('semester').optional().isInt(),
@@ -138,6 +166,7 @@ router.get('/unit/:unitId',
  * POST /api/grades
  */
 router.post('/',
+  blockTvetConnectAccess,
   requirePermission('grades:write'),
   [
     body('studentId').isString().withMessage('Student ID is required'),
@@ -210,6 +239,7 @@ router.post('/',
  * GET /api/grades/transcript/:studentId
  */
 router.get('/transcript/:studentId',
+  blockTvetConnectAccess,
   requirePermission('grades:read'),
   async (req, res) => {
     try {
