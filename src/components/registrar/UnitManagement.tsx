@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, BookOpen, User, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { notifyStudentsOfNewUnits } from "@/utils/notificationUtils";

@@ -1,0 +1,24 @@
+{
+  "exportDate": "2025-09-01T13:58:21.554Z",
+  "exportedFiles": [
+    "documents-firestore-export.json",
+    "fee_structures-firestore-export.json",
+    "migration-report.json",
+    "notifications-firestore-export.json",
+    "users-export.json"
+  ],
+  "summary": {
+    "documents-firestore-export.json": "1 records",
+    "fee_structures-firestore-export.json": "5 records",
+    "migration-report.json": "4 records",
+    "notifications-firestore-export.json": "18 records",
+    "users-export.json": "3 records"
+  },
+  "notes": [
+    "All Firebase Realtime Database collections have been exported",
+    "All Firestore collections have been exported",
+    "Firebase Auth users need to be exported separately using Admin SDK",
+    "File attachments in Storage need to be migrated separately",
+    "Review data structure before importing to Supabase"
+  ]
+}

@@ -53,6 +53,7 @@ import financeRoutes from './routes/finance.js';
 import uploadRoutes from './routes/upload.js';
 import enhancedRoutes from './routes/enhanced.js';
 import assignmentsRoutes from './routes/assignments.js';
+import authMigrationRoutes from './routes/auth-migration.js';
 
 // Import middleware
 import { authenticateApiKey } from './middleware/auth.js';
@@ -153,6 +154,7 @@ app.use('/api/admin/keys', apiKeyRoutes);
 
 // Public auth routes (for login verification)
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', authMigrationRoutes);
 
 // Student-specific routes (requires student JWT)
 app.use('/api/me', myDetailsRoutes);

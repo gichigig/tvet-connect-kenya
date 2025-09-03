@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { ExamTable } from "./exam-manager/ExamTable";
 import { EmptyExamState } from "./exam-manager/EmptyExamState";
 import { useDashboardSync } from "@/hooks/useDashboardSync";

@@ -12,7 +12,7 @@ import { useSemesterPlan, WeeklyDocument } from '@/contexts/SemesterPlanContext'
 import { Upload, FileText, Download, Trash2, Eye, EyeOff, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fileStorageService, UploadProgress } from '@/services/FileStorageService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 interface DocumentManagerProps {
   unitId: string;

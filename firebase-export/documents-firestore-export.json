@@ -1,0 +1,23 @@
+[
+  {
+    "id": "assignment_temp-assignment_1755452588631_j6gacy6rz",
+    "entityId": "temp-assignment",
+    "isVisible": true,
+    "fileType": "application/pdf",
+    "description": "",
+    "downloadUrl": "https://tvet-kenya-uploads-2024.s3.eu-north-1.amazonaws.com/documents/assignment/semester-plan-assignment/temp-assignment/1755452593009_4csojiyxs_exam-card-undefined-1-2023_2024.pdf",
+    "fileName": "exam-card-undefined-1-2023_2024.pdf",
+    "category": "assignment",
+    "s3Key": "documents/assignment/semester-plan-assignment/temp-assignment/1755452593009_4csojiyxs_exam-card-undefined-1-2023_2024.pdf",
+    "fileSize": 6892,
+    "entityType": "semester-plan-assignment",
+    "s3Bucket": "tvet-kenya-uploads-2024",
+    "uploadedBy": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "uploadedAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755452594,
+      "nanoseconds": 33000000
+    },
+    "title": "exam-card-undefined-1-2023_2024"
+  }
+]

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Clock, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 interface Question {
   id: string;

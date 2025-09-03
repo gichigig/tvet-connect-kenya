@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Unit } from '@/types/unitManagement';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { FeesSummaryCards } from "./student-fees-overview/FeesSummaryCards";
 import { FeesFilters } from "./student-fees-overview/FeesFilters";
 import { FeesTable } from "./student-fees-overview/FeesTable";

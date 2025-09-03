@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Course, Lesson } from "@/data/coursesData";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 type ViewState = "catalog" | "course" | "lesson" | "admin" | "classroom" | "lecturer" | "registrar" | "hod" | "student" | "finance";
 

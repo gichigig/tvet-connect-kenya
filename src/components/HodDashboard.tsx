@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useStudents } from "@/contexts/students/StudentsContext";
 import { useUsers } from "@/contexts/users/UsersContext";
 import { Button } from "@/components/ui/button";

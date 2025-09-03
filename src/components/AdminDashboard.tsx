@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Users, Clock, Shield, Ban, Unlock, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import NotificationManager from "@/components/admin/NotificationManager";
 

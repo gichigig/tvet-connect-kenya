@@ -13,7 +13,7 @@ import { LocationRestrictionManager } from "@/components/lecturer/LocationRestri
 import { AIEssayDetector } from "@/components/lecturer/AIEssayDetector";
 import { ManualMarksInput } from "@/components/lecturer/ManualMarksInput";
 import { AvailableCourses } from "@/components/courses/AvailableCourses";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";

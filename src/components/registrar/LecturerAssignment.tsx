@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, UserPlus, User, BookOpen, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { notifyLecturerOfUnitAssignment } from "@/utils/notificationUtils";
 import { Input } from "@/components/ui/input";

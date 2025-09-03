@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
 import { UnitManagementStats } from "./unit-management/UnitManagementStats";
 import { UnitCard } from "./unit-management/UnitCard";

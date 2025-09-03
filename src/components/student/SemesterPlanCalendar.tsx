@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BookOpen, FileText, PenTool, Brain, Users, Video, MapPin, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { format, isSameDay } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
 
 interface ActivityItem {

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { NotesForm } from "./notes-manager/NotesForm";
 import { NotesTable } from "./notes-manager/NotesTable";
 import { useDashboardSync } from "@/hooks/useDashboardSync";

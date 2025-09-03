@@ -30,7 +30,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 // Default map center (e.g., Nairobi)
 const DEFAULT_CENTER = { lat: -1.286389, lng: 36.817223 };
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

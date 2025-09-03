@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { checkDeviceAttendanceEligibility, recordDeviceAttendanceRestriction,cleanupOldDeviceRestrictions } from "@/utils/deviceFingerprinting";  
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';

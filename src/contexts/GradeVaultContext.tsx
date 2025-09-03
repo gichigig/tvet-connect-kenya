@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, ExamResult } from '@/contexts/auth/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useUsers } from '@/contexts/users/UsersContext';
 
 // Grade vault specific interfaces

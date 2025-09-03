@@ -10,7 +10,7 @@ import { HodDashboard } from "@/components/HodDashboard";
 import { StudentDashboard } from "@/components/StudentDashboard";
 import { FinanceDashboard } from "@/components/FinanceDashboard";
 import { Course, Lesson } from "@/data/coursesData";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useEffect, useState } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { firebaseApp } from "@/integrations/firebase/config";

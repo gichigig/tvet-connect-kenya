@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useStudents } from "@/contexts/students/StudentsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,8 @@ import { UnitManagement } from "@/components/registrar/UnitManagement";
 import { DepartmentManagement } from "@/components/registrar/DepartmentManagement";
 import AddStudentForm from "@/components/registrar/AddStudentFormMultiStep";
 import CreateStudentForm from "@/components/registrar/CreateStudentForm";
+import EnhancedAddStudentForm from "@/components/registrar/EnhancedAddStudentForm";
+import SupabaseStudentForm from "@/components/registrar/SupabaseStudentForm";
 import { CourseManagement } from "@/components/registrar/CourseManagement";
 import { CreateCourseForm } from "@/components/registrar/CreateCourseForm";
 import { CourseList } from "@/components/registrar/CourseList";
@@ -215,7 +217,9 @@ const RegistrarDashboardContent = () => {
         >
           <option value="students">Student Approval</option>
           <option value="approved">Approved Students</option>
-          <option value="create-student">Create Student</option>
+          <option value="create-student">Create Student (Legacy Firebase)</option>
+          <option value="enhanced-create-student">Enhanced Student Creation (Dual)</option>
+          <option value="supabase-student">Create Student (Supabase Only)</option>
           <option value="departments">Departments</option>
           <option value="courses">Course Management</option>
           <option value="unit-management">Unit Management</option>
@@ -228,7 +232,7 @@ const RegistrarDashboardContent = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         {/* Desktop tabs */}
-        <TabsList className="hidden md:grid w-full grid-cols-10">
+        <TabsList className="hidden md:grid w-full grid-cols-12">
           <TabsTrigger value="students" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
             Student Approval
@@ -239,7 +243,15 @@ const RegistrarDashboardContent = () => {
           </TabsTrigger>
           <TabsTrigger value="create-student" className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4" />
-            Create Student
+            Legacy Firebase
+          </TabsTrigger>
+          <TabsTrigger value="enhanced-create-student" className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4" />
+            <Badge variant="default" className="ml-1 text-xs">Dual</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="supabase-student" className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4" />
+            <Badge variant="default" className="ml-1 text-xs bg-green-600">Supabase</Badge>
           </TabsTrigger>
           <TabsTrigger value="departments" className="flex items-center gap-2">
             <Building className="w-4 h-4" />
@@ -291,6 +303,14 @@ const RegistrarDashboardContent = () => {
 
         <TabsContent value="create-student" className="space-y-4">
           <AddStudentForm />
+        </TabsContent>
+
+        <TabsContent value="enhanced-create-student" className="space-y-4">
+          <EnhancedAddStudentForm />
+        </TabsContent>
+
+        <TabsContent value="supabase-student" className="space-y-4">
+          <SupabaseStudentForm />
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-4">

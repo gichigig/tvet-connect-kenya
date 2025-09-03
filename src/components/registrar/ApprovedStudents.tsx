@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useStudents } from "@/contexts/students/StudentsContext";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { Button } from "@/components/ui/button";

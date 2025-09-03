@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { AssignmentForm } from "./assignment-manager/AssignmentForm";
 import { AssignmentTable } from "./assignment-manager/AssignmentTable";
 import { useDashboardSync } from "@/hooks/useDashboardSync";

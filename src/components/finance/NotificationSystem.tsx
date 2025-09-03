@@ -1,5 +1,5 @@
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { BulkActions } from "./notification-system/BulkActions";
 import { CustomNotificationForm } from "./notification-system/CustomNotificationForm";
 import { NotificationStats } from "./notification-system/NotificationStats";

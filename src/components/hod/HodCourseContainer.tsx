@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen, Users, GraduationCap, UserCheck, AlertCircle } from "lucide-react";
 import { useUnits } from "@/contexts/units/UnitsContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Unit } from "@/types/unitManagement";
 import { Course } from "@/types/course";

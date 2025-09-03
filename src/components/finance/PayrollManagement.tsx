@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Users, DollarSign, Send, FileText, CheckCircle, Pencil, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useFinance } from "@/contexts/finance/FinanceContext";
 import { AddWorkerDialog } from "./AddWorkerDialog";
 

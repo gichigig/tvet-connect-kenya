@@ -10,6 +10,10 @@ import { supabase, getCurrentProfile } from '@/integrations/supabase/config';
 import { AuthService } from '@/integrations/auth/supabase';
 import { DataService } from '@/integrations/data/supabase';
 import { saveUserToStorage, getUserFromStorage, removeUserFromStorage } from '@/utils/authPersistence';
+// Firebase imports for auth state management
+import { onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc, onSnapshot, collection } from 'firebase/firestore';
+import { firebaseApp, auth } from '@/integrations/firebase/config';
 
 export interface AuthContextType {
   user: User | null;

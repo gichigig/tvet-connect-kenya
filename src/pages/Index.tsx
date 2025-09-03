@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AppViewRenderer } from "@/components/AppViewRenderer";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useViewState } from "@/hooks/useViewState";
 import { useCourseProgress } from "@/hooks/useCourseProgress";
 import { useCourseActions } from "@/hooks/useCourseActions";

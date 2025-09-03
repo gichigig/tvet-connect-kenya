@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useCoursesContext } from '@/contexts/courses/CoursesContext';
 import { Course } from '@/types/course';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 interface AvailableCoursesProps {
   userRole?: 'student' | 'lecturer' | 'all';

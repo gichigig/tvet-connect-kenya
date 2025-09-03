@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Upload, FileText, Check, Clock, AlertCircle, Loader2, Download } from 'lucide-react';
 import { fileStorageService, StoredDocument, UploadProgress } from '@/services/FileStorageService';
 import { FallbackStorageIndicator } from '@/components/fallback/FallbackStorageIndicator';

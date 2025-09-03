@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { uploadCourseMaterialSecurely } from '@/integrations/aws/secureUploadLambda';
 import { uploadCourseMaterialDirectly } from '@/integrations/aws/directUpload';
 import { uploadCourseMaterialLocally } from '@/integrations/aws/localUpload';

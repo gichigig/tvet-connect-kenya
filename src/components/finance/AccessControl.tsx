@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Ban, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { AccessControlStats } from "./access-control/AccessControlStats";
 import { AccessControlBulkActions } from "./access-control/AccessControlBulkActions";
 import { AccessControlTable } from "./access-control/AccessControlTable";

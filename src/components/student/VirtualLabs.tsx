@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FlaskConical, Microscope, Cpu, Heart, Play, Clock, Star, Trophy, CheckCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
 import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc } from "firebase/firestore";
 import { firebaseApp } from "@/lib/firebase";

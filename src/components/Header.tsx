@@ -4,7 +4,7 @@ import { User, Search, LogOut, Shield, GraduationCap, Bell } from "lucide-react"
 import Cropper from "react-easy-crop";
 import { MobileMenu } from "@/components/ui/MobileMenu";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import getCroppedImg from "@/components/getCroppedImg";
 import {

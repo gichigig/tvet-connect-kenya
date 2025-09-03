@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, Calendar as CalendarIcon, Clock, MapPin, Plus, AlertCircle, Wifi, WifiOff } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
 import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
 import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from "firebase/firestore";

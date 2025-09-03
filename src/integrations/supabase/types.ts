@@ -1,4 +1,16 @@
-export * from './types/generated';
+// Type aliases for enums
+type ProctoringEventType = "tab_switch" | "face_not_visible" | "multiple_faces" | "audio_detected" | "no_person"
+type SeverityLevel = "low" | "medium" | "high"
+type ExamType = "quiz" | "midterm" | "final" | "practice"
+type DomainType = "science" | "engineering" | "medical"
+type JobStatus = "open" | "closed" | "in_review"
+type JobType = "internship" | "full_time" | "part_time" | "contract"
+type SessionType = "lecture" | "tutorial" | "practical"
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+// This type is used to define our database schema
+export interface Database {
   public: {
     Tables: {
       profiles: {
@@ -269,20 +281,20 @@ export * from './types/generated';
           academic_period?: string | null
           created_at?: string | null
           feedback_text: string
-          feedback_type: string
+          feedback_type: "unit" | "lecturer" | "facility" | "general"
           id?: string
           rating?: number | null
-          sentiment?: string | null
+          sentiment?: "positive" | "negative" | "neutral" | null
           subject_id?: string | null
         }
         Update: {
           academic_period?: string | null
           created_at?: string | null
           feedback_text?: string
-          feedback_type?: string
+          feedback_type?: "unit" | "lecturer" | "facility" | "general"
           id?: string
           rating?: number | null
-          sentiment?: string | null
+          sentiment?: "positive" | "negative" | "neutral" | null
           subject_id?: string | null
         }
         Relationships: []
@@ -362,13 +374,13 @@ export * from './types/generated';
           end_time: string
           id: string
           is_active: boolean
+          session_type: "lecture" | "tutorial" | "practical"
           latitude: number | null
+          longitude: number | null
+          location_required: boolean
           lecturer_id: string
           lecturer_name: string
-          location_required: boolean
-          longitude: number | null
           session_date: string
-          session_type: string
           start_time: string
           unit_code: string
           unit_name: string
@@ -388,7 +400,7 @@ export * from './types/generated';
           location_required?: boolean
           longitude?: number | null
           session_date: string
-          session_type: string
+          session_type: "lecture" | "tutorial" | "practical"
           start_time: string
           unit_code: string
           unit_name: string
@@ -408,7 +420,7 @@ export * from './types/generated';
           location_required?: boolean
           longitude?: number | null
           session_date?: string
-          session_type?: string
+          session_type?: "lecture" | "tutorial" | "practical"
           start_time?: string
           unit_code?: string
           unit_name?: string
@@ -767,29 +779,29 @@ export * from './types/generated';
       experiment_attempts: {
         Row: {
           completed_at: string | null
-          experiment_id: string | null
+          experiment_id: string
           id: string
           score: number | null
-          status: string | null
-          student_id: string | null
+          status: "in_progress" | "completed" | "failed"
+          student_id: string
           submission_data: Json | null
         }
         Insert: {
           completed_at?: string | null
-          experiment_id?: string | null
+          experiment_id: string
           id?: string
           score?: number | null
-          status?: string | null
-          student_id?: string | null
+          status?: "in_progress" | "completed" | "failed"
+          student_id: string
           submission_data?: Json | null
         }
         Update: {
           completed_at?: string | null
-          experiment_id?: string | null
+          experiment_id?: string
           id?: string
           score?: number | null
-          status?: string | null
-          student_id?: string | null
+          status?: "in_progress" | "completed" | "failed"
+          student_id?: string
           submission_data?: Json | null
         }
         Relationships: [
@@ -800,6 +812,13 @@ export * from './types/generated';
             referencedRelation: "experiments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "experiment_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
       }
       experiments: {
@@ -965,14 +984,14 @@ export * from './types/generated';
           end_time: string
           exam_type: Database["public"]["Enums"]["exam_type"]
           id?: string
-          is_published?: boolean | null
+          is_published?: boolean
           passing_marks: number
-          proctoring_enabled?: boolean | null
+          proctoring_enabled?: boolean
           start_time: string
           title: string
           total_marks: number
           unit_code: string
-          webcam_required?: boolean | null
+          webcam_required?: boolean
         }
         Update: {
           allow_tab_switch?: boolean | null
@@ -983,23 +1002,38 @@ export * from './types/generated';
           end_time?: string
           exam_type?: Database["public"]["Enums"]["exam_type"]
           id?: string
-          is_published?: boolean | null
+          is_published?: boolean
           passing_marks?: number
-          proctoring_enabled?: boolean | null
+          proctoring_enabled?: boolean
           start_time?: string
           title?: string
           total_marks?: number
           unit_code?: string
-          webcam_required?: boolean | null
+          webcam_required?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "online_exams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "online_exams_unit_code_fkey"
+            columns: ["unit_code"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["code"]
+          }
+        ]
       }
       pending_unit_registrations: {
         Row: {
           course: string
           id: string
           semester: number
-          status: string
+          status: "pending" | "approved" | "rejected"
           student_email: string
           student_id: string
           student_name: string
@@ -1013,7 +1047,7 @@ export * from './types/generated';
           course: string
           id?: string
           semester: number
-          status?: string
+          status?: "pending" | "approved" | "rejected"
           student_email: string
           student_id: string
           student_name: string
@@ -1027,7 +1061,7 @@ export * from './types/generated';
           course?: string
           id?: string
           semester?: number
-          status?: string
+          status?: "pending" | "approved" | "rejected"
           student_email?: string
           student_id?: string
           student_name?: string
@@ -1037,32 +1071,47 @@ export * from './types/generated';
           unit_name?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pending_unit_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_unit_registrations_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       proctoring_events: {
         Row: {
-          attempt_id: string | null
+          attempt_id: string
           event_data: Json | null
-          event_type: string
+          event_type: "tab_switch" | "face_not_visible" | "multiple_faces" | "audio_detected" | "no_person"
           id: string
-          severity: string
-          timestamp: string | null
+          severity: "low" | "medium" | "high"
+          timestamp: string
         }
         Insert: {
-          attempt_id?: string | null
+          attempt_id: string
           event_data?: Json | null
-          event_type: string
+          event_type: "tab_switch" | "face_not_visible" | "multiple_faces" | "audio_detected" | "no_person"
           id?: string
-          severity: string
-          timestamp?: string | null
+          severity: "low" | "medium" | "high"
+          timestamp?: string
         }
         Update: {
-          attempt_id?: string | null
+          attempt_id?: string
           event_data?: Json | null
-          event_type?: string
+          event_type?: "tab_switch" | "face_not_visible" | "multiple_faces" | "audio_detected" | "no_person"
           id?: string
-          severity?: string
-          timestamp?: string | null
+          severity?: "low" | "medium" | "high"
+          timestamp?: string
         }
         Relationships: [
           {
@@ -1071,7 +1120,7 @@ export * from './types/generated';
             isOneToOne: false
             referencedRelation: "exam_attempts"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       question_bank: {
@@ -1483,7 +1532,7 @@ export * from './types/generated';
     }
     Functions: {
       generate_verification_hash: {
-        Args: Record<PropertyKey, never>
+        Args: { content: string }
         Returns: string
       }
     }
@@ -1493,138 +1542,15 @@ export * from './types/generated';
       experiment_difficulty: "beginner" | "intermediate" | "advanced"
       job_status: "open" | "closed" | "in_review"
       job_type: "internship" | "full_time" | "part_time" | "contract"
+      session_type: "lecture" | "tutorial" | "practical"
+      proctoring_event_type: "tab_switch" | "face_not_visible" | "multiple_faces" | "audio_detected" | "no_person"
+      severity_level: "low" | "medium" | "high"
     }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      domain_type: ["science", "engineering", "medical"],
-      exam_type: ["quiz", "midterm", "final", "practice"],
-      experiment_difficulty: ["beginner", "intermediate", "advanced"],
-      job_status: ["open", "closed", "in_review"],
-      job_type: ["internship", "full_time", "part_time", "contract"],
-    },
-  },
-} as const
+// Type helpers
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
+export type TablesUpdate<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]

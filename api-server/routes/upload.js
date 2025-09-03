@@ -1,20 +1,22 @@
-// Server-side S3 upload endpoint
+// Server-side Cloudflare R2 upload endpoint
 import express from 'express';
-import AWS from 'aws-sdk';
+import { S3Client } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import cors from 'cors';
 
 const router = express.Router();
 
-// Configure AWS from environment variables
-AWS.config.update({
-  region: process.env.AWS_REGION || 'eu-north-1',
-  accessKeyId: process.env.***REMOVED***,
-  secretAccessKey: process.env.***REMOVED***
+// Configure Cloudflare R2 client
+const s3Client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  }
 });
 
-const s3 = new AWS.S3();
-const BUCKET_NAME = 'tvet-kenya-uploads-2024';
+const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'tvet-connect-kenya-r2';
 
 // Configure multer for file uploads (in memory)
 const upload = multer({
@@ -52,7 +54,7 @@ router.post('/upload-course-material', upload.single('file'), async (req, res) =
     const fileExtension = req.file.originalname.split('.').pop();
     const uniqueFileName = customFileName || `${timestamp}_${randomString}.${fileExtension}`;
 
-    // S3 upload parameters
+    // R2 upload parameters
     const key = `course-materials/${unitId || 'general'}/${uniqueFileName}`;
     
     const uploadParams = {
@@ -68,29 +70,36 @@ router.post('/upload-course-material', upload.single('file'), async (req, res) =
       }
     };
 
-    console.log('Uploading to S3:', {
+    console.log('Uploading to R2:', {
       bucket: BUCKET_NAME,
       key,
       contentType: req.file.mimetype,
       size: req.file.size
     });
 
-    // Upload to S3
-    const result = await s3.upload(uploadParams).promise();
+    // Upload to R2
+    const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+    const command = new PutObjectCommand(uploadParams);
+    const result = await s3Client.send(command);
     
-    console.log('S3 upload successful:', result.Location);
+    // Generate public URL
+    const fileUrl = process.env.R2_CUSTOM_DOMAIN 
+      ? `${process.env.R2_CUSTOM_DOMAIN}/${key}`
+      : `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+
+    console.log('R2 upload successful:', fileUrl);
 
     res.json({
       success: true,
-      fileUrl: result.Location,
+      fileUrl,
       fileName: uniqueFileName,
       originalName: req.file.originalname,
       size: req.file.size,
-      key: result.Key
+      key
     });
 
   } catch (error) {
-    console.error('S3 upload error:', error);
+    console.error('R2 upload error:', error);
     res.status(500).json({
       error: 'Upload failed',
       message: error.message,
@@ -107,52 +116,77 @@ router.get('/download/:key(*)', async (req, res) => {
       fullPath: req.params[0]
     });
 
-    // The key parameter contains the full S3 path
-    const s3Key = req.params.key;
+    // The key parameter contains the full R2 path
+    const r2Key = req.params.key;
     
-    // Get the object from S3
+    // Get the object from R2
     const getObjectParams = {
       Bucket: BUCKET_NAME,
-      Key: s3Key
+      Key: r2Key
     };
 
-    console.log('Downloading from S3:', getObjectParams);
+    console.log('Downloading from R2:', getObjectParams);
 
     try {
-      // Get the file from S3
-      const s3Object = await s3.getObject(getObjectParams).promise();
+      // Get the file from R2 using AWS SDK v3
+      const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+      const command = new GetObjectCommand(getObjectParams);
+      const r2Object = await s3Client.send(command);
       
       // Set appropriate response headers
-      res.setHeader('Content-Type', s3Object.ContentType || 'application/octet-stream');
-      res.setHeader('Content-Length', s3Object.ContentLength);
-      res.setHeader('Content-Disposition', `attachment; filename="${s3Object.Metadata?.originalName || s3Object.Metadata?.originalname || 'download'}"`);
+      res.setHeader('Content-Type', r2Object.ContentType || 'application/octet-stream');
+      res.setHeader('Content-Length', r2Object.ContentLength || 0);
+      res.setHeader('Content-Disposition', `attachment; filename="${r2Object.Metadata?.originalName || r2Object.Metadata?.originalname || 'download'}"`);
       
       // Stream the file to the response
-      res.send(s3Object.Body);
+      if (r2Object.Body) {
+        const stream = r2Object.Body;
+        if (stream instanceof ReadableStream) {
+          const reader = stream.getReader();
+          const chunks = [];
+          let done, value;
+          
+          while (!done) {
+            ({ done, value } = await reader.read());
+            if (value) chunks.push(value);
+          }
+          
+          const buffer = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+          let offset = 0;
+          for (const chunk of chunks) {
+            buffer.set(chunk, offset);
+            offset += chunk.length;
+          }
+          
+          res.send(Buffer.from(buffer));
+        } else {
+          res.send(r2Object.Body);
+        }
+      }
       
-      console.log('File downloaded successfully:', s3Key);
-    } catch (s3Error) {
-      console.error('S3 Error:', s3Error);
+      console.log('File downloaded successfully:', r2Key);
+    } catch (r2Error) {
+      console.error('R2 Error:', r2Error);
       
-      // Handle specific S3 errors
-      if (s3Error.code === 'NoSuchKey') {
+      // Handle specific R2 errors
+      if (r2Error.name === 'NoSuchKey') {
         return res.status(404).json({ 
           error: 'File not found',
           message: 'The requested file does not exist in the storage bucket.',
-          key: s3Key
+          key: r2Key
         });
       }
       
-      if (s3Error.code === 'AccessDenied') {
+      if (r2Error.name === 'AccessDenied') {
         return res.status(403).json({ 
           error: 'Access denied',
           message: 'Unable to access the requested file. Please contact support.',
-          key: s3Key
+          key: r2Key
         });
       }
       
-      // Generic S3 error
-      throw s3Error;
+      // Generic R2 error
+      throw r2Error;
     }
     
   } catch (error) {
@@ -170,9 +204,9 @@ router.get('/download/:key(*)', async (req, res) => {
 router.get('/upload-health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'S3 Upload Service',
+    service: 'Cloudflare R2 Upload Service',
     bucket: BUCKET_NAME,
-    region: 'eu-north-1'
+    region: 'auto'
   });
 });
 

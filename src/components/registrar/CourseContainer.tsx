@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen, Plus, GraduationCap, Users, Clock, Edit, Trash2 } from "lucide-react";
 import { useUnits } from "@/contexts/units/UnitsContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import { Unit } from "@/types/unitManagement";

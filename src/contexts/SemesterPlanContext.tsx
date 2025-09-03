@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { SemesterPlanAPI } from '@/integrations/api/semesterPlanAPI';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { fileStorageService } from '@/services/FileStorageService';
 
 // API Configuration

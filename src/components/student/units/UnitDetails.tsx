@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Video, FileText, PenTool, Calendar, Users, GraduationCap, Download, Clock, MessageSquare, ArrowLeft, ExternalLink, MessageCircle, BookOpen, Lock, Unlock, Monitor, Camera, Keyboard } from "lucide-react";
 import { Unit } from './types';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useCourseContent } from "@/contexts/CourseContentContext";
 import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
 import LocalFileDisplay from "@/components/ui/LocalFileDisplay";

@@ -1,0 +1,251 @@
+[
+  {
+    "id": "4idmMVjYl9swRYla2w3I",
+    "actionUrl": "/",
+    "title": "Welcome to TVET Connect Kenya!",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 537000000
+    },
+    "message": "Your account has been successfully created. Explore courses and start your learning journey.",
+    "read": false,
+    "type": "success"
+  },
+  {
+    "id": "8pSVfBNYIfrUx2t2Ngny",
+    "actionUrl": "/assignments",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 604000000
+    },
+    "message": "A new assignment has been posted for Computer Science 101. Due date: December 30, 2024.",
+    "type": "assignment",
+    "read": false,
+    "title": "New Assignment Available"
+  },
+  {
+    "id": "EuHM1Ba78SJOmGAfrZh7",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "title": "New Course Announcement",
+    "message": "Exciting new courses in Data Science and Machine Learning are now available for enrollment.",
+    "actionUrl": "/courses",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 787000000
+    },
+    "read": false,
+    "type": "announcement"
+  },
+  {
+    "id": "FAUlq2NqB4mf2K6Vn0xC",
+    "read": false,
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 152000000
+    },
+    "message": "Your account has been successfully created. Explore courses and start your learning journey.",
+    "type": "success",
+    "title": "Welcome to TVET Connect Kenya!",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "actionUrl": "/"
+  },
+  {
+    "id": "GzBI1ZWqMzm6yzY9hEii",
+    "read": false,
+    "type": "result",
+    "title": "Exam Results Published",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "message": "Your exam results for Semester 1 are now available. Check your performance in the results section.",
+    "actionUrl": "/results",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 693000000
+    }
+  },
+  {
+    "id": "Hv2kfTNg6Zey42tkNN5r",
+    "type": "assignment",
+    "actionUrl": "/assignments",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "message": "A new assignment has been posted for Computer Science 101. Due date: December 30, 2024.",
+    "read": false,
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 603000000
+    },
+    "title": "New Assignment Available"
+  },
+  {
+    "id": "LO58MRLV6MlfsssDGwwS",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 765000000
+    },
+    "read": false,
+    "message": "Scheduled maintenance will occur on Sunday, 2:00 AM - 4:00 AM. Some services may be unavailable.",
+    "type": "warning",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "title": "System Maintenance Notice"
+  },
+  {
+    "id": "NCLuOi15IW59VqZZIXnY",
+    "title": "Fee Payment Reminder",
+    "type": "payment",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 664000000
+    },
+    "read": false,
+    "message": "Your semester fee payment is due in 3 days. Please make payment to avoid late fees.",
+    "actionUrl": "/payments",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53"
+  },
+  {
+    "id": "OC777uCvuVEoomlg7rex",
+    "title": "System Maintenance Notice",
+    "message": "Scheduled maintenance will occur on Sunday, 2:00 AM - 4:00 AM. Some services may be unavailable.",
+    "type": "warning",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 725000000
+    },
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "read": false
+  },
+  {
+    "id": "P5V7Pq8aufLBZnjEFqdC",
+    "actionUrl": "/results",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 227000000
+    },
+    "title": "Exam Results Published",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "read": false,
+    "message": "Your exam results for Semester 1 are now available. Check your performance in the results section.",
+    "type": "result"
+  },
+  {
+    "id": "UqMlEIaZM6MgKhs5l7w7",
+    "title": "New Course Announcement",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "type": "announcement",
+    "read": false,
+    "actionUrl": "/courses",
+    "message": "Exciting new courses in Data Science and Machine Learning are now available for enrollment.",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 827000000
+    }
+  },
+  {
+    "id": "ZOCTQpnD5rNeMF9ZkaDa",
+    "type": "warning",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "read": false,
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 305000000
+    },
+    "message": "Scheduled maintenance will occur on Sunday, 2:00 AM - 4:00 AM. Some services may be unavailable.",
+    "title": "System Maintenance Notice"
+  },
+  {
+    "id": "fvBWYJETcMdkrnFZL0OR",
+    "actionUrl": "/",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "message": "Your account has been successfully created. Explore courses and start your learning journey.",
+    "title": "Welcome to TVET Connect Kenya!",
+    "type": "success",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 51000000
+    },
+    "read": false
+  },
+  {
+    "id": "hoqB8SMVekhpPmA1r4t6",
+    "type": "assignment",
+    "read": false,
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 123000000
+    },
+    "message": "A new assignment has been posted for Computer Science 101. Due date: December 30, 2024.",
+    "title": "New Assignment Available",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "actionUrl": "/assignments"
+  },
+  {
+    "id": "idLOXiWP2XsPaLpgLKWB",
+    "actionUrl": "/courses",
+    "type": "announcement",
+    "title": "New Course Announcement",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "read": false,
+    "message": "Exciting new courses in Data Science and Machine Learning are now available for enrollment.",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 356000000
+    }
+  },
+  {
+    "id": "jSAj65k3fiZxqARSzdO4",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1754466848,
+      "nanoseconds": 156000000
+    },
+    "actionUrl": "/payments",
+    "userId": "J7dTr4skLxd3P8Qem5S9S553Ln43",
+    "type": "payment",
+    "title": "Fee Payment Reminder",
+    "read": true,
+    "message": "Your semester fee payment is due in 3 days. Please make payment to avoid late fees."
+  },
+  {
+    "id": "yZXGrhB5mTx33NucrUJX",
+    "title": "Fee Payment Reminder",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755430728,
+      "nanoseconds": 666000000
+    },
+    "read": false,
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "type": "payment",
+    "message": "Your semester fee payment is due in 3 days. Please make payment to avoid late fees.",
+    "actionUrl": "/payments"
+  },
+  {
+    "id": "z58CEdP8wLEHNdC9S86N",
+    "title": "Exam Results Published",
+    "actionUrl": "/results",
+    "message": "Your exam results for Semester 1 are now available. Check your performance in the results section.",
+    "userId": "eBjFNANkcudx8WEu0W8LNRcxBX53",
+    "type": "result",
+    "createdAt": {
+      "type": "firestore/timestamp/1.0",
+      "seconds": 1755458144,
+      "nanoseconds": 696000000
+    },
+    "read": false
+  }
+]

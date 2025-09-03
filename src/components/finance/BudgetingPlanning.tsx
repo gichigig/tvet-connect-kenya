@@ -22,7 +22,7 @@ const departments = [
   'Arts & Media'
 ];
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useStudents } from "@/contexts/students/StudentsContext";
 
 export const BudgetingPlanning = () => {

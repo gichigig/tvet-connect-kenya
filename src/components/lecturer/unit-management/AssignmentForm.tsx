@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Upload, Trash2, FileText, PenTool } from "lucide-react";
 import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 interface AssignmentFormProps {
   onAddAssignment: (assignment: any) => void;

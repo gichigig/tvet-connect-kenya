@@ -22,7 +22,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useGradeVault, GradeVaultResult } from '@/contexts/GradeVaultContext';
 import { useToast } from '@/hooks/use-toast';
 

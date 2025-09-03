@@ -7,7 +7,7 @@ import { ExamForm } from "./ExamForm";
 import { NotesForm } from "./NotesForm";
 import { OnlineClassForm } from "./OnlineClassForm";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 
 interface UnitDetailsDialogProps {

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, GraduationCap, Calendar, TrendingUp, Award, FileText, Download, Filter } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useGradeVault, GradeVaultResult, StudentSearchResult } from '@/contexts/GradeVaultContext';
 import { useToast } from '@/hooks/use-toast';
 

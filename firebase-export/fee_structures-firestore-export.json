@@ -1,0 +1,152 @@
+[
+  {
+    "id": "7yL2ME0VWuKhjhum7Sji",
+    "courseName": "read",
+    "createdAt": "2025-07-24T22:16:20.561Z",
+    "breakdown": {
+      "libraryFees": 500,
+      "registrationFees": 300,
+      "labFees": 500,
+      "tuitionFees": 50000,
+      "otherFees": 200,
+      "examFees": 1000
+    },
+    "courseId": "a1uMFn1YcHNEBw3OgLvi",
+    "paymentSchedule": [
+      {
+        "dueDate": "2025-03-15T09:00:00.000Z",
+        "amount": 26250,
+        "semester": 1
+      },
+      {
+        "semester": 2,
+        "amount": 26250,
+        "dueDate": "2025-09-15T09:00:00.000Z"
+      }
+    ],
+    "academicYear": "2025",
+    "createdBy": "mEWWnKoNODRoFM7mk1mXOpjstHU2",
+    "totalFees": 52500,
+    "isActive": true
+  },
+  {
+    "id": "HUhhrvEIvWYmAK03DAoA",
+    "createdBy": "mEWWnKoNODRoFM7mk1mXOpjstHU2",
+    "breakdown": {
+      "examFees": 1000,
+      "labFees": 500,
+      "tuitionFees": 7000,
+      "libraryFees": 500,
+      "otherFees": 200,
+      "registrationFees": 300
+    },
+    "paymentSchedule": [
+      {
+        "semester": 1,
+        "dueDate": "2025-03-15T09:00:00.000Z",
+        "amount": 4750
+      },
+      {
+        "amount": 4750,
+        "dueDate": "2025-09-15T09:00:00.000Z",
+        "semester": 2
+      }
+    ],
+    "academicYear": "2025",
+    "courseId": "YGAcIXcos02jZh8YiJpj",
+    "totalFees": 9500,
+    "courseName": "mechanic",
+    "createdAt": "2025-07-23T20:52:17.215Z",
+    "isActive": true
+  },
+  {
+    "id": "gRyq21iPCMZhiStZAoxV",
+    "breakdown": {
+      "tuitionFees": 7000,
+      "registrationFees": 300,
+      "labFees": 500,
+      "examFees": 1000,
+      "otherFees": 200,
+      "libraryFees": 500
+    },
+    "academicYear": "2025",
+    "createdBy": "mEWWnKoNODRoFM7mk1mXOpjstHU2",
+    "courseId": "2ckzpuQCzpdvT7nToJoG",
+    "courseName": "billy",
+    "paymentSchedule": [
+      {
+        "amount": 4750,
+        "dueDate": "2025-03-15T09:00:00.000Z",
+        "semester": 1
+      },
+      {
+        "dueDate": "2025-09-15T09:00:00.000Z",
+        "amount": 4750,
+        "semester": 2
+      }
+    ],
+    "isActive": true,
+    "totalFees": 9500,
+    "createdAt": "2025-07-26T22:39:06.183Z"
+  },
+  {
+    "id": "sDVe5aq7ZH9UGPrqemeh",
+    "paymentSchedule": [
+      {
+        "amount": 31250,
+        "semester": 1,
+        "dueDate": "2025-03-15T09:00:00.000Z"
+      },
+      {
+        "dueDate": "2025-09-15T09:00:00.000Z",
+        "semester": 2,
+        "amount": 31250
+      }
+    ],
+    "isActive": true,
+    "breakdown": {
+      "tuitionFees": 60000,
+      "libraryFees": 500,
+      "labFees": 500,
+      "registrationFees": 300,
+      "otherFees": 200,
+      "examFees": 1000
+    },
+    "createdBy": "mEWWnKoNODRoFM7mk1mXOpjstHU2",
+    "courseId": "U6SKdUlhJmldAP3p0WwD",
+    "totalFees": 62500,
+    "courseName": "alvez",
+    "createdAt": "2025-07-26T21:08:57.717Z",
+    "academicYear": "2025"
+  },
+  {
+    "id": "sEQ9GoVv4YVfylRzSvPR",
+    "courseId": "NFXYif6G8AlzdCJwrm1l",
+    "paymentSchedule": [
+      {
+        "dueDate": "2025-03-15T09:00:00.000Z",
+        "amount": 4750,
+        "semester": 1
+      },
+      {
+        "semester": 2,
+        "amount": 4750,
+        "dueDate": "2025-09-15T09:00:00.000Z"
+      }
+    ],
+    "isActive": true,
+    "breakdown": {
+      "tuitionFees": 7000,
+      "labFees": 500,
+      "otherFees": 200,
+      "registrationFees": 300,
+      "examFees": 1000,
+      "libraryFees": 500
+    },
+    "academicYear": "2025",
+    "courseName": "blund",
+    "createdBy": "mEWWnKoNODRoFM7mk1mXOpjstHU2",
+    "totalFees": 9500,
+    "createdAt": "2025-07-26T23:16:19.273Z"
+  }
+]

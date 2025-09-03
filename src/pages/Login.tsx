@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 const Login = () => {
   const [identifier, setIdentifier] = useState("");
@@ -30,9 +30,10 @@ const Login = () => {
       });
       navigate("/");
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: "Invalid credentials. Please try again.",
+        description: error instanceof Error ? error.message : "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -55,16 +56,19 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">Username </Label>
+              <Label htmlFor="identifier">Email or Username</Label>
               <Input
                 id="identifier"
                 type="text"
-                placeholder="Enter your username"
+                placeholder="Enter your email or username"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
                 disabled={isLoading}
               />
+              <p className="text-sm text-gray-600">
+                Admin users should use: billyblund17@gmail.com
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Calendar } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { AttendanceForm } from "./attendance-manager/AttendanceForm";
 import { AttendanceHistory } from "./attendance-manager/AttendanceHistory";
 import { useDashboardSync } from "@/hooks/useDashboardSync";

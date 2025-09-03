@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { format, isAfter } from 'date-fns';
 import { Button } from '@/components/ui/button';

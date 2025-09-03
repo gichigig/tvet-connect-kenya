@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ProfilePictureUpload } from "@/components/ui/ProfilePictureUpload";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 

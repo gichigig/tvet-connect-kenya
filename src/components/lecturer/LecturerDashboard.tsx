@@ -13,7 +13,7 @@ import { LecturerDashboardOverview } from "@/components/lecturer/LecturerDashboa
 import { LocationRestrictionManager } from "@/components/lecturer/LocationRestrictionManager";
 import { SemesterPlanner } from "@/components/lecturer/SemesterPlanner";
 import { CampusManagement } from "@/components/lecturer/CampusManagement";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useDashboardSync } from "@/hooks/useDashboardSync";
 import { ResponsiveTabsMenu } from "@/components/ResponsiveTabsMenu";
 

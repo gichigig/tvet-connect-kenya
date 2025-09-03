@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useSemesterPlan } from "@/contexts/SemesterPlanContext";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, BookOpen, FileText, PenTool, Brain, Clock, Download, Eye, Users, Video, MapPin, CheckCircle } from "lucide-react";

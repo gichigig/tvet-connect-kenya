@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { QuizForm } from "./quiz-attendance/QuizForm";
 import { QuizTable } from "./quiz-attendance/QuizTable";
 import { AttendanceQuiz } from "./quiz-attendance/types";

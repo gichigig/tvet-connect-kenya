@@ -1,11 +1,10 @@
-import { BackblazeStorage, BackblazeConfig } from './backblaze';
 import { CloudflareR2Storage, CloudflareConfig } from './cloudflare';
 
-export type StorageProvider = 'b2' | 'r2';
+export type StorageProvider = 'r2';
 
 export interface StorageConfig {
   provider: StorageProvider;
-  config: BackblazeConfig | CloudflareConfig;
+  config: CloudflareConfig;
 }
 
 export interface StorageUploadParams {
@@ -16,21 +15,13 @@ export interface StorageUploadParams {
 }
 
 export class StorageService {
-  private storage: BackblazeStorage | CloudflareR2Storage;
+  private storage: CloudflareR2Storage;
 
   constructor(config: StorageConfig) {
-    this.storage = this.initializeStorage(config);
-  }
-
-  private initializeStorage(config: StorageConfig): BackblazeStorage | CloudflareR2Storage {
-    switch (config.provider) {
-      case 'b2':
-        return new BackblazeStorage(config.config as BackblazeConfig);
-      case 'r2':
-        return new CloudflareR2Storage(config.config as CloudflareConfig);
-      default:
-        throw new Error(`Unsupported storage provider: ${config.provider}`);
+    if (config.provider !== 'r2') {
+      throw new Error('Only R2 storage provider is supported');
     }
+    this.storage = new CloudflareR2Storage(config.config);
   }
 
   public async uploadFile(params: StorageUploadParams): Promise<{ url: string }> {
@@ -42,5 +33,4 @@ export class StorageService {
   }
 }
 
-// Export for direct usage if needed
-export { BackblazeStorage, CloudflareR2Storage };
+export * from './cloudflare';

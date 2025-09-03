@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useCourseContent } from '@/contexts/CourseContentContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useSemesterPlan, WeekPlan, WeeklyMaterial, WeeklyAssignment, WeeklyExam, AttendanceSession, OnlineClass } from '@/contexts/SemesterPlanContext';
 import { DocumentManager } from '@/components/lecturer/DocumentManager';
 import { ExamQuestionManager } from '@/components/lecturer/ExamQuestionManager';

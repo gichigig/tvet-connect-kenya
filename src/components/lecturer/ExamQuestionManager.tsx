@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useSemesterPlan, ExamQuestion, WeeklyExam } from '@/contexts/SemesterPlanContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Plus, Edit3, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Send } from 'lucide-react';
 
 interface ExamQuestionManagerProps {

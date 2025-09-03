@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useCoursesContext } from '@/contexts/courses/CoursesContext';
 import { Course } from '@/types/course';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export const CourseApprovalManagement: React.FC = () => {
