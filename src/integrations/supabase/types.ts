@@ -101,6 +101,66 @@ export type Database = {
         }
         Relationships: []
       }
+      content: {
+        Row: {
+          accepted_formats: string[] | null
+          assignment_type: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          files: Json | null
+          id: string
+          is_visible: boolean | null
+          lecturer_id: string
+          questions: Json | null
+          title: string
+          topic: string | null
+          type: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_formats?: string[] | null
+          assignment_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          files?: Json | null
+          id?: string
+          is_visible?: boolean | null
+          lecturer_id: string
+          questions?: Json | null
+          title: string
+          topic?: string | null
+          type: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_formats?: string[] | null
+          assignment_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          files?: Json | null
+          id?: string
+          is_visible?: boolean | null
+          lecturer_id?: string
+          questions?: Json | null
+          title?: string
+          topic?: string | null
+          type?: string
+          unit_code?: string
+          unit_id?: string
+          unit_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           code: string
@@ -280,6 +340,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_units: {
+        Row: {
+          created_at: string | null
+          grade: string | null
+          id: string
+          semester: number
+          status: string
+          student_id: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          semester: number
+          status?: string
+          student_id: string
+          unit_code: string
+          unit_id: string
+          unit_name: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          semester?: number
+          status?: string
+          student_id?: string
+          unit_code?: string
+          unit_id?: string
+          unit_name?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      units: {
+        Row: {
+          code: string
+          course: string
+          created_at: string | null
+          credits: number
+          department: string
+          description: string | null
+          id: string
+          lecturer_id: string
+          lecturer_name: string
+          name: string
+          semester: number
+          status: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          code: string
+          course: string
+          created_at?: string | null
+          credits?: number
+          department: string
+          description?: string | null
+          id?: string
+          lecturer_id: string
+          lecturer_name: string
+          name: string
+          semester: number
+          status?: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          code?: string
+          course?: string
+          created_at?: string | null
+          credits?: number
+          department?: string
+          description?: string | null
+          id?: string
+          lecturer_id?: string
+          lecturer_name?: string
+          name?: string
+          semester?: number
+          status?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
       }
       virtual_labs: {
         Row: {
