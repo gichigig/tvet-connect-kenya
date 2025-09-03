@@ -144,7 +144,7 @@ export class AuthService {
     if (profileError) {
       // Clean up auth if profile creation fails
       await supabase.auth.signOut();
-      return { user: null, error: profileError as AuthError };
+      throw error;
     }
 
     return {
