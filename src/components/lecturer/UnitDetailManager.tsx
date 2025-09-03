@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { uploadCourseMaterialSecurely } from '@/integrations/aws/secureUploadLambda';
-import { uploadCourseMaterialDirectly } from '@/integrations/aws/directUpload';
 import { uploadCourseMaterialLocally } from '@/integrations/aws/localUpload';
 import { uploadCourseMaterialViaAPI, testAPIServerConnectivity } from '@/integrations/aws/apiUpload';
 import { useCourseContent } from '@/contexts/CourseContentContext';
@@ -260,7 +259,8 @@ export const UnitDetailManager: React.FC<UnitDetailManagerProps> = ({ unit, onBa
             });
             
             try {
-              fileUrl = await uploadCourseMaterialDirectly(selectedFile, unit.id);
+              // fileUrl = await uploadCourseMaterialDirectly(selectedFile, unit.id);
+              // AWS direct upload removed. Use your new upload method here if needed.
               fileName = selectedFile.name;
               
               toast({

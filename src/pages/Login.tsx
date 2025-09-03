@@ -66,9 +66,7 @@ const Login = () => {
                 required
                 disabled={isLoading}
               />
-              <p className="text-sm text-gray-600">
-                Admin users should use: billyblund17@gmail.com
-              </p>
+              {/* Removed admin-specific login hint */}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

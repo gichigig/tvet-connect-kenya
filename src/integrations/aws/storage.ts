@@ -1,6 +1,5 @@
 import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Client, S3_BUCKET_NAME, S3_FOLDERS } from './config';
 
 export interface UploadResult {
   success: boolean;
