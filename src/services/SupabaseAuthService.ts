@@ -8,7 +8,9 @@ export interface SupabaseUser {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  phone?: string; // Add alias for compatibility
   approved: boolean;
+  blocked?: boolean;
   createdAt: string;
   lastLoginAt?: string;
   username?: string;
@@ -20,6 +22,8 @@ export interface SupabaseUser {
   semester?: number;
   academicYear?: string;
   profileComplete: boolean;
+  profilePicture?: string; // Add profilePicture property
+  financialStatus?: string; // Add financial status
 }
 
 export interface LoginCredentials {
@@ -175,7 +179,9 @@ export class SupabaseAuthService {
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
         phoneNumber: profile.phone_number,
+        phone: profile.phone_number, // Add alias
         approved: profile.approved || false,
+        blocked: profile.blocked || false,
         createdAt: profile.created_at,
         lastLoginAt: profile.last_login_at,
         username: profile.username,
@@ -186,7 +192,9 @@ export class SupabaseAuthService {
         year: profile.year,
         semester: profile.semester,
         academicYear: profile.academic_year,
-        profileComplete: this.checkProfileComplete(profile)
+        profileComplete: this.checkProfileComplete(profile),
+        profilePicture: profile.profile_picture,
+        financialStatus: profile.financial_status
       };
     } catch (error) {
       console.error('Error loading user profile:', error);

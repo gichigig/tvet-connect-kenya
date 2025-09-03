@@ -16,6 +16,7 @@ import { GradeVaultProvider } from "@/contexts/GradeVaultContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import SimpleLogin from "./pages/SimpleLogin";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminLoginTest from "./pages/AdminLoginTest";
@@ -45,6 +46,7 @@ const App = () => (
                             <Sonner />
                             <Routes>
                               <Route path="/login" element={<Login />} />
+                              <Route path="/simple-login" element={<SimpleLogin />} />
                               <Route path="/forgot-password" element={<ForgotPassword />} />
                               <Route path="/test-supabase" element={<SupabaseMigrationTest />} />
                               <Route path="/migrate-data" element={<DataMigrationTest />} />

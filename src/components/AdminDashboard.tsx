@@ -9,6 +9,7 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useCoursesContext } from "@/contexts/courses/CoursesContext";
 import NotificationManager from "@/components/admin/NotificationManager";
+import { CreateUserModal } from "@/components/admin/CreateUserModal";
 
 // Predefined departments for staff
 const departments = [
@@ -122,7 +123,7 @@ function AdminDashboard() {
   );
 
   const pendingUsers = getPendingUsers();
-  const allUsers = getAllUsers();
+  const allUsers = users; // Use the users array from context instead of getAllUsers() which returns a promise
   const blockedUsers = allUsers.filter(u => u.blocked);
 
   const handleApprove = (userId: string, userName: string) => {
@@ -240,6 +241,7 @@ function AdminDashboard() {
           <p className="text-gray-600">Manage user approvals and system oversight</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+          <CreateUserModal />
           <Button onClick={() => setShowAdminForm(v => !v)} variant="outline" className="w-full sm:w-auto">
             {showAdminForm ? "Cancel" : "Create Admin"}
           </Button>
@@ -320,7 +322,7 @@ function AdminDashboard() {
             <Button
               onClick={async () => {
                 if (newPassword && changePassword) {
-                  await changePassword("", newPassword);
+                  await changePassword(newPassword);
                 }
                 setShowPasswordModal(false);
                 setNewPassword("");
