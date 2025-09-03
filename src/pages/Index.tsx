@@ -1,101 +1,80 @@
-import { useState, useEffect } from "react";
-import { AppViewRenderer } from "@/components/AppViewRenderer";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
-import { useViewState } from "@/hooks/useViewState";
-import { useCourseProgress } from "@/hooks/useCourseProgress";
-import { useCourseActions } from "@/hooks/useCourseActions";
-import { useCourseFiltering } from "@/hooks/useCourseFiltering";
-import { getDatabase, ref, onValue } from "firebase/database";
-import { firebaseApp } from "@/integrations/firebase/config";
-import { testFirebaseConnection } from "@/utils/firebaseTest";
+import React from 'react';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import SimpleAdminDashboard from '@/components/SimpleAdminDashboard';
 
 const Index = () => {
-  const { isAdmin } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  const {
-    currentView,
-    setCurrentView,
-    selectedCourse,
-    setSelectedCourse,
-    selectedLesson,
-    setSelectedLesson,
-    handleBackToCatalog,
-    handleBackToCourse,
-    handleBackFromClassroom
-  } = useViewState();
+  const { user, loading } = useAuth();
 
-  const { userProgress, updateProgress } = useCourseProgress();
-  const { coursesByCategory } = useCourseFiltering(searchQuery);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const {
-    handleEnrollCourse,
-    handlePlayLesson,
-    handleCompleteLesson,
-    handleJoinClassroom
-  } = useCourseActions({
-    setSelectedCourse,
-    setSelectedLesson,
-    setCurrentView,
-    selectedCourse,
-    selectedLesson,
-    userProgress,
-    updateProgress
-  });
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">TVET Connect Kenya</h1>
+          <p className="text-xl text-gray-600 mb-8">Student Management System</p>
+          <div className="space-y-4">
+            <a 
+              href="/simple-login" 
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Login to Continue
+            </a>
+            <p className="text-sm text-gray-500">
+              Please login to access the system
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Firebase Realtime Database setup
-  const db = getDatabase(firebaseApp);
-
-  useEffect(() => {
-    // Test Firebase connection on app start
-    testFirebaseConnection();
+  // Render different dashboards based on role
+  switch (user.role) {
+    case 'admin':
+    case 'registrar':
+      return <SimpleAdminDashboard />;
     
-    // Debug user state
-    console.log('=== INDEX PAGE USER DEBUG ===');
-    console.log('isAdmin:', isAdmin);
-    console.log('Current view should be determined by useViewState hook');
-
-    const coursesRef = ref(db, 'courses/');
-    const coursesUnsubscribe = onValue(coursesRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("Live course data: ", data);
-      // Handle live data updates here
-    });
-
-    const progressRef = ref(db, 'userProgress/');
-    const progressUnsubscribe = onValue(progressRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("Live progress data: ", data);
-      // Handle live data updates here
-    });
-
-    // Cleanup function to unsubscribe from listeners
-    return () => {
-      coursesUnsubscribe();
-      progressUnsubscribe();
-    };
-  }, []); // Remove db and isAdmin from dependencies to prevent recreation
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AppViewRenderer
-        currentView={currentView}
-        searchQuery={searchQuery}
-        onSearch={setSearchQuery}
-        coursesByCategory={coursesByCategory}
-        userProgress={userProgress}
-        selectedCourse={selectedCourse}
-        selectedLesson={selectedLesson}
-        onEnrollCourse={handleEnrollCourse}
-        onBack={handleBackToCatalog}
-        onBackToCourse={handleBackToCourse}
-        onBackFromClassroom={handleBackFromClassroom}
-        onPlayLesson={handlePlayLesson}
-        onCompleteLesson={handleCompleteLesson}
-        onJoinClassroom={handleJoinClassroom}
-      />
-    </div>
-  );
+    case 'student':
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
+            <p className="text-gray-600">Student dashboard coming soon...</p>
+          </div>
+        </div>
+      );
+    
+    case 'lecturer':
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
+            <p className="text-gray-600">Lecturer dashboard coming soon...</p>
+          </div>
+        </div>
+      );
+    
+    default:
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
+            <p className="text-gray-600">Role: {user.role}</p>
+            <p className="text-gray-500 mt-2">Dashboard for your role is being developed...</p>
+          </div>
+        </div>
+      );
+  }
 };
 
 export default Index;
