@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { CreateUserModal } from '@/components/admin/CreateUserModal';
+import { CreateUserModal } from '@/components/CreateUserModal';
 import { UserPlus, Users, UserCheck, UserX } from 'lucide-react';
 
 export default function SimpleAdminDashboard() {
@@ -109,14 +109,7 @@ export default function SimpleAdminDashboard() {
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <CreateUserModal 
-                trigger={
-                  <Button className="w-full">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    New User
-                  </Button>
-                }
-              />
+              <CreateUserModal triggerText="New User" />
             </CardContent>
           </Card>
         </div>

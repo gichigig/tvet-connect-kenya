@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import SimpleAdminDashboard from '@/components/SimpleAdminDashboard';
+import { EmptyDashboard } from '@/components/EmptyDashboard';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -45,35 +46,13 @@ const Index = () => {
       return <SimpleAdminDashboard />;
     
     case 'student':
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
-            <p className="text-gray-600">Student dashboard coming soon...</p>
-          </div>
-        </div>
-      );
-    
     case 'lecturer':
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
-            <p className="text-gray-600">Lecturer dashboard coming soon...</p>
-          </div>
-        </div>
-      );
+    case 'finance':
+    case 'hod':
+      return <EmptyDashboard role={user.role} firstName={user.firstName} />;
     
     default:
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
-            <p className="text-gray-600">Role: {user.role}</p>
-            <p className="text-gray-500 mt-2">Dashboard for your role is being developed...</p>
-          </div>
-        </div>
-      );
+      return <EmptyDashboard role={user.role} firstName={user.firstName} />;
   }
 };
 

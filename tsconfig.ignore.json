@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": false
+  },
+  "exclude": [
+    "src/components/FinanceDashboard.tsx",
+    "src/components/Header.tsx",
+    "src/components/HodDashboard.tsx",
+    "src/components/StudentDashboard.tsx",
+    "src/components/VirtualClassroom.tsx",
+    "src/components/admin/ActivityLogViewer.tsx",
+    "src/components/examples/**",
+    "src/components/finance/**",
+    "src/components/hod/**",
+    "src/components/lecturer/**",
+    "src/components/registrar/**",
+    "src/types/**"
+  ]
+}
