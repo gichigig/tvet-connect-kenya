@@ -14,7 +14,7 @@ export interface SupabaseUser {
 interface AuthContextType {
   user: SupabaseUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<SupabaseUser>;
   logout: () => Promise<void>;
   createUser: (userData: any, password: string) => Promise<void>;
   getAllUsers: () => Promise<SupabaseUser[]>;
@@ -34,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<SupabaseUser[]>([]);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     // Check current session
@@ -71,28 +72,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        // Get user profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
+      console.log('🔄 Auth state change event:', event);
+      console.log('🔄 Session user:', session?.user?.id);
+      console.log('🔄 Is currently logging in:', isLoggingIn);
+      
+      // Skip profile fetching if we're in the middle of login process
+      if (isLoggingIn) {
+        console.log('⏭️ Auth listener: Skipping profile fetch - login in progress');
+        return;
+      }
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('📋 Auth listener: User signed in, fetching profile...');
         
-        if (profile) {
-          setUser({
-            id: profile.user_id,
-            email: profile.email,
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            role: profile.role,
-            approved: profile.approved,
-            blocked: profile.blocked
-          });
+        try {
+          console.log('📋 Auth listener: Fetching profile for user:', session.user.id);
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (profileError) {
+            console.error('❌ Auth listener: Profile error:', profileError);
+            setLoading(false);
+            return;
+          }
+          
+          if (profile) {
+            console.log('✅ Auth listener: Profile loaded:', profile);
+            const userData = {
+              id: profile.user_id,
+              email: profile.email,
+              firstName: profile.first_name,
+              lastName: profile.last_name,
+              role: profile.role,
+              approved: profile.approved,
+              blocked: profile.blocked,
+              departmentId: profile.department_id,
+              institutionId: profile.institution_id,
+            };
+            console.log('👤 Auth listener: Setting user data:', userData);
+            setUser(userData);
+          } else {
+            console.log('❌ Auth listener: No profile found');
+          }
+        } catch (error) {
+          console.error('🚨 Auth listener: Unexpected error:', error);
         }
-      } else {
+      } else if (event === 'SIGNED_OUT' || !session) {
+        console.log('👤 Auth listener: User signed out or no session, clearing user');
         setUser(null);
       }
+      
+      console.log('🏁 Auth listener: Setting loading to false');
       setLoading(false);
     });
 
@@ -100,13 +133,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) {
-      throw new Error(error.message);
+    console.log('🔐 Starting login process for:', email);
+    setIsLoggingIn(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (authError) {
+        console.error('❌ Auth error:', authError);
+        throw new Error(authError.message || 'Invalid credentials');
+      }
+
+      if (!authData?.user) {
+        console.error('❌ No user data returned');
+        throw new Error('No user data returned');
+      }
+
+      console.log('✅ Authentication successful, user ID:', authData.user.id);
+
+      // Get user profile
+      console.log('📋 Fetching user profile...');
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('❌ Profile error:', profileError);
+        throw new Error(`Error loading user profile: ${profileError.message}`);
+      }
+
+      if (!profile) {
+        console.error('❌ No profile found');
+        throw new Error('User profile not found');
+      }
+
+      console.log('✅ Profile loaded:', profile);
+
+      // Check if user is blocked
+      if (profile.blocked) {
+        console.error('❌ User is blocked');
+        throw new Error('This account has been blocked. Please contact support.');
+      }
+
+      // Check if user is approved
+      if (!profile.approved) {
+        console.error('❌ User not approved');
+        throw new Error('Your account is pending approval. Please wait for admin approval.');
+      }
+
+      const userData = {
+        id: profile.user_id,
+        email: profile.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        role: profile.role,
+        approved: profile.approved,
+        blocked: profile.blocked,
+        departmentId: profile.department_id,
+        institutionId: profile.institution_id,
+      };
+
+      console.log('👤 Setting user data from login function:', userData);
+      setUser(userData);
+      setLoading(false);
+      console.log('✅ Login complete, user state updated');
+
+      return userData;
+    } catch (error) {
+      console.error('🚨 Login error:', error);
+      setLoading(false);
+      // Clear any existing session on error
+      await supabase.auth.signOut();
+      setUser(null);
+      throw error;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -207,7 +312,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    await login(email, password);
+    const result = await login(email, password);
+    if (!result) {
+      throw new Error('Login failed');
+    }
   };
 
   const updateProfilePicture = async (file: File) => {

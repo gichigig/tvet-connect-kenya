@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ export default function SimpleLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +33,10 @@ export default function SimpleLogin() {
         description: "Logged in successfully!",
       });
 
-      // Redirect to main page
-      window.location.href = '/';
+      // Use React Router navigation
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Login Failed",

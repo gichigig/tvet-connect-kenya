@@ -17,27 +17,7 @@ const Index = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">TVET Connect Kenya</h1>
-          <p className="text-xl text-gray-600 mb-8">Student Management System</p>
-          <div className="space-y-4">
-            <a 
-              href="/simple-login" 
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Login to Continue
-            </a>
-            <p className="text-sm text-gray-500">
-              Please login to access the system
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Protected route will handle redirect if user is not authenticated
 
   // Render different dashboards based on role
   switch (user.role) {

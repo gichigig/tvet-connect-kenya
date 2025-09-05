@@ -22,8 +22,8 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 
 async function createAdminUser() {
     console.log('🔐 Creating admin user in Supabase...');
-    
-    const adminEmail = 'billyblund17@gmail.com';
+
+    const adminEmail = 'billyblund7@gmail.com';
     const adminPassword = 'bildad';
     
     try {
@@ -94,7 +94,7 @@ async function createUserProfile(userId, email) {
         const { data: existingProfile, error: selectError } = await supabaseAdmin
             .from('profiles')
             .select('*')
-            .eq('id', userId)
+            .eq('user_id', userId)
             .maybeSingle(); // Use maybeSingle instead of single to avoid error if not found
 
         if (selectError && selectError.code !== 'PGRST116') { // PGRST116 is "not found"
@@ -110,7 +110,8 @@ async function createUserProfile(userId, email) {
                 role: 'admin',
                 approved: true,
                 first_name: 'System',
-                last_name: 'Administrator'
+                last_name: 'Administrator',
+                blocked: false
             };
 
             const { error: updateError } = await supabaseAdmin
@@ -125,12 +126,13 @@ async function createUserProfile(userId, email) {
             
             // Create profile with only essential fields first
             const profileData = {
-                id: userId,
+                user_id: userId,
                 email: email,
                 first_name: 'System',
                 last_name: 'Administrator',
                 role: 'admin',
-                approved: true
+                approved: true,
+                blocked: false
             };
 
             console.log('📋 Profile data to insert:', profileData);
@@ -150,9 +152,13 @@ async function createUserProfile(userId, email) {
                     
                     // Try with absolute minimal data
                     const minimalData = {
-                        id: userId,
+                        user_id: userId,
                         email: email,
-                        role: 'admin'
+                        role: 'admin',
+                        first_name: 'System',
+                        last_name: 'Administrator',
+                        approved: true,
+                        blocked: false
                     };
 
                     const { error: minimalError } = await supabaseAdmin

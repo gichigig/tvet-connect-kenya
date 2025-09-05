@@ -15,28 +15,62 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('🔄 Login useEffect - Current user:', user);
+    console.log('🔄 Login useEffect - Auth loading state:', loading);
+    console.log('🔄 Login useEffect - Component loading state:', isLoading);
+    
+    // Only redirect if auth is not loading and user exists
+    if (!loading && user) {
+      console.log('🚀 User detected and auth loaded, redirecting to home page for role:', user.role);
+      navigate('/');
+    }
+  }, [user, navigate, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!identifier || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
+    console.log('🔐 Starting login with identifier:', identifier);
 
     try {
-      await login(identifier, password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to Billy Dev!",
-      });
-      navigate("/");
+      const userData = await login(identifier, password);
+      console.log('✅ Login result:', userData);
+      
+      if (userData) {
+        console.log('🎉 Login successful, showing toast');
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to TVET Connect Kenya!",
+        });
+        
+        // Small delay to ensure auth state has time to update
+        console.log('⏱️ Waiting for auth state to update...');
+        setTimeout(() => {
+          console.log('🚀 Attempting navigation to home page');
+          navigate('/');
+        }, 100);
+      }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('🚨 Login error:', error);
       toast({
         title: "Login Failed",
         description: error instanceof Error ? error.message : "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('🏁 Login process complete, setting loading to false');
       setIsLoading(false);
     }
   };
