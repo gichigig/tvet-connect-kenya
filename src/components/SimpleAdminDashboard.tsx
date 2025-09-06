@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { CreateUserModal } from '@/components/CreateUserModal';
+import { CreateCourseModal } from '@/components/CreateCourseModal';
+import { CreateDepartmentModal } from '@/components/CreateDepartmentModal';
 import { UserPlus, Users, UserCheck, UserX } from 'lucide-react';
 
 export default function SimpleAdminDashboard() {
@@ -105,11 +107,17 @@ export default function SimpleAdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Create User</CardTitle>
+              <CardTitle className="text-sm font-medium">Actions</CardTitle>
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <CreateUserModal triggerText="New User" />
+              {(user?.role === 'admin' || user?.role === 'registrar') && (
+                <>
+                  <CreateCourseModal />
+                  <CreateDepartmentModal />
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

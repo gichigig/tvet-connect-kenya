@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_roles: {
+        Row: {
+          created_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       assignment_submissions: {
         Row: {
           ai_detection_score: number | null
@@ -161,6 +179,44 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          code: string
+          created_at: string
+          department_id: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           code: string
@@ -250,6 +306,7 @@ export type Database = {
           total_fees_owed: number | null
           updated_at: string
           user_id: string
+          username: string | null
           year: number | null
         }
         Insert: {
@@ -272,6 +329,7 @@ export type Database = {
           total_fees_owed?: number | null
           updated_at?: string
           user_id: string
+          username?: string | null
           year?: number | null
         }
         Update: {
@@ -294,6 +352,7 @@ export type Database = {
           total_fees_owed?: number | null
           updated_at?: string
           user_id?: string
+          username?: string | null
           year?: number | null
         }
         Relationships: [
@@ -478,7 +537,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_user_with_bypass: {
+        Args: {
+          p_approved?: boolean
+          p_course?: string
+          p_department?: string
+          p_email: string
+          p_first_name: string
+          p_last_name: string
+          p_phone?: string
+          p_role: string
+          p_username: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

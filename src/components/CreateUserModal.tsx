@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,29 +7,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreateUserModalProps {
   triggerText?: string;
 }
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({ triggerText = "Create New User" }) => {
-  const { createUser } = useAuth();
+  const { user, createUserWithBypass } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
+    username: '',
+    password: '',
     role: 'student' as const,
     course: '',
     department: '',
     phone: ''
   });
 
+  // Load courses and departments
+  useEffect(() => {
+    const loadData = async () => {
+      const [coursesResult, deptResult] = await Promise.all([
+        supabase.from('courses').select('*'),
+        supabase.from('departments').select('*')
+      ]);
+      
+      if (coursesResult.data) setCourses(coursesResult.data);
+      if (deptResult.data) setDepartments(deptResult.data);
+    };
+    
+    if (open) {
+      loadData();
+    }
+  }, [open]);
+
+  // Role-based access control
+  const canCreateRole = (role: string) => {
+    if (user?.role === 'admin') return true;
+    if (user?.role === 'registrar') return role === 'student';
+    return false;
+  };
+
+  const showCourseAndDepartment = () => {
+    return formData.role === 'student' || formData.role === 'lecturer';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.role) {
+    
+    // Validation
+    const requiredFields = ['firstName', 'lastName', 'email', 'username', 'password', 'role'];
+    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+    
+    if (missingFields.length > 0) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -38,17 +76,30 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ triggerText = 
       return;
     }
 
+    if (!canCreateRole(formData.role)) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to create users with this role",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      await createUser(formData, 'temp123');
+      await createUserWithBypass(formData);
       toast({
         title: "User Created Successfully",
         description: `${formData.firstName} ${formData.lastName} has been created with role: ${formData.role}`
       });
+      
+      // Reset form
       setFormData({
         firstName: '',
         lastName: '',
         email: '',
+        username: '',
+        password: '',
         role: 'student',
         course: '',
         department: '',
@@ -112,6 +163,29 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ triggerText = 
           </div>
 
           <div>
+            <Label htmlFor="username">Username *</Label>
+            <Input
+              id="username"
+              value={formData.username}
+              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+              placeholder="e.g. john.doe"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password *</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              placeholder="Enter a secure password"
+              required
+            />
+          </div>
+
+          <div>
             <Label htmlFor="role">Role *</Label>
             <Select
               value={formData.role}
@@ -121,12 +195,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ triggerText = 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="student">Student</SelectItem>
-                <SelectItem value="lecturer">Lecturer</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="registrar">Registrar</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="hod">HOD</SelectItem>
+                {canCreateRole('student') && <SelectItem value="student">Student</SelectItem>}
+                {canCreateRole('lecturer') && <SelectItem value="lecturer">Lecturer</SelectItem>}
+                {canCreateRole('admin') && <SelectItem value="admin">Admin</SelectItem>}
+                {canCreateRole('registrar') && <SelectItem value="registrar">Registrar</SelectItem>}
+                {canCreateRole('finance') && <SelectItem value="finance">Finance</SelectItem>}
+                {canCreateRole('hod') && <SelectItem value="hod">HOD</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -140,23 +214,47 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ triggerText = 
             />
           </div>
 
-          <div>
-            <Label htmlFor="course">Course</Label>
-            <Input
-              id="course"
-              value={formData.course}
-              onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value }))}
-            />
-          </div>
+          {showCourseAndDepartment() && (
+            <>
+              <div>
+                <Label htmlFor="course">Course</Label>
+                <Select
+                  value={formData.course}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, course: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.name}>
+                        {course.name} ({course.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label htmlFor="department">Department</Label>
-            <Input
-              id="department"
-              value={formData.department}
-              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-            />
-          </div>
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>
+                        {dept.name} ({dept.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">

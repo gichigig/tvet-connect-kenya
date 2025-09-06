@@ -14,9 +14,10 @@ export interface SupabaseUser {
 interface AuthContextType {
   user: SupabaseUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<SupabaseUser>;
+  login: (identifier: string, password: string) => Promise<SupabaseUser>; // Support username or email
   logout: () => Promise<void>;
   createUser: (userData: any, password: string) => Promise<void>;
+  createUserWithBypass: (userData: any) => Promise<void>; // New bypass method
   getAllUsers: () => Promise<SupabaseUser[]>;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -24,7 +25,7 @@ interface AuthContextType {
   users: SupabaseUser[];
   approveUser: (userId: string) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (identifier: string, password: string) => Promise<void>; // Support username or email
   updateProfilePicture: (file: File) => Promise<void>;
 }
 
@@ -132,10 +133,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    console.log('🔐 Starting login process for:', email);
+  const login = async (identifier: string, password: string) => {
+    console.log('🔐 Starting login process for:', identifier);
     setIsLoggingIn(true);
+    
     try {
+      // First, try to find user by username or email
+      let email = identifier;
+      
+      // Check if identifier is not an email (doesn't contain @)
+      if (!identifier.includes('@')) {
+        // Look up email by username
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', identifier)
+          .single();
+          
+        if (profileError || !profile) {
+          throw new Error('User not found');
+        }
+        
+        email = profile.email;
+        console.log('🔍 Found email for username:', email);
+      }
+      
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -229,7 +251,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: userData.email,
       password: password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          username: userData.username,
+          role: userData.role
+        }
       }
     });
 
@@ -244,19 +272,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .insert({
           user_id: authData.user.id,
           email: userData.email,
+          username: userData.username,
           first_name: userData.firstName,
           last_name: userData.lastName,
           role: userData.role,
           course: userData.course,
           department: userData.department,
           phone: userData.phone,
-          approved: false,
+          approved: true, // Auto-approve
           blocked: false
         });
 
       if (profileError) {
         throw new Error(profileError.message);
       }
+    }
+  };
+
+  const createUserWithBypass = async (userData: any) => {
+    try {
+      // First create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            username: userData.username,
+            role: userData.role
+          }
+        }
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (authData.user) {
+        // Use the bypass function to create profile with admin privileges
+        const { data, error: functionError } = await supabase.rpc('create_user_with_bypass', {
+          p_email: userData.email,
+          p_username: userData.username,
+          p_first_name: userData.firstName,
+          p_last_name: userData.lastName,
+          p_role: userData.role,
+          p_course: userData.course || null,
+          p_department: userData.department || null,
+          p_phone: userData.phone || null,
+          p_approved: true
+        });
+
+        if (functionError) {
+          // If profile creation fails, clean up the auth user
+          await supabase.auth.signOut();
+          throw new Error(functionError.message);
+        }
+
+        // Refresh users list
+        await getAllUsers();
+      }
+    } catch (error) {
+      console.error('Error creating user with bypass:', error);
+      throw error;
     }
   };
 
@@ -311,8 +390,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await getAllUsers();
   };
 
-  const signIn = async (email: string, password: string) => {
-    const result = await login(email, password);
+  const signIn = async (identifier: string, password: string) => {
+    const result = await login(identifier, password);
     if (!result) {
       throw new Error('Login failed');
     }
@@ -329,6 +408,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     createUser,
+    createUserWithBypass,
     getAllUsers,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin' || user?.role === 'registrar',
