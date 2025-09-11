@@ -75,10 +75,10 @@ const LecturerDashboardContent = () => {
     index === self.findIndex(i => i.id === item.id)
   );
 
-  // If a unit is selected for detailed management, show the UnitDetailManager
+  // If a unit is selected for detailed management, show the UnitDetail
   if (selectedUnit) {
     return (
-      <UnitDetailManager 
+      <UnitDetail 
         unit={selectedUnit} 
         onBack={() => setSelectedUnit(null)}
       />

@@ -21,6 +21,7 @@ interface CoursesContextType {
   addCourse: (course: Omit<Course, 'id'>) => void;
   updateCourse: (id: string, updates: Partial<Course>) => void;
   deleteCourse: (id: string) => void;
+  updateFeeStructure?: (id: string, feeStructure: any) => Promise<void>;
 }
 
 const CoursesContext = createContext<CoursesContextType | undefined>(undefined);
@@ -67,7 +68,8 @@ export const CoursesProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getCoursesByLevel,
     addCourse,
     updateCourse,
-    deleteCourse
+    deleteCourse,
+    updateFeeStructure: async () => {}
   };
 
   return (

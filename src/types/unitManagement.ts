@@ -3,9 +3,9 @@ export interface Unit {
   id: string;
   code: string;
   name: string;
-  description: string;
+  description?: string; // Make optional to match UnitsContext
   credits: number;
-  department: string;
+  department?: string; // Make optional to match UnitsContext
   course: string;
   year: number;
   semester: number;
