@@ -2,6 +2,7 @@
 export interface Course {
   id: string;
   title: string;
+  name: string; // Required for compatibility
   description: string;
   instructor: string;
   duration: string;
@@ -11,6 +12,7 @@ export interface Course {
   lessons: Lesson[];
   category: string;
   level: string;
+  department: string; // Required for compatibility
 }
 
 export interface Lesson {
@@ -25,6 +27,7 @@ export const coursesData: Course[] = [
   {
     id: "1",
     title: "Automotive Technology",
+    name: "Automotive Technology", // Add for compatibility
     description: "Comprehensive training in vehicle maintenance, repair, and diagnostics. Learn engine systems, electrical systems, and modern automotive technology.",
     instructor: "John Mwangi",
     duration: "6 months",
@@ -32,6 +35,7 @@ export const coursesData: Course[] = [
     rating: 4.7,
     image: "photo-1486312338219-ce68d2c6f44d",
     category: "Engineering",
+    department: "Engineering", // Add for compatibility
     level: "Diploma",
     lessons: [
       { id: "1-1", title: "Engine Fundamentals", duration: "45 min", completed: false },
@@ -44,6 +48,7 @@ export const coursesData: Course[] = [
   {
     id: "2",
     title: "Information Technology",
+    name: "Information Technology",
     description: "Master computer systems, networking, software development, and cybersecurity fundamentals for the digital age.",
     instructor: "Grace Wanjiku",
     duration: "12 months",
@@ -51,6 +56,7 @@ export const coursesData: Course[] = [
     rating: 4.9,
     image: "photo-1461749280684-dccba630e2f6",
     category: "Technology",
+    department: "Technology",
     level: "Diploma",
     lessons: [
       { id: "2-1", title: "Computer Fundamentals", duration: "30 min", completed: false },

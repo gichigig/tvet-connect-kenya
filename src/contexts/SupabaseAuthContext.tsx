@@ -55,6 +55,13 @@ interface AuthContextType {
   pendingUnitRegistrations?: any[];
   getStudentCard?: (id: string) => Promise<any>;
   createdContent?: any[];
+  studentCards?: any[];
+  activateStudentCard?: (id: string) => Promise<void>;
+  deactivateStudentCard?: (id: string) => Promise<void>;
+  getActivityLogs?: (id: string) => Promise<any[]>;
+  updateSupplyRequestStatus?: (id: string, status: string) => Promise<void>;
+  addStudentFee?: (fee: any) => Promise<void>;
+  blockUser?: (id: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -319,7 +326,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     approveUser,
     deleteUser,
     signIn,
-    updateProfilePicture
+    updateProfilePicture,
+    // Initialize optional properties with empty arrays/undefined
+    supplyRequests: [],
+    studentFees: [],
+    clearanceForms: [],
+    addClearanceForm: async () => {},
+    updateClearanceStatus: async () => {},
+    updateStudentFinancialStatus: async () => {},
+    addFeeStructure: async () => {},
+    paymentRecords: [],
+    generateInvoice: async () => {},
+    updateFeeStatus: async () => {},
+    addPaymentRecord: async () => {},
+    pendingUnitRegistrations: [],
+    getStudentCard: async () => ({}),
+    createdContent: [],
+    studentCards: [],
+    activateStudentCard: async () => {},
+    deactivateStudentCard: async () => {},
+    getActivityLogs: async () => [],
+    updateSupplyRequestStatus: async () => {},
+    addStudentFee: async () => {},
+    blockUser: async () => {}
   };
 
   return (

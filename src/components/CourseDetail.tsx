@@ -17,7 +17,10 @@ interface Course {
 
 interface CourseDetailProps {
   course: Course;
+  progress?: number;
   onBack: () => void;
+  onPlayLesson?: (lesson: any) => void;
+  onJoinClassroom?: () => void;
 }
 
 export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) => {
