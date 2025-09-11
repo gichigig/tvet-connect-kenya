@@ -6,6 +6,12 @@ export interface SupabaseUser {
   role: string;
   approved?: boolean;
   blocked?: boolean;
+  phone?: string;
+  profilePicture?: string;
+  department?: string;
+  course?: string;
+  level?: string;
+  admissionNumber?: string;
 }
 
 export interface AuthState {

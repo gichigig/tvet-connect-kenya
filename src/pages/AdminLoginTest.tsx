@@ -18,7 +18,7 @@ const AdminLoginTest = () => {
     setResult('');
     
     try {
-      console.log('🔐 Testing direct Supabase login...');
+      console.log('Ã°Å¸â€Â Testing direct Supabase login...');
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -26,14 +26,14 @@ const AdminLoginTest = () => {
       });
 
       if (error) {
-        setResult(`❌ Login failed: ${error.message}`);
+        setResult(`Ã¢ÂÅ’ Login failed: ${error.message}`);
         toast({
           title: "Login Failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        setResult(`✅ Login successful! User: ${data.user?.email}`);
+        setResult(`Ã¢Å“â€¦ Login successful! User: ${data.user?.email}`);
         toast({
           title: "Login Successful",
           description: "Direct Supabase authentication worked!",
@@ -47,14 +47,14 @@ const AdminLoginTest = () => {
           .single();
         
         if (profileError) {
-          setResult(prev => prev + `\n⚠️ Profile error: ${profileError.message}`);
+          setResult(prev => prev + `\nÃ¢Å¡Â Ã¯Â¸Â Profile error: ${profileError.message}`);
         } else {
-          setResult(prev => prev + `\n👤 Profile found: ${profile.role}`);
+          setResult(prev => prev + `\nÃ°Å¸â€˜Â¤ Profile found: ${profile.role}`);
         }
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      setResult(`💥 Unexpected error: ${errorMsg}`);
+      setResult(`Ã°Å¸â€™Â¥ Unexpected error: ${errorMsg}`);
       toast({
         title: "Error",
         description: errorMsg,

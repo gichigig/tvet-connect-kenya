@@ -72,7 +72,6 @@ async function testAdminLogin() {
       }
 
       console.log('\n🎉 All tests passed successfully!');
-    }
   } catch (error) {
     console.error('\n❌ Test failed:', error.message);
     console.log('\n� Troubleshooting steps:');

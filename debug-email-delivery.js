@@ -1,11 +1,12 @@
-// Debug script to test email delivery configuration
-import { getAuth, sendPasswordResetEmail } from "firebase/auth";
-import { firebaseApp } from "./src/integrations/firebase/config.js";
+// Debug script to test email delivery configuration (using Supabase)
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://dzqvgvvsgaciqkpqmraq.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6cXZndnZzZ2FjaXFrcHFtcmFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4OTE5NDEsImV4cCI6MjA1MDQ2Nzk0MX0.lQ4U9OeYvqpOXpY12UIHR2YNlJP9WsIgPgz8MIW6UpQ';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function debugEmailDelivery() {
-  console.log("🔍 Debugging Firebase Email Delivery...");
-  
-  const auth = getAuth(firebaseApp);
+  console.log("🔍 Debugging Supabase Email Delivery...");
   
   // Test email delivery configuration
   console.log("Firebase Config:");

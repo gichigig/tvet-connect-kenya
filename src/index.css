@@ -101,3 +101,62 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom utility classes */
+@layer utilities {
+  .scrollbar-hide {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    -webkit-scrollbar: none;
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scrolling for tab navigation */
+  .tabs-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom tab spacing for better mobile experience */
+  .tab-mobile-optimized {
+    min-width: 120px;
+    justify-content: center;
+    min-height: 44px; /* iOS touch target minimum */
+  }
+
+  /* Enhanced focus states for accessibility */
+  .tab-focus-enhanced:focus-visible {
+    @apply ring-2 ring-blue-500 ring-offset-2 outline-none;
+  }
+
+  /* Touch-friendly tab interactions */
+  .tab-touch-optimized {
+    padding: 12px 16px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Responsive text sizing for tabs */
+  .tab-responsive-text {
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 640px) {
+    .tab-responsive-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tab-responsive-text {
+      font-size: 0.7rem;
+    }
+  }
+}

@@ -19,13 +19,13 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('🔄 Login useEffect - Current user:', user);
-    console.log('🔄 Login useEffect - Auth loading state:', loading);
-    console.log('🔄 Login useEffect - Component loading state:', isLoading);
+    console.log('Ã°Å¸â€â€ž Login useEffect - Current user:', user);
+    console.log('Ã°Å¸â€â€ž Login useEffect - Auth loading state:', loading);
+    console.log('Ã°Å¸â€â€ž Login useEffect - Component loading state:', isLoading);
     
     // Only redirect if auth is not loading and user exists
     if (!loading && user) {
-      console.log('🚀 User detected and auth loaded, redirecting to home page for role:', user.role);
+      console.log('Ã°Å¸Å¡â‚¬ User detected and auth loaded, redirecting to home page for role:', user.role);
       navigate('/');
     }
   }, [user, navigate, loading]);
@@ -42,35 +42,35 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    console.log('🔐 Starting login with identifier:', identifier);
+    console.log('Ã°Å¸â€Â Starting login with identifier:', identifier);
 
     try {
       const userData = await login(identifier, password);
-      console.log('✅ Login result:', userData);
+      console.log('Ã¢Å“â€¦ Login result:', userData);
       
       if (userData) {
-        console.log('🎉 Login successful, showing toast');
+        console.log('Ã°Å¸Å½â€° Login successful, showing toast');
         toast({
           title: "Login Successful",
           description: "Welcome back to TVET Connect Kenya!",
         });
         
         // Small delay to ensure auth state has time to update
-        console.log('⏱️ Waiting for auth state to update...');
+        console.log('Ã¢ÂÂ±Ã¯Â¸Â Waiting for auth state to update...');
         setTimeout(() => {
-          console.log('🚀 Attempting navigation to home page');
+          console.log('Ã°Å¸Å¡â‚¬ Attempting navigation to home page');
           navigate('/');
         }, 100);
       }
     } catch (error) {
-      console.error('🚨 Login error:', error);
+      console.error('Ã°Å¸Å¡Â¨ Login error:', error);
       toast({
         title: "Login Failed",
         description: error instanceof Error ? error.message : "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {
-      console.log('🏁 Login process complete, setting loading to false');
+      console.log('Ã°Å¸ÂÂ Login process complete, setting loading to false');
       setIsLoading(false);
     }
   };
