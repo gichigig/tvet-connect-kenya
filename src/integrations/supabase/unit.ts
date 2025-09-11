@@ -19,17 +19,30 @@ export interface Unit {
 
 export class UnitService {
   async createUnit(unit: Omit<Unit, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ data: Unit | null; error: Error | null }> {
+    const unitData = {
+      code: unit.code,
+      name: unit.name,
+      description: unit.description || '',
+      course: unit.course,
+      year: unit.year,
+      semester: unit.semester,
+      lecturer_id: unit.lecturerId || '',
+      lecturer_name: unit.lecturerName || '',
+      department: unit.department,
+      credits: unit.credits,
+      status: unit.status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('units')
-      .insert([{
-        ...unit,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
+      .insert([unitData])
       .select()
       .single();
 
     if (error) {
+      console.error('Supabase unit creation error:', error);
       return { data: null, error };
     }
 

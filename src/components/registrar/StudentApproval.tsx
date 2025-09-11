@@ -1,1 +1,10 @@
-import React from "react"; export const StudentApproval = () => <div>Student Approval</div>;
+import React from 'react';
+import AddStudentForm from './AddStudentForm';
+
+export const StudentApproval: React.FC = () => {
+  return (
+    <div className="space-y-6">
+      <AddStudentForm />
+    </div>
+  );
+};

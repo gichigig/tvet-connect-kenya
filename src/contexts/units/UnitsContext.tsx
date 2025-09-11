@@ -87,6 +87,8 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addUnit = async (unitData: Omit<Unit, 'id'>) => {
     try {
       setLoading(true);
+      console.log('Creating unit with data:', unitData);
+      
       const { data, error } = await unitService.createUnit({
         code: unitData.code,
         name: unitData.name,
@@ -111,6 +113,9 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Refresh units to get updated list
         await refreshUnits();
       }
+    } catch (error) {
+      console.error('Unit creation failed:', error);
+      throw error;
     } finally {
       setLoading(false);
     }

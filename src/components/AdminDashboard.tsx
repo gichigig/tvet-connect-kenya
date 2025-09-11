@@ -317,7 +317,12 @@ function AdminDashboard() {
       {showProfileModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
-            <button className="absolute top-2 right-2 text-gray-500" onClick={() => setShowProfileModal(false)}>&times;</button>
+             <button 
+               className="absolute top-2 right-2 text-gray-500" 
+               onClick={() => setShowProfileModal(false)}
+             >
+               &times;
+             </button>
             <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
             <div className="mb-2">Name: <span className="font-semibold">{user?.firstName} {user?.lastName}</span></div>
             <div className="mb-2">Email: <span className="font-semibold">{user?.email}</span></div>
@@ -763,14 +768,10 @@ function AdminDashboard() {
           )}
         </CardContent>
       </Card>
-        </div>
-      )}
-      </div>
     </div>
   );
-}
+};
 
-// AdminDashboard component (CoursesProvider now provided at app level)
 const AdminDashboardWithProvider = () => <AdminDashboard />;
 
 export default AdminDashboardWithProvider;
