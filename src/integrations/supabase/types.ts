@@ -3416,6 +3416,95 @@ export type Database = {
         }
         Relationships: []
       }
+      retakes: {
+        Row: {
+          academic_year: string
+          approved_by: string | null
+          approved_date: string | null
+          created_at: string
+          exam_id: string | null
+          fee_paid: boolean | null
+          fee_required: number | null
+          id: string
+          original_score: number | null
+          payment_reference: string | null
+          rejection_reason: string | null
+          retake_date: string | null
+          retake_reason: string
+          retake_score: number | null
+          retake_type: string
+          semester: number
+          status: string | null
+          student_email: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_id: string | null
+          unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year: string
+          approved_by?: string | null
+          approved_date?: string | null
+          created_at?: string
+          exam_id?: string | null
+          fee_paid?: boolean | null
+          fee_required?: number | null
+          id?: string
+          original_score?: number | null
+          payment_reference?: string | null
+          rejection_reason?: string | null
+          retake_date?: string | null
+          retake_reason: string
+          retake_score?: number | null
+          retake_type: string
+          semester: number
+          status?: string | null
+          student_email: string
+          student_id: string
+          student_name: string
+          unit_code: string
+          unit_id?: string | null
+          unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string
+          approved_by?: string | null
+          approved_date?: string | null
+          created_at?: string
+          exam_id?: string | null
+          fee_paid?: boolean | null
+          fee_required?: number | null
+          id?: string
+          original_score?: number | null
+          payment_reference?: string | null
+          rejection_reason?: string | null
+          retake_date?: string | null
+          retake_reason?: string
+          retake_score?: number | null
+          retake_type?: string
+          semester?: number
+          status?: string | null
+          student_email?: string
+          student_id?: string
+          student_name?: string
+          unit_code?: string
+          unit_id?: string | null
+          unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retakes_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           granted_at: string | null
@@ -4329,6 +4418,86 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      timetable: {
+        Row: {
+          academic_year_id: string | null
+          class_type: string | null
+          course: string | null
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          lecturer_id: string | null
+          lecturer_name: string
+          notes: string | null
+          room_capacity: number | null
+          semester: number | null
+          semester_id: string | null
+          start_time: string
+          unit_code: string
+          unit_id: string | null
+          unit_name: string
+          updated_at: string
+          venue: string
+          year: number | null
+        }
+        Insert: {
+          academic_year_id?: string | null
+          class_type?: string | null
+          course?: string | null
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          lecturer_id?: string | null
+          lecturer_name: string
+          notes?: string | null
+          room_capacity?: number | null
+          semester?: number | null
+          semester_id?: string | null
+          start_time: string
+          unit_code: string
+          unit_id?: string | null
+          unit_name: string
+          updated_at?: string
+          venue: string
+          year?: number | null
+        }
+        Update: {
+          academic_year_id?: string | null
+          class_type?: string | null
+          course?: string | null
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          lecturer_id?: string | null
+          lecturer_name?: string
+          notes?: string | null
+          room_capacity?: number | null
+          semester?: number | null
+          semester_id?: string | null
+          start_time?: string
+          unit_code?: string
+          unit_id?: string | null
+          unit_name?: string
+          updated_at?: string
+          venue?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transcripts: {
         Row: {
