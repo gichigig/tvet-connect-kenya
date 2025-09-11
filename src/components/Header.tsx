@@ -106,7 +106,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const createSampleNotifs = async () => {
     if (!user?.id) return;
     try {
-      await createSampleNotifications(user.id);
+      // await createSampleNotifications(user.id); // Temporarily disabled
       setSuccess("Sample notifications created!");
     } catch (error) {
       console.error("Error creating sample notifications:", error);
@@ -120,10 +120,10 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
       
       // Import validation function dynamically
       import("@/integrations/aws/utils").then(({ validateProfilePicture }) => {
-        const validation = validateProfilePicture(file);
+        const isValid = validateProfilePicture(file);
         
-        if (!validation.valid) {
-          setError(validation.error || "Invalid file");
+        if (!isValid) {
+          setError("Invalid file format or size");
           return;
         }
         

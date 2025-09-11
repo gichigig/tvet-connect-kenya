@@ -10,14 +10,27 @@ interface Course {
 }
 
 interface CourseViewProps {
-  courses: Course[];
+  courses?: Course[];
+  coursesByCategory?: Record<string, Course[]>;
+  userProgress?: Record<string, number>;
   onCourseSelect?: (course: Course) => void;
+  onEnrollCourse?: (courseId: string) => void;
 }
 
-export const CourseView: React.FC<CourseViewProps> = ({ courses, onCourseSelect }) => {
+export const CourseView: React.FC<CourseViewProps> = ({ 
+  courses, 
+  coursesByCategory, 
+  userProgress, 
+  onCourseSelect, 
+  onEnrollCourse 
+}) => {
+  // Use courses if provided, otherwise flatten coursesByCategory
+  const coursesList = courses || (coursesByCategory ? 
+    Object.values(coursesByCategory).flat() : []);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {courses.map((course) => (
+      {coursesList.map((course) => (
         <Card 
           key={course.id} 
           className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -30,6 +43,22 @@ export const CourseView: React.FC<CourseViewProps> = ({ courses, onCourseSelect 
           <CardContent>
             <p className="text-sm text-gray-600 mb-2">{course.description}</p>
             <p className="text-xs text-gray-500">Level: {course.level}</p>
+            {userProgress && userProgress[course.id] && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-500">Progress: {userProgress[course.id]}%</div>
+              </div>
+            )}
+            {onEnrollCourse && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEnrollCourse(course.id);
+                }}
+                className="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              >
+                Enroll
+              </button>
+            )}
           </CardContent>
         </Card>
       ))}

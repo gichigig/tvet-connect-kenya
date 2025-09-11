@@ -13,6 +13,13 @@ export interface SupabaseUser {
   blocked?: boolean;
   departmentId?: string;
   institutionId?: string;
+  phone?: string;
+  profilePicture?: string;
+  user_metadata?: any;
+  admissionNumber?: string;
+  year?: string;
+  course?: string;
+  department?: string;
 }
 
 interface AuthContextType {
@@ -33,6 +40,21 @@ interface AuthContextType {
   deleteUser: (userId: string) => Promise<void>;
   signIn: (identifier: string, password: string) => Promise<void>;
   updateProfilePicture: (file: File) => Promise<void>;
+  // Additional finance-related properties
+  supplyRequests?: any[];
+  studentFees?: any[];
+  clearanceForms?: any[];
+  addClearanceForm?: (form: any) => Promise<void>;
+  updateClearanceStatus?: (id: string, status: string) => Promise<void>;
+  updateStudentFinancialStatus?: (id: string, status: any) => Promise<void>;
+  addFeeStructure?: (structure: any) => Promise<void>;
+  paymentRecords?: any[];
+  generateInvoice?: (data: any) => Promise<void>;
+  updateFeeStatus?: (id: string, status: string) => Promise<void>;
+  addPaymentRecord?: (record: any) => Promise<void>;
+  pendingUnitRegistrations?: any[];
+  getStudentCard?: (id: string) => Promise<any>;
+  createdContent?: any[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

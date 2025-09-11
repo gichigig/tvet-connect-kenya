@@ -36,6 +36,7 @@ interface UnitsContextType {
   updateUnit: (id: string, updates: Partial<Unit>) => Promise<void>;
   deleteUnit: (id: string) => Promise<void>;
   refreshUnits: () => Promise<void>;
+  createdUnits?: Unit[];
 }
 
 const UnitsContext = createContext<UnitsContextType | undefined>(undefined);
@@ -169,7 +170,8 @@ export const UnitsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     addUnit,
     updateUnit,
     deleteUnit,
-    refreshUnits
+    refreshUnits,
+    createdUnits: units
   };
 
   return (
