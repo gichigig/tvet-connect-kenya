@@ -43,7 +43,7 @@ import { RetakeManager } from "@/components/registrar/RetakeManager";
 import ApprovedStudents from "@/components/registrar/ApprovedStudents";
 import { PendingUnitRegistrations } from "@/components/registrar/PendingUnitRegistrations";
 import { UnitManagement } from "@/components/registrar/UnitManagement";
-import { DepartmentManagement } from "@/components/registrar/DepartmentManagement";
+import DepartmentManagement from "@/components/registrar/DepartmentManagement";
 import SupabaseStudentForm from "@/components/registrar/SupabaseStudentForm";
 import { CourseManagement } from "@/components/registrar/CourseManagement";
 import { CreateCourseForm } from "@/components/registrar/CreateCourseForm";

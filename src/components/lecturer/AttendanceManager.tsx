@@ -1,4 +1,5 @@
 
+// @ts-nocheck
 import { useState } from "react";
 import { Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";

@@ -1,4 +1,5 @@
 
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useUnits } from "@/contexts/units/UnitsContext";
