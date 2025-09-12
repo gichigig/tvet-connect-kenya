@@ -52,3 +52,31 @@ export interface CreatedContent {
   type: string;
   createdAt: string;
 }
+
+export interface SupplyRequest {
+  id: string;
+  description: string;
+  quantity: number;
+  status: string;
+}
+
+export interface FeeStructure {
+  id: string;
+  name: string;
+  amount: number;
+  type: string;
+}
+
+export interface ClearanceForm {
+  id: string;
+  studentId: string;
+  status: string;
+  items: string[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}

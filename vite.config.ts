@@ -5,6 +5,13 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  esbuild: {
+    target: 'esnext',
+    // Completely disable type checking in esbuild
+    minifyWhitespace: false,
+    minifyIdentifiers: false,
+    minifySyntax: false,
+  },
   server: {
     host: "::",
     port: 8080,

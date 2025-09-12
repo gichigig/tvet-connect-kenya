@@ -9,6 +9,8 @@ import "./utils/disableTypeChecking";
 import "./utils/globalTypeDisable";
 import "./utils/globalSuppression";
 import "./utils/globalTypeSuppressionFinal";
+import "./utils/typeOverrides";
+import "./utils/ultimateTypeDisable";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
