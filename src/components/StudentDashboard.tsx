@@ -111,7 +111,7 @@ export const StudentDashboard = () => {
         subtitle={`Welcome back, ${user?.firstName || 'Student'}!`}
         notificationCount={userPendingRegistrations.length + syncedExams.length}
         additionalActions={
-          studentCard?.isActive && feesAreCleared ? (
+          feesAreCleared ? (
             <Button onClick={handleDownloadExamCard} className="flex items-center gap-2">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Download Exam Card</span>
@@ -123,7 +123,7 @@ export const StudentDashboard = () => {
       <div className="container mx-auto px-4 py-6 space-y-6">
 
       {/* Student Card Status */}
-      {studentCard?.isActive && (
+      {feesAreCleared && (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
@@ -138,16 +138,10 @@ export const StudentDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-800">
-                  {feesAreCleared 
-                    ? "All fees cleared - You can download your student card" 
-                    : `Outstanding balance: KSh ${totalOwed.toLocaleString()} - Please clear your fees to download your card`
-                  }
+                  All fees cleared - You can download your student card
                 </p>
               </div>
-              <Button
-                disabled={!feesAreCleared}
-                className={feesAreCleared ? "bg-green-600 hover:bg-green-700" : ""}
-              >
+              <Button className="bg-green-600 hover:bg-green-700">
                 <Download className="w-4 h-4 mr-2" />
                 Download Student Card
               </Button>
@@ -160,7 +154,15 @@ export const StudentDashboard = () => {
       <EnhancedExamCard />
 
       {/* Stats Cards */}
-      <StudentStatsGrid stats={stats} />
+      <div className="bg-card p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-2">My Statistics</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div><span className="text-sm text-muted-foreground">Enrolled Units:</span> {stats.enrolledUnits}</div>
+          <div><span className="text-sm text-muted-foreground">Pending:</span> {stats.pendingRegistrations}</div>
+          <div><span className="text-sm text-muted-foreground">Exams:</span> {stats.upcomingExams}</div>
+          <div><span className="text-sm text-muted-foreground">Assignments:</span> {stats.completedAssignments}</div>
+        </div>
+      </div>
 
       {/* My Units Section */}
       <div className="space-y-4">

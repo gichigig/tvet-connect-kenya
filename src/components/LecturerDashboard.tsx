@@ -21,6 +21,7 @@ import { LecturerCourseContainer } from "@/components/lecturer/LecturerCourseCon
 import { UnitDetailManager } from "@/components/lecturer/UnitDetailManager";
 import { useDashboardSync } from "@/hooks/useDashboardSync";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { LecturerStats, UnitDetail } from "@/components/dashboard/DashboardComponents";
 
 export const LecturerDashboard = () => {
   return <LecturerDashboardContent />;
@@ -117,7 +118,15 @@ const LecturerDashboardContent = () => {
       
       <div className="container mx-auto px-4 py-6 space-y-6">
 
-      <LecturerDashboardStats stats={lecturerStats} />
+      <div className="bg-card p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-2">Statistics</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div><span className="text-sm text-muted-foreground">Courses:</span> {lecturerStats.totalCourses}</div>
+          <div><span className="text-sm text-muted-foreground">Students:</span> {lecturerStats.totalStudents}</div>
+          <div><span className="text-sm text-muted-foreground">Assignments:</span> {lecturerStats.pendingAssignments}</div>
+          <div><span className="text-sm text-muted-foreground">Exams:</span> {lecturerStats.upcomingExams}</div>
+        </div>
+      </div>
 
        {/* Responsive hamburger for mobile; triggers on md+ */}
       <div className="mb-3">
@@ -162,8 +171,17 @@ const LecturerDashboardContent = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lecturerCourses.map((course) => (
-                  <LecturerCourseContainer key={course.id} course={course} />
+                {lecturerCourses.map((course: any) => (
+                  <LecturerCourseContainer 
+                    key={course.id} 
+                    course={{
+                      ...course,
+                      durationType: course.durationType || 'semester',
+                      mode: course.mode || 'on-campus',
+                      totalCredits: course.totalCredits || 0,
+                      units: course.units || []
+                    }} 
+                  />
                 ))}
               </div>
             )}
