@@ -9,7 +9,7 @@ export interface Unit {
   course: string;
   year: number;
   semester: number;
-  prerequisites: string[];
+  prerequisites?: string[];
   lecturerId?: string;
   lecturerName?: string;
   lecturerEmail?: string;
@@ -17,10 +17,10 @@ export interface Unit {
   enrolled: number;
   schedule?: string;
   whatsappLink?: string;
-  hasDiscussionGroup: boolean;
-  createdBy: string;
-  createdDate: string;
-  status: 'active' | 'inactive';
+  hasDiscussionGroup?: boolean;
+  createdBy?: string;
+  createdDate?: string;
+  status?: 'active' | 'inactive';
   campusId?: string; // Campus where this unit is offered
   campusName?: string;
   availableCampuses?: string[]; // Multiple campuses where this unit is available

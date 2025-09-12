@@ -37,7 +37,7 @@ export const FinanceDashboard = () => {
   const overdueFees = studentFees.filter(f => f.status === 'overdue');
   const totalRevenue = studentFees.filter(f => f.status === 'paid').reduce((sum, fee) => sum + (fee.paidAmount || fee.amount), 0);
   
-  const defaulters = students.filter(s => s.financialStatus === 'defaulter');
+  const defaulters = students.filter((s: any) => s.financialStatus === 'defaulter');
   const pendingClearances = clearanceForms.filter(c => c.status === 'pending');
 
   const stats = {

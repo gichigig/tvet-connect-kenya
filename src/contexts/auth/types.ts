@@ -7,7 +7,7 @@ export interface Student {
   email: string;
   department?: string;
   departmentId?: string;
-  financialStatus?: 'paid' | 'pending' | 'overdue';
+  financialStatus?: 'good' | 'defaulter' | 'pending';
   isActive?: boolean;
 }
 

@@ -17,6 +17,7 @@ export interface User {
 interface UsersContextType {
   users: User[];
   loading: boolean;
+  examResults: any[];
   getUser: (id: string) => User | undefined;
   getUsersByRole: (role: string) => User[];
   getUsersByDepartment: (departmentId: string) => User[];
@@ -61,6 +62,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const value: UsersContextType = {
     users,
     loading,
+    examResults: [],
     getUser,
     getUsersByRole,
     getUsersByDepartment,

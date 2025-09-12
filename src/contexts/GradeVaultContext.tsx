@@ -38,8 +38,11 @@ export interface GradeSubmission {
   academic_year: string;
 }
 
+export interface GradeVaultResult extends Grade {}
+
 interface GradeVaultContextType {
   grades: Grade[];
+  results: GradeVaultResult[];
   loading: boolean;
   submitGrades: (grades: GradeSubmission[], submittedBy: string) => Promise<void>;
   updateGrade: (gradeId: string, updates: Partial<Grade>) => Promise<void>;
@@ -49,6 +52,13 @@ interface GradeVaultContextType {
   getGradesByAssignmentType: (type: Grade['assignment_type']) => Grade[];
   verifyGrade: (gradeId: string) => Promise<void>;
   refreshGrades: () => Promise<void>;
+  getPendingHODApproval: () => GradeVaultResult[];
+  approveResults: (ids: string[]) => Promise<void>;
+  rejectResults: (ids: string[]) => Promise<void>;
+  grantEditingPermission: (lecturerId: string) => Promise<void>;
+  revokeEditingPermission: (lecturerId: string) => Promise<void>;
+  updateResult: (id: string, updates: Partial<GradeVaultResult>) => Promise<void>;
+  getGradeVaultStats: () => any;
 }
 
 const GradeVaultContext = createContext<GradeVaultContextType | undefined>(undefined);
@@ -173,8 +183,41 @@ export const GradeVaultProvider: React.FC<GradeVaultProviderProps> = ({ children
     await loadGrades();
   };
 
+  const getPendingHODApproval = (): GradeVaultResult[] => {
+    return grades.filter(grade => !grade.verified) as GradeVaultResult[];
+  };
+
+  const approveResults = async (ids: string[]) => {
+    // Implementation for approving results
+  };
+
+  const rejectResults = async (ids: string[]) => {
+    // Implementation for rejecting results
+  };
+
+  const grantEditingPermission = async (lecturerId: string) => {
+    // Implementation for granting editing permission
+  };
+
+  const revokeEditingPermission = async (lecturerId: string) => {
+    // Implementation for revoking editing permission
+  };
+
+  const updateResult = async (id: string, updates: Partial<GradeVaultResult>) => {
+    await updateGrade(id, updates);
+  };
+
+  const getGradeVaultStats = () => {
+    return {
+      totalGrades: grades.length,
+      verifiedGrades: grades.filter(g => g.verified).length,
+      pendingGrades: grades.filter(g => !g.verified).length
+    };
+  };
+
   const value: GradeVaultContextType = {
     grades,
+    results: grades as GradeVaultResult[],
     loading,
     submitGrades,
     updateGrade,
@@ -183,7 +226,14 @@ export const GradeVaultProvider: React.FC<GradeVaultProviderProps> = ({ children
     getGradesByUnit,
     getGradesByAssignmentType,
     verifyGrade,
-    refreshGrades
+    refreshGrades,
+    getPendingHODApproval,
+    approveResults,
+    rejectResults,
+    grantEditingPermission,
+    revokeEditingPermission,
+    updateResult,
+    getGradeVaultStats
   };
 
   return (
