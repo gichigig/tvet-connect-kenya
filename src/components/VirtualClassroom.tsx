@@ -1,4 +1,9 @@
 // @ts-nocheck
-// Global TypeScript error suppression
-export const VirtualClassroom = () => null;
+interface VirtualClassroomProps {
+  onBack: () => void;
+  courseId?: string;
+  courseTitle?: string;
+}
+
+export const VirtualClassroom = ({ onBack }: VirtualClassroomProps) => null;
 export default VirtualClassroom;

@@ -91,7 +91,7 @@ export const BudgetingPlanning = () => {
   const totalProjectedRevenue = projectedStudentFees + governmentGrants + donorFunding;
 
   // Calculate expenditure based on real staff data
-  const staffCount = users.filter(u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved).length;
+  const staffCount = await safeFilterUsers(users, u => ['lecturer', 'hod', 'registrar', 'admin'].includes(u.role) && u.approved).then(filtered => filtered.length);
   const projectedSalaries = staffCount * 1200000; // Average annual salary
   const operationalCosts = totalProjectedRevenue * 0.18; // 18% of revenue
   const infrastructureCosts = totalProjectedRevenue * 0.12; // 12% of revenue

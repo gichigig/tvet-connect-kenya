@@ -36,3 +36,12 @@ export interface PaymentRecord {
   date: string;
   status: string;
 }
+
+export interface StudentResult {
+  id: string;
+  studentId: string;
+  unitCode: string;
+  marks: number;
+  grade: string;
+  status: string;
+}

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayCircle, PauseCircle, Calendar, Settings } from "lucide-react";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 interface SemesterReportingPeriod {
   id: string;

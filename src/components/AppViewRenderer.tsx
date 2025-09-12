@@ -203,8 +203,6 @@ export const AppViewRenderer = ({
   if (currentView === "classroom" && selectedCourse) {
     return (
       <VirtualClassroom
-        courseId={selectedCourse.id}
-        courseTitle={selectedCourse.title}
         onBack={onBackFromClassroom}
       />
     );
