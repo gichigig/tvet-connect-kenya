@@ -45,3 +45,10 @@ export interface StudentResult {
   grade: string;
   status: string;
 }
+
+export interface CreatedContent {
+  id: string;
+  title: string;
+  type: string;
+  createdAt: string;
+}

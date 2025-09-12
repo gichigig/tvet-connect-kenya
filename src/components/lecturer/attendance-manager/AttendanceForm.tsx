@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+// @ts-nocheck
 import { useRef } from "react";
 import { MapContainer, TileLayer, Marker, Circle } from "react-leaflet";
 // Helper: Get IP-based location

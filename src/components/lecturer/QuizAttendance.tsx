@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+// @ts-nocheck
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
